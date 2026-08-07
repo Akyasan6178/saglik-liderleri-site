@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE_URL } from '../config/api'
 
 /* ════════════════════════════════════════
    SABİTLER
 ════════════════════════════════════════ */
-const API = 'http://localhost:8000/api'
+const API = `${API_BASE_URL}/api`
 
 const DURUM_MAP = {
   ONAYLANDI:  { label: 'Onaylandı',  cls: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },

@@ -68,13 +68,40 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# ─── Database (SQLite) ────────────────────────────────────────────────────────
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# ─── Database ─────────────────────────────────────────────────────────────────
+# DATABASE_URL tanımlıysa PostgreSQL (Supabase), yoksa yerel SQLite kullanılır.
+import os, urllib.parse, dj_database_url
+
+_DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+
+if _DATABASE_URL:
+    # Paroladaki özel karakterler (@, #, %, vb.) URL parse hatasına yol açmasın diye otomatik encode et
+    try:
+        if '://' in _DATABASE_URL and '@' in _DATABASE_URL:
+            scheme, rest = _DATABASE_URL.split('://', 1)
+            creds, host_part = rest.rsplit('@', 1)
+            if ':' in creds:
+                user, passwd = creds.split(':', 1)
+                if '%' not in passwd:
+                    passwd = urllib.parse.quote(passwd, safe='')
+                _DATABASE_URL = f'{scheme}://{user}:{passwd}@{host_part}'
+    except Exception:
+        pass
+
+    DATABASES = {
+        'default': dj_database_url.parse(
+            _DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # ─── Auth ─────────────────────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [

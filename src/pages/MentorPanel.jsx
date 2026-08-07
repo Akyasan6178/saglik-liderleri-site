@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE_URL } from '../config/api'
 
-const API = 'http://localhost:8000/api'
+const API = `${API_BASE_URL}/api`
 
 // SVG İkonlar
 const Ic = {
