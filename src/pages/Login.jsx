@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { API_BASE_URL } from '../config/api'
+import { loginUser } from '../services/supabaseService'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -15,25 +15,14 @@ export default function Login() {
     setError(null)
     
     try {
-      const res = await fetch(`${API_BASE_URL}/api/login/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
-      })
-
-      if (!res.ok) {
-        throw new Error('E-posta veya şifre hatalı')
-      }
-
-      const data = await res.json()
+      const data = await loginUser(email, password)
       
       // Token ve rolü kaydet
       localStorage.setItem('access', data.access)
       localStorage.setItem('refresh', data.refresh)
       localStorage.setItem('role', data.role)
       localStorage.setItem('username', data.username)
+      localStorage.setItem('user_email', data.email)
       
       // Role göre yönlendir
       const userRole = data.role
@@ -48,7 +37,7 @@ export default function Login() {
       }
       
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Giriş yapılamadı')
     } finally {
       setLoading(false)
     }
