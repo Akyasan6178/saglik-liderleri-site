@@ -1,0 +1,4 @@
+project_id = "wczupupflxvfnjbjkfrj"
+
+[functions.ai-content-dna]
+verify_jwt = false
