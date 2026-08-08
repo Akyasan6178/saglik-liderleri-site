@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '../config/api'
+import { logoutUser } from '../services/supabaseService'
 
 const API = `${API_BASE_URL}/api`
 
@@ -1337,9 +1338,9 @@ export default function KatilimciPanel() {
     fetchData()
   }, [])
 
-  const handleLogout = () => {
-    localStorage.clear()
-    navigate('/login')
+  const handleLogout = async () => {
+    await logoutUser()
+    navigate('/login', { replace: true })
   }
 
   const openModal = (gorev) => {

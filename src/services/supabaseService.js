@@ -4,61 +4,67 @@ import { supabase } from '../config/supabaseClient'
 export async function loginUser(email, password) {
   const cleanEmail = email.trim().toLowerCase()
 
-  // 1. Admin Kontrolü
-  if (cleanEmail === 'admin@gdsl.com' || cleanEmail.includes('admin')) {
-    return {
-      access: 'supabase-admin-access-token',
-      refresh: 'supabase-admin-refresh-token',
-      role: 'Admin',
-      username: 'GDSL Admin',
-      email: cleanEmail,
-    }
-  }
-
-  // 2. Katılımcı Kontrolü
-  const { data: katilimci } = await supabase
-    .from('core_katilimci')
-    .select('*')
-    .ilike('eposta', cleanEmail)
-    .maybeSingle()
-
-  if (katilimci) {
-    return {
-      access: 'supabase-katilimci-token',
-      refresh: 'supabase-katilimci-refresh',
-      role: 'Katilimci',
-      username: katilimci.ad_soyad || cleanEmail.split('@')[0],
-      email: katilimci.eposta || cleanEmail,
-      katilimci_id: katilimci.id,
-    }
-  }
-
-  // 3. Mentor Kontrolü
-  const { data: mentor } = await supabase
-    .from('core_mentor')
-    .select('*')
-    .ilike('eposta', cleanEmail)
-    .maybeSingle()
-
-  if (mentor) {
-    return {
-      access: 'supabase-mentor-token',
-      refresh: 'supabase-mentor-refresh',
-      role: 'Mentor',
-      username: mentor.ad_soyad || cleanEmail.split('@')[0],
-      email: mentor.eposta || cleanEmail,
-      mentor_id: mentor.id,
-    }
-  }
-
-  // 4. Varsayılan Fallback (Yeni Girişler İçin)
-  const role = cleanEmail.includes('mentor') ? 'Mentor' : 'Katilimci'
-  return {
-    access: 'supabase-default-token',
-    refresh: 'supabase-default-refresh',
-    role: role,
-    username: cleanEmail.split('@')[0],
+  // 1. Supabase Auth ile gerçek e-posta ve şifre doğrulaması
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: cleanEmail,
+    password: password,
+  })
+
+  if (error) {
+    if (
+      error.message.includes('Invalid login credentials') ||
+      error.message.includes('invalid_credentials') ||
+      error.status === 400
+    ) {
+      throw new Error('E-posta adresi veya şifre hatalı.')
+    }
+    throw new Error(error.message || 'Giriş yapılırken bir hata oluştu.')
+  }
+
+  const user = data?.user
+  const session = data?.session
+
+  if (!user || !session) {
+    throw new Error('Oturum başlatılamadı.')
+  }
+
+  // 2. Profiles tablosundan kullanıcının rol ve profil bilgilerini çek
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profileError) {
+    console.error('Profile query error:', profileError)
+    await supabase.auth.signOut()
+    throw new Error('Kullanıcı profili okunurken veritabanı hatası oluştu.')
+  }
+
+  if (!profile || !profile.role) {
+    await supabase.auth.signOut()
+    throw new Error('Kullanıcı profil kaydı bulunamadı. Lütfen sistem yöneticiniz ile iletişime geçin.')
+  }
+
+  return {
+    access: session.access_token,
+    refresh: session.refresh_token,
+    role: profile.role.toLowerCase(),
+    username: profile.ad_soyad || user.email.split('@')[0],
+    email: user.email,
+    user_id: user.id,
+    core_katilimci_id: profile.core_katilimci_id,
+    core_mentor_id: profile.core_mentor_id,
+  }
+}
+
+export async function logoutUser() {
+  try {
+    await supabase.auth.signOut()
+  } catch (err) {
+    console.error('Logout error:', err)
+  } finally {
+    localStorage.clear()
   }
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '../config/api'
+import { logoutUser } from '../services/supabaseService'
 
 /* ════════════════════════════════════════
    SABİTLER
@@ -732,7 +733,7 @@ export default function AdminPanel() {
               <p className="text-[10px] text-gray-400">Yönetici</p>
             </div>
           </div>
-          <button onClick={() => navigate('/')} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200">
+          <button onClick={async () => { await logoutUser(); navigate('/login', { replace: true }) }} className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200">
             <Ic.Logout /><span>Çıkış Yap</span>
           </button>
         </div>

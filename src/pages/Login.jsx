@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { loginUser } from '../services/supabaseService'
+import { loginUser, logoutUser } from '../services/supabaseService'
+import { isSupabaseEnvConfigured } from '../config/supabaseClient'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -15,25 +16,31 @@ export default function Login() {
     setError(null)
     
     try {
+      if (!isSupabaseEnvConfigured) {
+        throw new Error('Canlı ortamda Supabase API anahtarları (VITE_SUPABASE_ANON_KEY) eksik. Lütfen Cloudflare Pages Environment Variables ayarlarını kontrol edip yeni build tetikleyin.')
+      }
+
       const data = await loginUser(email, password)
       
-      // Token ve rolü kaydet
+      // Legacy uyumluluğu için geçici localStorage kaydı
+      const roleDisplayName = data.role === 'admin' ? 'Admin' : data.role === 'mentor' ? 'Mentor' : 'Katılımcı'
       localStorage.setItem('access', data.access)
       localStorage.setItem('refresh', data.refresh)
-      localStorage.setItem('role', data.role)
+      localStorage.setItem('role', roleDisplayName)
       localStorage.setItem('username', data.username)
       localStorage.setItem('user_email', data.email)
       
       // Role göre yönlendir
-      const userRole = data.role
-      if (userRole === 'Admin') {
-        navigate('/admin')
-      } else if (userRole === 'Mentor') {
-        navigate('/mentor')
-      } else if (userRole === 'Katilimci' || userRole === 'Katılımcı') {
-        navigate('/katilimci')
+      const userRole = data.role?.toLowerCase()
+      if (userRole === 'admin') {
+        navigate('/admin', { replace: true })
+      } else if (userRole === 'mentor') {
+        navigate('/mentor', { replace: true })
+      } else if (userRole === 'katilimci') {
+        navigate('/katilimci', { replace: true })
       } else {
-        navigate('/')
+        setError('Hesabınıza tanımlı geçerli bir rol bulunamadı.')
+        await logoutUser()
       }
       
     } catch (err) {
