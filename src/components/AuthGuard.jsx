@@ -67,18 +67,38 @@ export default function AuthGuard({ children, allowedRoles }) {
     }
 
     // İlk oturum kontrolü
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      evaluateSession(session)
-    })
+    try {
+      supabase.auth.getSession().then(({ data }) => {
+        evaluateSession(data?.session || null)
+      }).catch(err => {
+        console.error('AuthGuard getSession hatası:', err)
+        if (isMounted) {
+          setAuthenticated(false)
+          setLoading(false)
+        }
+      })
+    } catch (err) {
+      console.error('AuthGuard senkron getSession hatası:', err)
+      if (isMounted) {
+        setAuthenticated(false)
+        setLoading(false)
+      }
+    }
 
     // Auth durum değişikliklerini dinle (Refresh / SignIn / SignOut)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      evaluateSession(session)
-    })
+    let subscription = null
+    try {
+      const authListener = supabase.auth.onAuthStateChange((_event, session) => {
+        evaluateSession(session)
+      })
+      subscription = authListener?.data?.subscription
+    } catch (err) {
+      console.error('AuthGuard onAuthStateChange hatası:', err)
+    }
 
     return () => {
       isMounted = false
-      subscription.unsubscribe()
+      if (subscription) subscription.unsubscribe()
     }
   }, [])
 
