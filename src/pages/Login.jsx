@@ -16,10 +16,6 @@ export default function Login() {
     setError(null)
     
     try {
-      if (!isSupabaseEnvConfigured) {
-        throw new Error('Canlı ortamda Supabase API anahtarları (VITE_SUPABASE_ANON_KEY) eksik. Lütfen Cloudflare Pages Environment Variables ayarlarını kontrol edip yeni build tetikleyin.')
-      }
-
       const data = await loginUser(email, password)
       
       // Legacy uyumluluğu için geçici localStorage kaydı
