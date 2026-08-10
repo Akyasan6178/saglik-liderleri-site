@@ -874,11 +874,11 @@ export async function getAdminKatilimciTeslimleri(katilimciId) {
   if (gorevIds.length > 0) {
     const { data: gorevler } = await supabase
       .from('core_gorev')
-      .select('id, baslik, gorev_adi')
+      .select('id, gorev_adi')
       .in('id', gorevIds)
 
     if (gorevler) {
-      gorevMap = new Map(gorevler.map(g => [Number(g.id), g.gorev_adi || g.baslik || `Görev #${g.id}`]))
+      gorevMap = new Map(gorevler.map(g => [Number(g.id), g.gorev_adi || `Görev #${g.id}`]))
     }
   }
 
