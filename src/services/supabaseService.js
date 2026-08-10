@@ -475,3 +475,38 @@ export async function callAdminAction(action, payload = {}) {
   }
   return data
 }
+
+// ─── MENTOR EDGE FUNCTION ÇAĞRISI ────────────────────────────────────────────
+export async function requestRevision(teslim_id, revizyon_notu) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError || !session?.access_token) {
+    throw new Error('Oturum geçersiz veya süresi dolmuş.')
+  }
+
+  const { data, error } = await supabase.functions.invoke('mentor-actions', {
+    body: {
+      action: 'request_revision',
+      payload: { teslim_id, revizyon_notu }
+    },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`
+    }
+  })
+
+  if (error) {
+    let msg = error.message || 'Revizyon isteği iletilemedi.'
+    if (error.context && typeof error.context.json === 'function') {
+      try {
+        const body = await error.context.json()
+        if (body?.error) msg = body.error
+      } catch (_) {}
+    }
+    throw new Error(msg)
+  }
+
+  if (!data?.ok) {
+    throw new Error(data?.error || 'Revizyon isteği işlenirken bir hata oluştu.')
+  }
+  return data.data
+}
+

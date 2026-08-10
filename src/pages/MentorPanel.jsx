@@ -7,6 +7,7 @@ import {
   getMentorKatilimcilarim,
   getMentorTeslimler,
   getGorevler,
+  requestRevision,
   logoutUser
 } from '../services/supabaseService'
 
@@ -256,29 +257,13 @@ export default function MentorPanel() {
     }
 
     setSaving(true)
-    const token = localStorage.getItem('access')
     try {
-      const res = await fetch(`${API}/teslimler/${selectedTeslim.id}/revizyon-iste/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          revizyon_notu: revizyonNotu,
-          mentor_yorumu: revizyonNotu
-        })
-      })
-
-      if (res.ok) {
-        setSelectedTeslim(null)
-        fetchAll()
-      } else {
-        const errData = await res.json().catch(() => ({}))
-        setModalError(errData.detail || 'Revizyon isteği kaydedilemedi.')
-      }
+      await requestRevision(selectedTeslim.id, revizyonNotu.trim())
+      setSelectedTeslim(null)
+      fetchAll()
     } catch (err) {
-      setModalError('Bağlantı hatası oluştu.')
+      console.error('Revizyon isteme hatası:', err)
+      setModalError(err.message || 'Revizyon isteği kaydedilemedi.')
     } finally {
       setSaving(false)
     }
