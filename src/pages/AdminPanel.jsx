@@ -644,7 +644,7 @@ export default function AdminPanel() {
   )
 
   // Atanmamış katılımcılar (takımlar sekmesi dropdown için)
-  const serbest = katilimcilar.filter(k => k.takim === null)
+  const serbest = katilimcilar.filter(k => !k.takim_id && !k.takim)
 
   /* ════════════════════════════════════════
      RENDER
@@ -892,7 +892,7 @@ export default function AdminPanel() {
                   : takimlar.length === 0
                     ? <div className="col-span-full text-center py-16 text-gray-400"><p className="text-4xl mb-3">🏆</p><p className="font-medium">{error ? 'Veri yüklenemedi.' : 'Henüz takım yok.'}</p></div>
                     : takimlar.map((takim) => {
-                      const uyeler   = takim.katilimcilar ?? []
+                      const uyeler   = katilimcilar.filter(k => Number(k.takim_id ?? k.takim) === Number(takim.id))
                       const isAdding = addingMember === takim.id
                       const isDeleting = deletingTakim === takim.id
                       const dropOpen = activeDropdown === takim.id
@@ -944,17 +944,17 @@ export default function AdminPanel() {
                           <div className="px-6 pb-2">
                             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Üyeler ({uyeler.length})</p>
                             {uyeler.length === 0
-                              ? <p className="text-xs text-gray-400 italic py-2">Henüz üye yok.</p>
+                              ? <p className="text-xs text-gray-400 italic py-2">Bu takımda henüz katılımcı yok.</p>
                               : (
                                 <div className="space-y-1.5">
                                   {uyeler.map(uye => (
                                     <div key={uye.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 group/uye">
                                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet/20 to-purple-100 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-[10px] font-bold text-violet">{(uye.aday_adi ?? '?')[0].toUpperCase()}</span>
+                                        <span className="text-[10px] font-bold text-violet">{((uye.aday_adi || uye.ad_soyad || '?')[0] || '?').toUpperCase()}</span>
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium text-gray-700 truncate">{uye.aday_adi}</p>
-                                        <p className="text-[10px] text-gray-400 truncate">{uye.aday_universite}</p>
+                                        <p className="text-xs font-medium text-gray-700 truncate">{uye.aday_adi || uye.ad_soyad || `Katılımcı #${uye.id}`}</p>
+                                        <p className="text-[10px] text-gray-400 truncate">{uye.aday_universite || uye.universite || ''}</p>
                                       </div>
                                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${uye.program_katilim_durumu === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
                                         {uye.program_katilim_durumu}
@@ -963,7 +963,7 @@ export default function AdminPanel() {
                                       <button
                                         id={`btn-uye-cikar-${uye.id}`}
                                         title="Takımdan Çıkar"
-                                        onClick={() => uyeCikar(uye.id, uye.aday_adi)}
+                                        onClick={() => uyeCikar(uye.id, uye.aday_adi || uye.ad_soyad || `Katılımcı #${uye.id}`)}
                                         className="p-1 rounded-md text-red-300 hover:text-red-600 hover:bg-red-50 transition-all opacity-0 group-hover/uye:opacity-100 ml-1"
                                       >
                                         <Ic.X c="w-3.5 h-3.5" />
@@ -978,7 +978,7 @@ export default function AdminPanel() {
                           {/* Üye Ekle */}
                           <div className="px-6 pb-6 pt-3 border-t border-gray-100 mt-auto relative">
                             {serbest.length === 0
-                              ? <p className="text-xs text-gray-400 italic text-center py-1">Atanabilecek serbest üye yok.</p>
+                              ? <p className="text-xs text-gray-400 italic text-center py-1">Takıma eklenebilecek serbest üye yok.</p>
                               : (
                                 <>
                                   <button

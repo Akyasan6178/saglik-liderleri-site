@@ -150,7 +150,11 @@ export async function getKatilimcilar() {
       takim: k.takim_id,
       aday: k.aday_id,
       aday_adi: fullAd || `Katılımcı #${k.id}`,
-      aday_universite: adayObj.universite || ''
+      aday_soyad: adayObj.soyad || '',
+      ad_soyad: fullAd || `Katılımcı #${k.id}`,
+      eposta: adayObj.eposta || '',
+      aday_universite: adayObj.universite || '',
+      universite: adayObj.universite || ''
     }
   })
 }
