@@ -29,3 +29,11 @@ dist-ssr
 .env.*.local
 backend/.env
 backend/.env.local
+
+# Google Service Account Credentials — ASLA commit etme
+*.service-account.json
+google-credentials*.json
+service-account*.json
+credentials*.json
+supabase/functions/.env
+
