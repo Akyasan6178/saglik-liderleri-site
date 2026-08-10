@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { API_BASE_URL } from '../config/api'
 import {
   getAdaylar,
   getTakimlar,
@@ -23,11 +22,6 @@ import {
   addAdminPerformansNotu,
   logoutUser
 } from '../services/supabaseService'
-
-/* ════════════════════════════════════════
-   SABİTLER
-════════════════════════════════════════ */
-const API = `${API_BASE_URL}/api`
 
 const DURUM_MAP = {
   ONAYLANDI:  { label: 'Onaylandı',  cls: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' },
@@ -1458,7 +1452,6 @@ export default function AdminPanel() {
           {/* ══════════ PERFORMANS SEKMESİ ══════════ */}
           {menu === 'performans' && (
             <PerformansSection
-              token={localStorage.getItem('access') || ''}
               setToast={setToast}
             />
           )}
@@ -1466,7 +1459,6 @@ export default function AdminPanel() {
           {/* ══════════ İÇERİK DNA ANALİZLERİ SEKMESİ ══════════ */}
           {menu === 'dna' && (
             <DnaSection
-              token={localStorage.getItem('access') || ''}
               dnaList={dnaList}
               setDnaList={setDnaList}
               dnaLoading={dnaLoading}
@@ -2710,11 +2702,6 @@ function PerformansSection({ token, setToast }) {
     not_metni: '',
   })
   const [savingNot, setSavingNot] = useState(false)
-
-  const authHeaders = useMemo(() => ({
-    'Authorization': `Bearer ${token || ''}`,
-    'Content-Type': 'application/json',
-  }), [token])
 
   const fetchList = useCallback(async () => {
     setLoading(true)
