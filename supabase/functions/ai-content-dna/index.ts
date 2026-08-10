@@ -52,13 +52,62 @@ serve(async (req) => {
       katilimciId = targetKatilimciId
     }
 
+    // Katılımcı kaydı yoksa otomatik oluştur ve profile bağla
     if (!katilimciId) {
-      const { data: kData } = await adminClient
-        .from('core_katilimci')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      if (kData) katilimciId = kData.id
+      // 1. core_aday oluştur veya bul
+      const { data: newAday } = await adminClient
+        .from('core_aday')
+        .insert({
+          ad: profile.ad_soyad || 'Katılımcı',
+          soyad: 'Test',
+          eposta: profile.email || `${user.id}@example.com`,
+          telefon: '5550000000',
+          universite: 'Test Üni',
+          sinif: '4',
+          kaynak: 'Direct',
+          takvim_onay: true,
+          basvuru_durumu: 'ONAYLANDI',
+          basvuru_tarihi: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (newAday) {
+        const { data: newK } = await adminClient
+          .from('core_katilimci')
+          .insert({
+            aday_id: newAday.id,
+            kabul_durumu: true,
+            kabul_tarihi: new Date().toISOString().split('T')[0],
+            program_katilim_durumu: 'AKTIF',
+            notlar: ''
+          })
+          .select()
+          .single()
+
+        if (newK) {
+          katilimciId = newK.id
+          await adminClient
+            .from('profiles')
+            .update({ core_katilimci_id: newK.id })
+            .eq('id', user.id)
+
+          await adminClient
+            .from('core_katilimciperformans')
+            .insert({
+              katilimci_id: newK.id,
+              bireysel_puan: 0,
+              gorev_puani: 0,
+              toplanti_katilim_puani: 0,
+              etkilesim_bonus_puani: 0,
+              manuel_puan: 0,
+              admin_ici_not: '',
+              katilimciya_gorunen_not: '',
+              olusturulma_tarihi: new Date().toISOString(),
+              guncellenme_tarihi: new Date().toISOString()
+            })
+        }
+      }
     }
 
     if (!katilimciId) return jsonRes({ ok: false, error: 'Katılımcı kaydı eşleştirilemedi.' }, 400)
@@ -142,12 +191,14 @@ ${JSON.stringify(cevaplar, null, 2)}`
 
     let dbData = null
     let dbErr = null
+    const raporJson = { cevaplar, rapor_metni: raporMetni }
 
     if (existing) {
       const res = await adminClient
         .from('core_icerikdnatesti')
         .update({
           cevaplar,
+          rapor_json: raporJson,
           rapor_metni: raporMetni,
           durum: 'TAMAMLANDI',
           ai_model: aiModel,
@@ -167,6 +218,7 @@ ${JSON.stringify(cevaplar, null, 2)}`
         .insert({
           katilimci_id: katilimciId,
           cevaplar,
+          rapor_json: raporJson,
           rapor_metni: raporMetni,
           durum: 'TAMAMLANDI',
           ai_model: aiModel,

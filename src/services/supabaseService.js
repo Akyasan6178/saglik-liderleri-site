@@ -249,7 +249,14 @@ export async function submitIcerikDna(cevaplar) {
   })
 
   if (error) {
-    throw new Error(error.message || 'İçerik DNA testi gönderilemedi.')
+    let msg = error.message || 'İçerik DNA testi gönderilemedi.'
+    if (error.context && typeof error.context.json === 'function') {
+      try {
+        const body = await error.context.json()
+        if (body?.error) msg = body.error
+      } catch (_) {}
+    }
+    throw new Error(msg)
   }
   if (!data?.ok) {
     throw new Error(data?.error || 'İçerik DNA testi işlenirken bir hata oluştu.')
