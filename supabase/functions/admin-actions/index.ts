@@ -261,14 +261,15 @@ serve(async (req) => {
         return headers.findIndex(h => normAliases.includes(h))
       }
 
-      const colAd = getColIndex(['ad', 'adi', 'first_name', 'firstname', 'name', 'isim'])
-      const colSoyad = getColIndex(['soyad', 'soyadi', 'last_name', 'lastname', 'surname', 'soyisim'])
-      const colEposta = getColIndex(['eposta', 'e-posta', 'e posta', 'email', 'mail'])
-      const colTelefon = getColIndex(['telefon', 'telefon numarasi', 'phone', 'tel', 'mobile', 'gsm'])
-      const colUniversite = getColIndex(['universite', 'university', 'okul'])
-      const colSinif = getColIndex(['sinif', 'class', 'grade', 'yil'])
+      const colAd = getColIndex(['ad', 'adi', 'adiniz', 'first_name', 'firstname', 'name', 'isim'])
+      const colSoyad = getColIndex(['soyad', 'soyadi', 'soyadiniz', 'last_name', 'lastname', 'surname', 'soyisim'])
+      const colEposta = getColIndex(['eposta', 'e-posta', 'e posta', 'eposta adresi', 'eposta adresiniz', 'email', 'e-mail', 'mail', 'email adresi', 'email adresiniz'])
+      const colTelefon = getColIndex(['telefon', 'telefon numarası', 'telefon numaranız', 'tel', 'phone', 'gsm', 'mobile'])
+      const colUniversite = getColIndex(['universite', 'üniversite', 'okuduğunuz / mezun olduğunuz üniversite', 'university', 'okul'])
+      const colSinif = getColIndex(['sinif', 'sınıf', 'sınıfınız', 'sinifiniz', 'class', 'grade', 'yil'])
+      const colTakvimOnay = getColIndex(['program takvimine uyum ve devamlılık onayı', 'takvim onayi', 'takvim_onay', 'devamlılık onayı'])
       const colKaynak = getColIndex(['kaynak', 'source'])
-      const colAdSoyadCombined = getColIndex(['ad_soyad', 'ad soyad', 'isim soyisim', 'adi soyadi', 'fullname', 'full_name'])
+      const colAdSoyadCombined = getColIndex(['ad_soyad', 'ad soyad', 'isim soyisim', 'adi soyadi', 'adiniz soyadiniz', 'fullname', 'full_name'])
 
       if (colEposta === -1 || (colAd === -1 && colSoyad === -1 && colAdSoyadCombined === -1)) {
         return jsonRes(req, { ok: false, error: 'CSV başlıkları tanınamadı. Lütfen eposta/email ve ad/soyad veya ad_soyad kolonları kullanın.' }, 400)
@@ -300,7 +301,7 @@ serve(async (req) => {
         const rowNum = i + 1
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!email || !emailRegex.test(email)) {
-          errors.push(`Satır ${rowNum}: Geçersiz veya boş e-posta adresi ("${email}")`)
+          errors.push(`Satır ${rowNum}: Geçersiz veya boş e-posta adresi ("${cols[colEposta] || ad || 'boş'}")`)
           continue
         }
 
@@ -317,7 +318,9 @@ serve(async (req) => {
         const telefon = colTelefon !== -1 ? (cols[colTelefon] || '').trim() : null
         const universite = colUniversite !== -1 ? (cols[colUniversite] || '').trim() : null
         const sinif = colSinif !== -1 ? (cols[colSinif] || '').trim() : null
-        const kaynakVal = colKaynak !== -1 && cols[colKaynak] ? cols[colKaynak].trim() : 'Admin CSV Import'
+        const takvimOnayVal = colTakvimOnay !== -1 ? (cols[colTakvimOnay] || '').trim().toLowerCase() : ''
+        const takvim_onay = takvimOnayVal.includes('evet') || takvimOnayVal.includes('onay') || takvimOnayVal.includes('kabul') || takvimOnayVal === 'true' || takvimOnayVal === '1'
+        const kaynakVal = colKaynak !== -1 && cols[colKaynak] ? cols[colKaynak].trim() : 'Google Forms CSV Import'
 
         existingEmails.add(email)
         rowsToInsert.push({
@@ -330,7 +333,7 @@ serve(async (req) => {
           kaynak: kaynakVal,
           basvuru_tarihi: nowIso,
           basvuru_durumu: 'BEKLIYOR',
-          takvim_onay: false,
+          takvim_onay: takvim_onay,
         })
       }
 
