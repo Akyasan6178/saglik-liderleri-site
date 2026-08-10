@@ -433,4 +433,27 @@ export async function getMentorTeslimler(mentorId) {
   }))
 }
 
+// ─── ADMIN EDGE FUNCTION ÇAĞRISI ─────────────────────────────────────────────
+const ADMIN_ACTIONS_URL = 'https://wczupupflxvfnjbjkfrj.supabase.co/functions/v1/admin-actions'
 
+export async function callAdminAction(action, payload = {}) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError || !session?.access_token) {
+    throw new Error('Oturum geçersiz veya süresi dolmuş.')
+  }
+
+  const res = await fetch(ADMIN_ACTIONS_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ action, payload }),
+  })
+
+  const data = await res.json()
+  if (!res.ok || !data.ok) {
+    throw new Error(data.error || `Edge Function HTTP ${res.status}`)
+  }
+  return data
+}

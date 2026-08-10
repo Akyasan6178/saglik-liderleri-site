@@ -14,6 +14,7 @@ import {
   deleteGorev,
   updateKatilimci,
   updateTakim,
+  callAdminAction,
   logoutUser
 } from '../services/supabaseService'
 
@@ -441,27 +442,21 @@ export default function AdminPanel() {
     return () => clearTimeout(t)
   }, [toast])
 
-  /* ── Aday durum güncelle (PATCH) — TODO: DATA-05 Edge Function ── */
+  /* ── Aday durum güncelle (admin-actions Edge Function) ── */
   const durumGuncelle = async (aday, yeniDurum) => {
     if (updating) return
     setUpdating(aday.id)
     try {
-      const res = await fetch(`${API}/adaylar/${aday.id}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ basvuru_durumu: yeniDurum }),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const updated = await res.json()
-      const nDurum = updated.basvuru_durumu ?? yeniDurum
-      setAdaylar(prev => prev.map(a => a.id === aday.id ? { ...a, basvuru_durumu: nDurum } : a))
-      setModal(prev => (prev && prev.id === aday.id) ? { ...prev, basvuru_durumu: nDurum } : prev)
+      const action = yeniDurum === 'ONAYLANDI' ? 'approve_candidate' : 'reject_candidate'
+      await callAdminAction(action, { aday_id: aday.id })
+      setAdaylar(prev => prev.map(a => a.id === aday.id ? { ...a, basvuru_durumu: yeniDurum } : a))
+      setModal(prev => (prev && prev.id === aday.id) ? { ...prev, basvuru_durumu: yeniDurum } : prev)
       if (yeniDurum === 'ONAYLANDI') {
         const kD = await getKatilimcilar()
         setKatilimcilar(kD)
       }
       setToast({ msg: `"${aday.ad_soyad}" → ${DURUM_MAP[yeniDurum]?.label ?? yeniDurum}`, type: 'success' })
-    } catch (e) { setToast({ msg: `Güncelleme başarısız (DATA-05 Edge Function gerekli): ${e.message}`, type: 'error' }) }
+    } catch (e) { setToast({ msg: `Güncelleme başarısız: ${e.message}`, type: 'error' }) }
     finally { setUpdating(null) }
   }
 
@@ -495,7 +490,7 @@ export default function AdminPanel() {
     setToast({ msg: 'Mentor atandı!', type: 'success' })
   }
 
-  /* ── Mentor oluştur (POST) — TODO: DATA-05 Edge Function (Auth user creation) ── */
+  /* ── Mentor oluştur (admin-actions Edge Function) ── */
   const mentorOlustur = async () => {
     const { ad_soyad, eposta, uzmanlik, gecici_sifre } = mentorForm
     if (!ad_soyad.trim() || !eposta.trim()) {
@@ -504,31 +499,25 @@ export default function AdminPanel() {
     }
     setSavingMentor(true)
     try {
-      const res = await fetch(`${API}/mentorlar/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ad_soyad: ad_soyad.trim(),
-          eposta: eposta.trim(),
-          uzmanlik: uzmanlik.trim(),
-          gecici_sifre: gecici_sifre ? gecici_sifre.trim() : '',
-        }),
+      await callAdminAction('create_mentor', {
+        ad_soyad: ad_soyad.trim(),
+        eposta: eposta.trim(),
+        uzmanlik: uzmanlik.trim(),
+        gecici_sifre: gecici_sifre ? gecici_sifre.trim() : '',
       })
-      if (!res.ok) { const b = await res.text(); throw new Error(`HTTP ${res.status}: ${b}`) }
       setMentorForm(MENTOR_BOSH)
       setShowMentorForm(false)
       await fetchAll()
       setToast({ msg: `"${ad_soyad.trim()}" mentor olarak eklendi! 🎉`, type: 'success' })
-    } catch (e) { setToast({ msg: `Mentor eklenemedi (DATA-05 Edge Function gerekli): ${e.message}`, type: 'error' }) }
+    } catch (e) { setToast({ msg: `Mentor eklenemedi: ${e.message}`, type: 'error' }) }
     finally { setSavingMentor(false) }
   }
 
-  /* ── Mentor sil (DELETE) — TODO: DATA-05 Edge Function (Auth user deletion) ── */
+  /* ── Mentor sil (admin-actions Edge Function) ── */
   const mentorSil = async (mentor) => {
     setDeletingMentor(mentor.id)
     try {
-      const res = await fetch(`${API}/mentorlar/${mentor.id}/`, { method: 'DELETE' })
-      if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+      await callAdminAction('delete_mentor', { mentor_id: mentor.id })
       await fetchAll()
       setToast({ msg: `"${mentor.ad_soyad}" silindi.`, type: 'info' })
     } catch (e) { setToast({ msg: `Mentor silinemedi: ${e.message}`, type: 'error' }) }
@@ -604,55 +593,14 @@ export default function AdminPanel() {
     finally { setDeletingGorev(null) }
   }
 
-  /* ── CSV Import ── */
+  /* ── CSV Import — TODO: DATA-05B Edge Function (CSV parse + bulk insert) ── */
   const importCsv = async () => {
-    if (!importFile || importing) return
-    setImporting(true)
-    setImportResult(null)
-    try {
-      const token = localStorage.getItem('access') || ''
-      const fd = new FormData()
-      fd.append('file', importFile)
-      const res = await fetch(`${API}/import-csv/`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: fd,
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
-      setImportResult(data)
-      if (data.olusturulan > 0 || data.guncellenen > 0) {
-        await fetchAll()
-        setToast({ msg: `${data.olusturulan} yeni + ${data.guncellenen} güncellenen aday aktarıldı!`, type: 'success' })
-      }
-    } catch (e) { setToast({ msg: `İçe aktarma başarısız: ${e.message}`, type: 'error' }) }
-    finally { setImporting(false) }
+    setToast({ msg: 'CSV içe aktarma şu an devre dışı. Google Sheets entegrasyonu (DATA-05B) bekleniyor.', type: 'error' })
   }
 
-  /* ── Sheets URL Import ── */
+  /* ── Sheets URL Import — TODO: DATA-05B Edge Function ── */
   const importSheetsUrl = async () => {
-    if (!importUrl.trim() || importing) return
-    setImporting(true)
-    setImportResult(null)
-    try {
-      const token = localStorage.getItem('access') || ''
-      const res = await fetch(`${API}/import-sheets-url/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ url: importUrl.trim() }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
-      setImportResult(data)
-      if (data.olusturulan > 0 || data.guncellenen > 0) {
-        await fetchAll()
-        setToast({ msg: `${data.olusturulan} yeni + ${data.guncellenen} güncellenen aday aktarıldı!`, type: 'success' })
-      }
-    } catch (e) { setToast({ msg: `İçe aktarma başarısız: ${e.message}`, type: 'error' }) }
-    finally { setImporting(false) }
+    setToast({ msg: 'Google Sheets içe aktarma şu an devre dışı. Google Drive API entegrasyonu (GD fazı) bekleniyor.', type: 'error' })
   }
 
 
