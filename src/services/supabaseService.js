@@ -235,15 +235,26 @@ export async function deleteMentor(id) {
   return true
 }
 
-// ─── İÇERİK DNA ────────────────────────────────────────────────────────────────
-export async function submitIcerikDna(katilimci_id, form_yanitlari) {
-  // Edge Function çağır
-  const response = await fetch('https://wczupupflxvfnjbjkfrj.supabase.co/functions/v1/ai-content-dna', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ katilimci_id, form_yanitlari })
+export async function submitIcerikDna(cevaplar) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError || !session?.access_token) {
+    throw new Error('Oturum geçersiz veya süresi dolmuş.')
+  }
+
+  const { data, error } = await supabase.functions.invoke('ai-content-dna', {
+    body: { cevaplar },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`
+    }
   })
-  return await response.json()
+
+  if (error) {
+    throw new Error(error.message || 'İçerik DNA testi gönderilemedi.')
+  }
+  if (!data?.ok) {
+    throw new Error(data?.error || 'İçerik DNA testi işlenirken bir hata oluştu.')
+  }
+  return data.data
 }
 
 // ─── KATILIMCI ÖZEL SORGULARI ──────────────────────────────────────────────────

@@ -7,6 +7,7 @@ import {
   getKatilimciTeslimlerMe,
   getKatilimciDnaMe,
   getKatilimciPerformansMe,
+  submitIcerikDna,
   logoutUser
 } from '../services/supabaseService'
 
@@ -1281,34 +1282,19 @@ export default function KatilimciPanel() {
     }
 
     setDnaSubmitting(true)
-    const token = localStorage.getItem('access')
 
     try {
-      const res = await fetch(`${API}/icerik-dna/submit/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ cevaplar: dnaAnswers })
-      })
-
-      if (res.ok) {
-        const updated = await res.json()
-        setDnaData(updated)
-        if (updated.durum === 'HATA') {
-          setToast({ type: 'error', message: updated.hata_mesaji || 'Rapor oluşturulurken hata oluştu.' })
-        } else {
-          setToast({ type: 'success', message: 'İçerik DNA Testi başarıyla gönderildi!' })
-        }
-        setTimeout(() => setToast(null), 4000)
+      const updated = await submitIcerikDna(dnaAnswers)
+      setDnaData(updated)
+      if (updated.durum === 'HATA') {
+        setToast({ type: 'error', message: updated.hata_mesaji || 'Rapor oluşturulurken hata oluştu.' })
       } else {
-        const errData = await res.json().catch(() => ({}))
-        setToast({ type: 'error', message: errData.detail || 'Rapor oluşturulurken hata oluştu. Lütfen daha sonra tekrar deneyin.' })
-        setTimeout(() => setToast(null), 4000)
+        setToast({ type: 'success', message: 'İçerik DNA Testi başarıyla gönderildi!' })
       }
+      setTimeout(() => setToast(null), 4000)
     } catch (err) {
-      setToast({ type: 'error', message: 'Bağlantı hatası oluştu.' })
+      console.error('DNA submit hatası:', err)
+      setToast({ type: 'error', message: err.message || 'Bağlantı hatası oluştu.' })
       setTimeout(() => setToast(null), 4000)
     } finally {
       setDnaSubmitting(false)
