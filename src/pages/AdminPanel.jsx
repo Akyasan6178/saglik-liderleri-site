@@ -3544,9 +3544,9 @@ function PerformansSection({ token, setToast }) {
                             onChange={e => setNotForm(f => ({ ...f, kriter: e.target.value }))}
                             className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-slate-300 focus:outline-none"
                           >
-                            <option value="">— Genel Değerlendirme (Kritersiz) —</option>
+                            <option value="">— Lütfen Kriter Seçin —</option>
                             {kriterlerList.map(k => (
-                              <option key={k.id} value={k.id}>{String(k.ad || '')}</option>
+                              <option key={k.id} value={k.id}>{String(k.kriter_adi || k.ad || `Kriter #${k.id}`)}</option>
                             ))}
                           </select>
                         ) : (

@@ -810,52 +810,100 @@ export async function getAdminKatilimciSosyalMedya(katilimciId) {
 
 export async function getAdminKatilimciPerformansNotlari(katilimciId) {
   if (!katilimciId) return []
-  const { data, error } = await supabase
+
+  const { data: notlar, error } = await supabase
     .from('core_katilimciperformansnotu')
-    .select(`
-      *,
-      kriter:core_performanskriteri(id, kriter_adi)
-    `)
+    .select('*')
     .eq('katilimci_id', katilimciId)
     .order('id', { ascending: false })
-  if (error) {
-    const { data: rawNotlar } = await supabase
-      .from('core_katilimciperformansnotu')
-      .select('*')
-      .eq('katilimci_id', katilimciId)
-      .order('id', { ascending: false })
-    return rawNotlar || []
+
+  if (error || !notlar || notlar.length === 0) {
+    if (error) console.warn('getAdminKatilimciPerformansNotlari warning:', error)
+    return []
   }
-  return data || []
+
+  const kriterIds = [...new Set(notlar.map(n => n.kriter_id).filter(Boolean))]
+
+  let kriterMap = new Map()
+  if (kriterIds.length > 0) {
+    const { data: kriterler } = await supabase
+      .from('core_performanskriteri')
+      .select('id, kriter_adi, ad')
+      .in('id', kriterIds)
+
+    if (kriterler) {
+      kriterMap = new Map(kriterler.map(k => [Number(k.id), k.kriter_adi || k.ad || `Kriter #${k.id}`]))
+    }
+  }
+
+  return notlar.map(n => {
+    const kId = n.kriter_id ? Number(n.kriter_id) : null
+    const kAdi = (kId && kriterMap.get(kId)) ? kriterMap.get(kId) : (kId ? `Kriter #${kId}` : 'Kriter bilgisi yok')
+
+    return {
+      id: n.id,
+      katilimci_id: n.katilimci_id,
+      kriter_id: kId,
+      kriter_adi: kAdi,
+      kriter: { id: kId, kriter_adi: kAdi },
+      puan: Number(n.puan) || 0,
+      not_metni: n.not_metni || '',
+      tarih: n.tarih || n.olusturulma_tarihi || null,
+      olusturulma_tarihi: n.olusturulma_tarihi || null
+    }
+  })
 }
 
 export async function getAdminKatilimciTeslimleri(katilimciId) {
   if (!katilimciId) return []
-  const { data, error } = await supabase
+
+  const { data: teslimler, error } = await supabase
     .from('core_teslim')
-    .select(`
-      *,
-      gorev:core_gorev(id, baslik)
-    `)
+    .select('*')
     .eq('katilimci_id', katilimciId)
     .order('id', { ascending: false })
-  if (error) {
-    const { data: rawTeslimler } = await supabase
-      .from('core_teslim')
-      .select('*')
-      .eq('katilimci_id', katilimciId)
-      .order('id', { ascending: false })
-    return (rawTeslimler || []).map(t => ({
-      ...t,
-      gorev_adi: `Görev #${t.gorev_id || t.gorev}`,
-      dosya_linki: t.teslim_dosyasi || t.teslim_linki || ''
-    }))
+
+  if (error || !teslimler || teslimler.length === 0) {
+    if (error) console.warn('getAdminKatilimciTeslimleri warning:', error)
+    return []
   }
-  return (data || []).map(t => ({
-    ...t,
-    gorev_adi: t.gorev?.baslik || `Görev #${t.gorev_id || t.gorev}`,
-    dosya_linki: t.teslim_dosyasi || t.teslim_linki || ''
-  }))
+
+  const gorevIds = [...new Set(teslimler.map(t => t.gorev_id || t.gorev).filter(Boolean))]
+
+  let gorevMap = new Map()
+  if (gorevIds.length > 0) {
+    const { data: gorevler } = await supabase
+      .from('core_gorev')
+      .select('id, baslik, gorev_adi')
+      .in('id', gorevIds)
+
+    if (gorevler) {
+      gorevMap = new Map(gorevler.map(g => [Number(g.id), g.gorev_adi || g.baslik || `Görev #${g.id}`]))
+    }
+  }
+
+  return teslimler.map(t => {
+    const gId = Number(t.gorev_id || t.gorev)
+    const gAdi = (gId && gorevMap.get(gId)) ? gorevMap.get(gId) : (gId ? `Görev #${gId}` : 'Görev bilgisi yok')
+    const dosyaLink = t.teslim_dosyasi_url || t.teslim_dosyasi || t.teslim_linki || ''
+
+    return {
+      id: t.id,
+      katilimci_id: t.katilimci_id,
+      gorev_id: gId || null,
+      gorev_adi: gAdi,
+      durum: t.durum || 'BEKLIYOR',
+      durum_etiketi: t.durum_etiketi || t.durum || '—',
+      teslim_tarihi: t.teslim_tarihi || t.olusturulma_tarihi || null,
+      alinan_puan: Number(t.alinan_puan) || 0,
+      mentor_yorumu: t.mentor_yorumu || '',
+      teslim_dosyasi_url: t.teslim_dosyasi_url || '',
+      teslim_dosyasi: t.teslim_dosyasi || '',
+      teslim_linki: t.teslim_linki || '',
+      dosya_linki: dosyaLink,
+      hareketler: t.hareketler || t.teslim_hareketleri || []
+    }
+  })
 }
 
 export async function getAdminPerformansKriterleri() {
