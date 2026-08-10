@@ -245,3 +245,102 @@ export async function submitIcerikDna(katilimci_id, form_yanitlari) {
   })
   return await response.json()
 }
+
+// ─── KATILIMCI ÖZEL SORGULARI ──────────────────────────────────────────────────
+export async function getKatilimciMe() {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError || !session?.user) throw new Error('Oturum geçersiz.')
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', session.user.id)
+    .maybeSingle()
+
+  if (profileError) throw profileError
+  if (!profile) throw new Error('Profil bulunamadı.')
+
+  let katilimciId = profile.core_katilimci_id
+  let katilimciData = null
+
+  if (katilimciId) {
+    const { data: kData, error: kError } = await supabase
+      .from('core_katilimci')
+      .select('*')
+      .eq('id', katilimciId)
+      .maybeSingle()
+    if (!kError) katilimciData = kData
+  }
+
+  if (!katilimciData) {
+    const { data: kData, error: kError } = await supabase
+      .from('core_katilimci')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .maybeSingle()
+    if (!kError && kData) {
+      katilimciData = kData
+      katilimciId = kData.id
+    }
+  }
+
+  let takimData = null
+  if (katilimciData && katilimciData.takim_id) {
+    const { data: tData } = await supabase
+      .from('core_takim')
+      .select('*')
+      .eq('id', katilimciData.takim_id)
+      .maybeSingle()
+    if (tData) takimData = tData
+  }
+
+  return {
+    profile,
+    katilimci: katilimciData ? {
+      ...katilimciData,
+      takim: katilimciData.takim_id,
+      takim_adi: takimData ? takimData.takim_adi : null,
+      toplam_puan: takimData ? takimData.toplam_puan : 0
+    } : null,
+    takim: takimData
+  }
+}
+
+export async function getKatilimciPerformansMe(katilimciId) {
+  if (!katilimciId) return null
+  const { data, error } = await supabase
+    .from('core_katilimciperformans')
+    .select('*')
+    .eq('katilimci_id', katilimciId)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+export async function getKatilimciDnaMe(katilimciId) {
+  if (!katilimciId) return null
+  const { data, error } = await supabase
+    .from('core_icerikdnatesti')
+    .select('*')
+    .eq('katilimci_id', katilimciId)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+export async function getKatilimciTeslimlerMe(katilimciId) {
+  if (!katilimciId) return []
+  const { data, error } = await supabase
+    .from('core_teslim')
+    .select('*')
+    .eq('katilimci_id', katilimciId)
+    .order('id', { ascending: false })
+  if (error) throw error
+  return (data || []).map(t => ({
+    ...t,
+    katilimci: t.katilimci_id,
+    takim: t.takim_id,
+    gorev: t.gorev_id
+  }))
+}
+

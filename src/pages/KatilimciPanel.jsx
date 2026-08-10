@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '../config/api'
-import { logoutUser } from '../services/supabaseService'
+import {
+  getKatilimciMe,
+  getGorevler,
+  getKatilimciTeslimlerMe,
+  getKatilimciDnaMe,
+  getKatilimciPerformansMe,
+  logoutUser
+} from '../services/supabaseService'
 
 const API = `${API_BASE_URL}/api`
 
@@ -980,24 +987,18 @@ export default function KatilimciPanel() {
   const [performansError, setPerformansError] = useState(null)
 
   const fetchDna = async () => {
-    const token = localStorage.getItem('access')
-    if (!token) return
     setDnaLoading(true)
     setDnaError(null)
     try {
-      const res = await fetch(`${API}/icerik-dna/me/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setDnaData(data)
-        if (data.cevaplar && typeof data.cevaplar === 'object') {
-          setDnaAnswers(prev => ({ ...normalizeDnaAnswers(data.cevaplar), ...prev }))
+      if (katilimci?.id) {
+        const dData = await getKatilimciDnaMe(katilimci.id)
+        setDnaData(dData)
+        if (dData && dData.cevaplar && typeof dData.cevaplar === 'object') {
+          setDnaAnswers(prev => ({ ...normalizeDnaAnswers(dData.cevaplar), ...prev }))
         }
-      } else {
-        setDnaError(`Test verisi yüklenemedi (${res.status})`)
       }
     } catch (err) {
+      console.error('İçerik DNA çekilemedi:', err)
       setDnaError('İçerik DNA verisi alınırken bağlantı hatası oluştu.')
     } finally {
       setDnaLoading(false)
@@ -1006,80 +1007,60 @@ export default function KatilimciPanel() {
 
   const fetchData = async () => {
     setLoading(true)
-    const token = localStorage.getItem('access')
-    if (!token) {
-      navigate('/login')
-      return
-    }
-
     try {
-      const headers = { 'Authorization': `Bearer ${token}` }
-
-      const [kRes, gRes, tesRes, dnaRes, perfRes] = await Promise.all([
-        fetch(`${API}/katilimci/me/`, { headers }).catch(() => ({ ok: false })),
-        fetch(`${API}/gorevler/`, { headers }).catch(() => ({ ok: false })),
-        fetch(`${API}/teslimler/`, { headers }).catch(() => ({ ok: false })),
-        fetch(`${API}/icerik-dna/me/`, { headers }).catch(() => ({ ok: false })),
-        fetch(`${API}/performans/me/`, { headers }).catch(() => ({ ok: false })),
-      ])
-
-      if ((kRes && kRes.status === 401) || (perfRes && perfRes.status === 401)) {
-        navigate('/login')
-        return
-      }
-
-      if (kRes && kRes.ok) {
-        const kData = await kRes.json()
-        setKatilimci(kData)
-        if (kData.takim_adi) {
-          setTakim({
-            id: kData.takim,
-            takim_adi: kData.takim_adi,
-            toplam_puan: kData.toplam_puan || 0
-          })
+      // 1. Profil ve Katılımcı Bilgisi
+      const meData = await getKatilimciMe()
+      if (meData?.katilimci) {
+        setKatilimci(meData.katilimci)
+        if (meData.takim) {
+          setTakim(meData.takim)
         } else {
           setTakim(null)
         }
       }
 
-      if (gRes && gRes.ok) {
-        const gData = await gRes.json()
-        const rawGorevler = Array.isArray(gData) ? gData : (gData.results || [])
+      const katilimciId = meData?.katilimci?.id
 
-        let teslimler = []
-        if (tesRes && tesRes.ok) {
-          const tesData = await tesRes.json()
-          teslimler = Array.isArray(tesData) ? tesData : (tesData.results || [])
+      // 2. Görevler, Kendi Teslimleri, DNA ve Performans Bilgisi
+      const [rawGorevler, teslimler, dData, pData] = await Promise.all([
+        getGorevler().catch(() => []),
+        katilimciId ? getKatilimciTeslimlerMe(katilimciId).catch(() => []) : [],
+        katilimciId ? getKatilimciDnaMe(katilimciId).catch(() => null) : null,
+        katilimciId ? getKatilimciPerformansMe(katilimciId).catch(() => null) : null,
+      ])
+
+      // Görevler ile teslimleri eşleştir
+      const veriler = rawGorevler.map(g => {
+        const matchedTeslim = teslimler.find(t => t.gorev === g.id || t.gorev?.id === g.id)
+        return {
+          ...g,
+          teslim: matchedTeslim || null
         }
+      })
+      setGorevler(veriler)
 
-        const veriler = rawGorevler.map(g => {
-          const matchedTeslim = teslimler.find(t => t.gorev === g.id || t.gorev?.id === g.id)
-          return {
-            ...g,
-            teslim: matchedTeslim || null
-          }
-        })
-        setGorevler(veriler)
-      }
-
-      if (dnaRes && dnaRes.ok) {
-        const dData = await dnaRes.json()
+      // DNA
+      if (dData) {
         setDnaData(dData)
         if (dData.cevaplar && typeof dData.cevaplar === 'object') {
           setDnaAnswers(prev => ({ ...normalizeDnaAnswers(dData.cevaplar), ...prev }))
         }
       }
 
-      if (perfRes && perfRes.ok) {
-        const pData = await perfRes.json()
-        setPerformans(pData || null)
+      // Performans
+      if (pData) {
+        setPerformans(pData)
         setPerformansError(null)
       } else {
         setPerformans(null)
         setPerformansError('Performans bilgileriniz henüz oluşturulmamış.')
       }
+
     } catch (error) {
-      console.error('Veri çekme hatası:', error)
+      console.error('Katılımcı verileri çekilemedi:', error)
+      if (error.message?.includes('Oturum geçersiz') || error.message?.includes('Profil bulunamadı')) {
+        navigate('/login')
+      }
     } finally {
       setLoading(false)
       setDnaLoading(false)
