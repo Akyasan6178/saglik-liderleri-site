@@ -586,15 +586,37 @@ export async function getMentorKatilimcilarim(mentorId) {
     .from('core_takim')
     .select('id, takim_adi')
 
+  const { data: profData } = await supabase
+    .from('profiles')
+    .select('core_katilimci_id, ad_soyad, eposta')
+
   const takimMap = new Map((takData || []).map(t => [Number(t.id), t.takim_adi]))
+  const profMap = new Map((profData || []).filter(p => p.core_katilimci_id).map(p => [Number(p.core_katilimci_id), p]))
+
+  let adayMap = new Map()
   const rawList = katErr ? (await supabase.from('core_katilimci').select('*').order('id', { ascending: false })).data || [] : (katData || [])
+  const adayIds = rawList.map(k => k.aday_id).filter(Boolean)
+
+  if (adayIds.length > 0) {
+    const { data: adayList } = await supabase
+      .from('core_aday')
+      .select('id, ad, soyad, eposta, universite')
+      .in('id', adayIds)
+    if (adayList) {
+      adayMap = new Map(adayList.map(a => [Number(a.id), a]))
+    }
+  }
 
   return rawList.map(k => {
-    const adayObj = k.aday || {}
+    const directAday = k.aday_id ? adayMap.get(Number(k.aday_id)) : null
+    const adayObj = directAday || k.aday || {}
+    const profileObj = profMap.get(Number(k.id)) || {}
+
     const adayAdSoyad = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim()
-    const directAdSoyad = `${k.ad || ''} ${k.soyad || ''}`.trim() || k.ad_soyad || ''
+    const directAdSoyad = `${k.ad || ''} ${k.soyad || ''}`.trim() || k.ad_soyad || profileObj.ad_soyad || ''
     const finalAdSoyad = adayAdSoyad || directAdSoyad || `Katılımcı #${k.id}`
-    const finalEposta = adayObj.eposta || k.eposta || ''
+
+    const finalEposta = adayObj.eposta || k.eposta || profileObj.eposta || ''
     const finalUniversite = adayObj.universite || k.universite || ''
     const rawTakimId = k.takim_id ?? (k.takim && typeof k.takim === 'object' ? k.takim.id : k.takim)
     const takimId = rawTakimId !== undefined && rawTakimId !== null ? Number(rawTakimId) : null
@@ -924,6 +946,15 @@ export async function uploadFileToGoogleDrive({ filename, file_base64, content_t
 }
 
 export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, file }) {
+  if (!gorev_id) {
+    throw new Error('Görev bilgisi bulunamadı. Lütfen sayfayı yenileyip tekrar deneyin.')
+  }
+
+  const cleanLink = typeof teslim_linki === 'string' ? teslim_linki.trim() : ''
+  if (!file && !cleanLink) {
+    throw new Error('Lütfen bir dosya yükleyin veya harici bağlantı girin.')
+  }
+
   const user = (await supabase.auth.getUser()).data.user
   if (!user) throw new Error('Oturum açmanız gerekmektedir.')
 
@@ -943,7 +974,7 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
   const { data: katilimciRow } = await supabase.from('core_katilimci').select('takim_id').eq('id', katilimciId).maybeSingle()
   const takimId = katilimciRow?.takim_id || null
 
-  let finalFileLink = teslim_linki || ''
+  let finalFileLink = cleanLink
   let finalFileDosya = ''
 
   if (file) {
@@ -962,9 +993,10 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
       katilimci_id: katilimciId
     })
 
-    finalFileDosya = driveRes.webViewLink || driveRes.download_url
+    const driveUrl = driveRes ? (driveRes.webViewLink || driveRes.download_url || '') : ''
+    finalFileDosya = driveUrl
     if (!finalFileLink) {
-      finalFileLink = driveRes.webViewLink || driveRes.download_url
+      finalFileLink = driveUrl
     }
   }
 

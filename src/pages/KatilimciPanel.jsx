@@ -1317,25 +1317,34 @@ export default function KatilimciPanel() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!selectedGorev) return
+    if (!selectedGorev || !selectedGorev.id) {
+      setToast({ type: 'error', message: 'Görev bilgisi bulunamadı. Lütfen sayfayı yenileyip tekrar deneyin.' })
+      return
+    }
+
+    const cleanLink = typeof link === 'string' ? link.trim() : ''
+    if (!file && !cleanLink) {
+      setToast({ type: 'error', message: 'Lütfen bir dosya yükleyin veya harici bağlantı girin.' })
+      return
+    }
 
     setSubmitting(true)
 
     try {
       await submitKatilimciTeslim({
         gorev_id: selectedGorev.id,
-        teslim_linki: link,
-        aciklama: not,
+        teslim_linki: cleanLink,
+        aciklama: not || '',
         file: file
       })
 
-      setToast({ type: 'success', message: 'Tesliminiz Google Drive ve Supabase üzerine başarıyla yüklendi!' })
+      setToast({ type: 'success', message: 'Tesliminiz başarıyla yüklendi!' })
       setTimeout(() => setToast(null), 3000)
       setSelectedGorev(null)
       fetchData()
     } catch (err) {
       console.error('Gönderim başarısız:', err)
-      setToast({ type: 'error', message: err.message || 'Gönderim sırasında hata oluştu.' })
+      setToast({ type: 'error', message: err?.message || 'Gönderim sırasında hata oluştu.' })
       setTimeout(() => setToast(null), 5000)
     } finally {
       setSubmitting(false)
