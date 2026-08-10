@@ -344,3 +344,93 @@ export async function getKatilimciTeslimlerMe(katilimciId) {
   }))
 }
 
+// ─── MENTOR ÖZEL SORGULARI ───────────────────────────────────────────────────
+export async function getMentorMe() {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError || !session?.user) throw new Error('Oturum geçersiz.')
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', session.user.id)
+    .maybeSingle()
+
+  if (profileError) throw profileError
+  if (!profile) throw new Error('Profil bulunamadı.')
+
+  let mentorId = profile.core_mentor_id
+  let mentorData = null
+
+  if (mentorId) {
+    const { data: mData, error: mError } = await supabase
+      .from('core_mentor')
+      .select('*')
+      .eq('id', mentorId)
+      .maybeSingle()
+    if (!mError) mentorData = mData
+  }
+
+  if (!mentorData) {
+    const { data: mData, error: mError } = await supabase
+      .from('core_mentor')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .maybeSingle()
+    if (!mError && mData) {
+      mentorData = mData
+      mentorId = mData.id
+    }
+  }
+
+  return {
+    profile,
+    mentor: mentorData ? {
+      ...mentorData,
+      id: mentorData.id,
+      ad_soyad: mentorData.ad_soyad,
+      eposta: mentorData.eposta,
+      uzmanlik: mentorData.uzmanlik
+    } : null
+  }
+}
+
+export async function getMentorTakimlarim(mentorId) {
+  const { data, error } = await supabase
+    .from('core_takim')
+    .select('*')
+    .order('id', { ascending: false })
+  if (error) throw error
+  return (data || []).map(t => ({
+    ...t,
+    mentor: t.mentor_id
+  }))
+}
+
+export async function getMentorKatilimcilarim(mentorId) {
+  const { data, error } = await supabase
+    .from('core_katilimci')
+    .select('*')
+    .order('id', { ascending: false })
+  if (error) throw error
+  return (data || []).map(k => ({
+    ...k,
+    takim: k.takim_id,
+    aday: k.aday_id
+  }))
+}
+
+export async function getMentorTeslimler(mentorId) {
+  const { data, error } = await supabase
+    .from('core_teslim')
+    .select('*')
+    .order('id', { ascending: false })
+  if (error) throw error
+  return (data || []).map(t => ({
+    ...t,
+    katilimci: t.katilimci_id,
+    takim: t.takim_id,
+    gorev: t.gorev_id
+  }))
+}
+
+

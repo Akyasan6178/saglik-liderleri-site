@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '../config/api'
-import { logoutUser } from '../services/supabaseService'
+import {
+  getMentorMe,
+  getMentorTakimlarim,
+  getMentorKatilimcilarim,
+  getMentorTeslimler,
+  getGorevler,
+  logoutUser
+} from '../services/supabaseService'
 
 const API = `${API_BASE_URL}/api`
 
@@ -103,45 +110,49 @@ export default function MentorPanel() {
   const fetchAll = async () => {
     setLoading(true)
     setError(null)
-    const token = localStorage.getItem('access')
-    if (!token) {
-      navigate('/login')
-      return
-    }
-    const headers = { 'Authorization': `Bearer ${token}` }
-
     try {
-      const [mRes, tRes, kRes, tesRes] = await Promise.all([
-        fetch(`${API}/mentor/me/`, { headers }).catch(() => ({ ok: false })),
-        fetch(`${API}/mentor/takimlarim/`, { headers }).catch(() => ({ ok: false })),
-        fetch(`${API}/mentor/katilimcilarim/`, { headers }).catch(() => ({ ok: false })),
-        fetch(`${API}/teslimler/`, { headers }).catch(() => ({ ok: false }))
+      // 1. Mentor Profil Bilgisi
+      const meData = await getMentorMe()
+      if (meData?.mentor) {
+        setMentorInfo(meData.mentor)
+      } else {
+        setMentorInfo({ ad_soyad: username, uzmanlik: 'Mentor' })
+      }
+
+      const mentorId = meData?.mentor?.id
+
+      // 2. Takımlarım, Katılımcılarım, Teslimler, Görevler
+      const [tData, kData, tesData, gData] = await Promise.all([
+        getMentorTakimlarim(mentorId).catch(() => []),
+        getMentorKatilimcilarim(mentorId).catch(() => []),
+        getMentorTeslimler(mentorId).catch(() => []),
+        getGorevler().catch(() => [])
       ])
 
-      if (mRes && mRes.status === 401) {
+      // Katılımcı/Görev detaylarını teslim objelerine map'leyelim
+      const mappedTeslimler = tesData.map(t => {
+        const kMatch = kData.find(k => k.id === t.katilimci || k.id === t.katilimci_id)
+        const gMatch = gData.find(g => g.id === t.gorev || g.id === t.gorev_id)
+        const tMatch = tData.find(tk => tk.id === t.takim || tk.id === t.takim_id)
+        return {
+          ...t,
+          katilimci_adi: t.katilimci_adi || kMatch?.ad_soyad || 'Katılımcı',
+          gorev_adi: t.gorev_adi || gMatch?.gorev_adi || `Görev #${t.gorev_id || t.gorev}`,
+          takim_adi: t.takim_adi || tMatch?.takim_adi || ''
+        }
+      })
+
+      setTakimlar(tData)
+      setKatilimcilar(kData)
+      setTeslimler(mappedTeslimler)
+
+    } catch (err) {
+      console.error('Mentor verileri çekilemedi:', err)
+      if (err.message?.includes('Oturum geçersiz') || err.message?.includes('Profil bulunamadı')) {
         navigate('/login')
         return
       }
-
-      if (mRes && mRes.ok) {
-        const mData = await mRes.json()
-        setMentorInfo(mData)
-      }
-      if (tRes && tRes.ok) {
-        const tData = await tRes.json()
-        setTakimlar(Array.isArray(tData) ? tData : (tData.results || []))
-      }
-      if (kRes && kRes.ok) {
-        const kData = await kRes.json()
-        setKatilimcilar(Array.isArray(kData) ? kData : (kData.results || []))
-      }
-      if (tesRes && tesRes.ok) {
-        const tesData = await tesRes.json()
-        setTeslimler(Array.isArray(tesData) ? tesData : (tesData.results || []))
-      }
-    } catch (err) {
       setError('Veriler yüklenirken bir hata oluştu.')
-      console.error('Mentor verileri çekilemedi:', err)
     } finally {
       setLoading(false)
     }
@@ -152,18 +163,26 @@ export default function MentorPanel() {
   }, [])
 
   const fetchTeslimler = async () => {
-    const token = localStorage.getItem('access')
-    if (!token) return
     try {
-      const res = await fetch(`${API}/teslimler/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const mentorId = mentorInfo?.id
+      const [tesData, gData, kData, tData] = await Promise.all([
+        getMentorTeslimler(mentorId),
+        getGorevler().catch(() => []),
+        getMentorKatilimcilarim(mentorId).catch(() => []),
+        getMentorTakimlarim(mentorId).catch(() => [])
+      ])
+      const mappedTeslimler = tesData.map(t => {
+        const kMatch = kData.find(k => k.id === t.katilimci || k.id === t.katilimci_id)
+        const gMatch = gData.find(g => g.id === t.gorev || g.id === t.gorev_id)
+        const tMatch = tData.find(tk => tk.id === t.takim || tk.id === t.takim_id)
+        return {
+          ...t,
+          katilimci_adi: t.katilimci_adi || kMatch?.ad_soyad || 'Katılımcı',
+          gorev_adi: t.gorev_adi || gMatch?.gorev_adi || `Görev #${t.gorev_id || t.gorev}`,
+          takim_adi: t.takim_adi || tMatch?.takim_adi || ''
+        }
       })
-      if (res.ok) {
-        const data = await res.json()
-        setTeslimler(Array.isArray(data) ? data : (data.results || []))
-      } else if (res.status === 401) {
-        navigate('/login')
-      }
+      setTeslimler(mappedTeslimler)
     } catch (error) {
       console.error('Teslimler çekilemedi:', error)
     }
