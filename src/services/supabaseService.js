@@ -577,74 +577,11 @@ export async function getMentorTakimlarim(mentorId) {
 }
 
 export async function getMentorKatilimcilarim(mentorId) {
-  try {
-    const res = await callMentorAction('get_my_participants', { mentor_id: mentorId })
-    if (res && res.ok && Array.isArray(res.data)) {
-      return res.data
-    }
-  } catch (eErr) {
-    console.warn('mentor-actions get_my_participants call failed, falling back to client query:', eErr)
+  const res = await callMentorAction('get_my_participants', { mentor_id: mentorId })
+  if (res && res.ok && Array.isArray(res.data)) {
+    return res.data
   }
-
-  const { data: katData, error: katErr } = await supabase
-    .from('core_katilimci')
-    .select('*, aday:core_aday(ad, soyad, eposta, universite)')
-    .order('id', { ascending: false })
-
-  const { data: takData } = await supabase
-    .from('core_takim')
-    .select('id, takim_adi')
-
-  const { data: profData } = await supabase
-    .from('profiles')
-    .select('core_katilimci_id, ad_soyad, email')
-
-  const takimMap = new Map((takData || []).map(t => [Number(t.id), t.takim_adi]))
-  const profMap = new Map((profData || []).filter(p => p.core_katilimci_id).map(p => [Number(p.core_katilimci_id), p]))
-
-  let adayMap = new Map()
-  const rawList = katErr ? (await supabase.from('core_katilimci').select('*').order('id', { ascending: false })).data || [] : (katData || [])
-  const adayIds = rawList.map(k => k.aday_id).filter(Boolean)
-
-  if (adayIds.length > 0) {
-    const { data: adayList } = await supabase
-      .from('core_aday')
-      .select('id, ad, soyad, eposta, universite')
-      .in('id', adayIds)
-    if (adayList) {
-      adayMap = new Map(adayList.map(a => [Number(a.id), a]))
-    }
-  }
-
-  return rawList.map(k => {
-    const directAday = k.aday_id ? adayMap.get(Number(k.aday_id)) : null
-    const adayObj = directAday || k.aday || {}
-    const profileObj = profMap.get(Number(k.id)) || {}
-
-    const adayAdSoyad = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim()
-    const directAdSoyad = `${k.ad || ''} ${k.soyad || ''}`.trim() || k.ad_soyad || profileObj.ad_soyad || ''
-    const finalAdSoyad = adayAdSoyad || directAdSoyad || `Katılımcı #${k.id}`
-
-    const finalEposta = adayObj.eposta || k.eposta || profileObj.email || ''
-    const finalUniversite = adayObj.universite || k.universite || ''
-    const rawTakimId = k.takim_id ?? (k.takim && typeof k.takim === 'object' ? k.takim.id : k.takim)
-    const takimId = rawTakimId !== undefined && rawTakimId !== null ? Number(rawTakimId) : null
-    const takimAdi = (takimId ? takimMap.get(takimId) : null) || (k.takim && typeof k.takim === 'object' ? k.takim.takim_adi : null) || k.takim_adi || ''
-
-    return {
-      ...k,
-      id: k.id,
-      takim_id: takimId,
-      takim: takimId,
-      takim_adi: takimAdi,
-      aday: k.aday_id ?? null,
-      aday_id: k.aday_id ?? null,
-      aday_ad_soyad: finalAdSoyad,
-      ad_soyad: finalAdSoyad,
-      eposta: finalEposta,
-      universite: finalUniversite
-    }
-  })
+  return []
 }
 
 function groupTeslimlerByTask(rawTeslimList) {
@@ -751,24 +688,21 @@ export async function importCandidatesCsvText(filename, csvText) {
 }
 
 // ─── MENTOR EDGE FUNCTION ÇAĞRISI ────────────────────────────────────────────
-export async function requestRevision(teslim_id, revizyon_notu) {
+export async function callMentorAction(action, payload = {}) {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()
   if (sessionError || !session?.access_token) {
     throw new Error('Oturum geçersiz veya süresi dolmuş.')
   }
 
   const { data, error } = await supabase.functions.invoke('mentor-actions', {
-    body: {
-      action: 'request_revision',
-      payload: { teslim_id, revizyon_notu }
-    },
+    body: { action, payload },
     headers: {
       Authorization: `Bearer ${session.access_token}`
     }
   })
 
   if (error) {
-    let msg = error.message || 'Revizyon isteği iletilemedi.'
+    let msg = error.message || 'Mentor işlemi gerçekleştirilemedi.'
     if (error.context && typeof error.context.json === 'function') {
       try {
         const body = await error.context.json()
@@ -779,42 +713,20 @@ export async function requestRevision(teslim_id, revizyon_notu) {
   }
 
   if (!data?.ok) {
-    throw new Error(data?.error || 'Revizyon isteği işlenirken bir hata oluştu.')
+    throw new Error(data?.error || 'Mentor işlemi gerçekleştirilirken bir hata oluştu.')
   }
-  return data.data
+
+  return data
+}
+
+export async function requestRevision(teslim_id, revizyon_notu) {
+  const res = await callMentorAction('request_revision', { teslim_id, revizyon_notu })
+  return res.data
 }
 
 export async function evaluateDelivery(teslim_id, alinan_puan, mentor_yorumu) {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError || !session?.access_token) {
-    throw new Error('Oturum geçersiz veya süresi dolmuş.')
-  }
-
-  const { data, error } = await supabase.functions.invoke('mentor-actions', {
-    body: {
-      action: 'evaluate_delivery',
-      payload: { teslim_id, alinan_puan, mentor_yorumu }
-    },
-    headers: {
-      Authorization: `Bearer ${session.access_token}`
-    }
-  })
-
-  if (error) {
-    let msg = error.message || 'Değerlendirme kaydedilemedi.'
-    if (error.context && typeof error.context.json === 'function') {
-      try {
-        const body = await error.context.json()
-        if (body?.error) msg = body.error
-      } catch (_) {}
-    }
-    throw new Error(msg)
-  }
-
-  if (!data?.ok) {
-    throw new Error(data?.error || 'Nihai değerlendirme işlenirken bir hata oluştu.')
-  }
-  return data.data
+  const res = await callMentorAction('evaluate_delivery', { teslim_id, alinan_puan, mentor_yorumu })
+  return res.data
 }
 
 export async function getAdminPerformansList() {

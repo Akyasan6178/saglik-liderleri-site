@@ -437,7 +437,7 @@ serve(async (req) => {
       if (katilimciIds.length > 0) {
         const { data: profs } = await adminClient
           .from('profiles')
-          .select('core_katilimci_id, ad_soyad, eposta')
+          .select('core_katilimci_id, ad_soyad, email')
           .in('core_katilimci_id', katilimciIds)
         if (profs) {
           profMap = new Map(profs.map((p: any) => [Number(p.core_katilimci_id), p]))
@@ -453,7 +453,7 @@ serve(async (req) => {
         const directAdSoyad = `${k.ad || ''} ${k.soyad || ''}`.trim() || k.ad_soyad || profileObj.ad_soyad || ''
         const finalAdSoyad = adayAdSoyad || directAdSoyad || `Katılımcı #${k.id}`
 
-        const finalEposta = adayObj.eposta || k.eposta || profileObj.eposta || ''
+        const finalEposta = adayObj.eposta || k.eposta || profileObj.email || ''
         const finalUniversite = adayObj.universite || k.universite || ''
         const rawTakimId = k.takim_id ?? k.takim
         const takimId = rawTakimId !== undefined && rawTakimId !== null ? Number(rawTakimId) : null
