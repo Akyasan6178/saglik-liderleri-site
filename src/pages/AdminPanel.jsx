@@ -257,9 +257,10 @@ function TeslimTimeline({ hareketler }) {
 
   const ISLEM_CONFIG = {
     ILK_TESLIM: { label: 'İlk Teslim', icon: '🚀', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
-    REVIZYON_ISTENDI: { label: 'Revizyon İstendi', icon: '🔄', badge: 'bg-orange-50 text-orange-700 border-orange-200' },
+    TESLIM_EDILDI: { label: 'Teslim edildi', icon: '🚀', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
+    REVIZYON_ISTENDI: { label: 'Revizyon istendi', icon: '🔄', badge: 'bg-orange-50 text-orange-700 border-orange-200' },
     REVIZE_TESLIM: { label: 'Revize Teslim', icon: '📤', badge: 'bg-purple-50 text-purple-700 border-purple-200' },
-    NIHAI_DEGERLENDIRME: { label: 'Nihai Değerlendirme', icon: '✅', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    NIHAI_DEGERLENDIRME: { label: 'Nihai değerlendirme', icon: '✅', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   }
 
   return (

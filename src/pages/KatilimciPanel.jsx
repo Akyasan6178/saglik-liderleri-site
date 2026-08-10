@@ -2348,11 +2348,20 @@ export default function KatilimciPanel() {
 
                     <div className="relative pl-5 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
                       {teslim.hareketler.map((h, idx) => {
+                        const tipe = String(h.islem_tipi || '').toUpperCase()
+                        const labelMap = {
+                          ILK_TESLIM: 'İlk Teslim',
+                          TESLIM_EDILDI: 'Teslim edildi',
+                          REVIZYON_ISTENDI: 'Revizyon istendi',
+                          REVIZE_TESLIM: 'Revize Teslim',
+                          NIHAI_DEGERLENDIRME: 'Nihai değerlendirme'
+                        }
                         const badgeColor =
-                          h.islem_tipi === 'ILK_TESLIM' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                            h.islem_tipi === 'REVIZYON_ISTENDI' ? 'bg-orange-100 text-orange-700 border-orange-200' :
-                              h.islem_tipi === 'REVIZE_TESLIM' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-                                'bg-emerald-100 text-emerald-700 border-emerald-200'
+                          tipe === 'ILK_TESLIM' || tipe === 'TESLIM_EDILDI' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                          tipe === 'REVIZYON_ISTENDI' ? 'bg-orange-100 text-orange-700 border-orange-200' :
+                          tipe === 'REVIZE_TESLIM' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                          'bg-emerald-100 text-emerald-700 border-emerald-200'
+                        const islemLabel = labelMap[tipe] || h.islem_tipi_etiketi || h.islem_tipi || 'İşlem'
 
                         return (
                           <div key={h.id || idx} className="relative flex items-start gap-2.5">
@@ -2360,7 +2369,7 @@ export default function KatilimciPanel() {
                             <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 w-full space-y-1 text-xs">
                               <div className="flex items-center justify-between gap-2">
                                 <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] border ${badgeColor}`}>
-                                  {h.islem_tipi_etiketi || h.islem_tipi}
+                                  {islemLabel}
                                 </span>
                                 <span className="text-[9px] text-slate-400 font-mono">
                                   {h.olusturulma_tarihi ? new Date(h.olusturulma_tarihi).toLocaleString('tr-TR') : ''}

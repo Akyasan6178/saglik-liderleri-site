@@ -228,8 +228,22 @@ export async function updateGorev(id, updates) {
 }
 
 export async function deleteGorev(id) {
+  const { count, error: countErr } = await supabase
+    .from('core_teslim')
+    .select('id', { count: 'exact', head: true })
+    .eq('gorev_id', id)
+
+  if (!countErr && count && count > 0) {
+    throw new Error('Bu göreve ait teslimler bulunduğu için görev silinemez. Geçmiş veriyi korumak için görev pasifleştirilmeli veya teslimler arşivlenmelidir.')
+  }
+
   const { error } = await supabase.from('core_gorev').delete().eq('id', id)
-  if (error) throw error
+  if (error) {
+    if (error.message && (error.message.includes('foreign key constraint') || error.message.includes('violates foreign key'))) {
+      throw new Error('Bu göreve ait teslimler bulunduğu için görev silinemez. Geçmiş veriyi korumak için görev pasifleştirilmeli veya teslimler arşivlenmelidir.')
+    }
+    throw error
+  }
   return true
 }
 
@@ -237,6 +251,7 @@ export async function deleteGorev(id) {
 // DRIVE-LINK-FIX-01: Normalize file link fields so UI always has a consistent
 // teslim_dosyasi_url regardless of which DB column was written by the uploader.
 function normalizeTeslim(t) {
+  if (!t || typeof t !== 'object') return t
   const dosyaUrl =
     (typeof t.teslim_dosyasi_url === 'string' && t.teslim_dosyasi_url) ||
     (typeof t.teslim_dosyasi     === 'string' && t.teslim_dosyasi)     ||
@@ -252,17 +267,57 @@ function normalizeTeslim(t) {
     (typeof t.teslim_dosyasi     === 'string' && t.teslim_dosyasi)     ||
     (typeof t.teslim_dosyasi_url === 'string' && t.teslim_dosyasi_url) ||
     null
+
+  let hareketler = Array.isArray(t.hareketler)
+    ? t.hareketler
+    : Array.isArray(t.core_teslimhareketi)
+    ? t.core_teslimhareketi
+    : []
+
+  if (hareketler.length === 0 && (t.teslim_tarihi || dosyaUrl || linki || t.durum)) {
+    hareketler = [
+      {
+        id: `fallback-${t.id}`,
+        islem_tipi: t.durum === 'REVIZYON_ISTENDI' ? 'REVIZYON_ISTENDI' : (t.durum === 'TAMAMLANDI' || t.degerlendirildi ? 'NIHAI_DEGERLENDIRME' : 'TESLIM_EDILDI'),
+        olusturan_adi: 'Katılımcı',
+        tarih: t.teslim_tarihi || t.olusturulma_tarihi || new Date().toISOString(),
+        olusturulma_tarihi: t.teslim_tarihi || t.olusturulma_tarihi || new Date().toISOString(),
+        teslim_dosyasi_url: dosyaUrl,
+        teslim_linki: linki,
+        aciklama: t.aciklama || 'Teslim alındı',
+        mentor_yorumu: t.mentor_yorumu || null,
+        puan: t.alinan_puan ?? null
+      }
+    ]
+  }
+
   return {
     ...t,
     teslim_dosyasi_url: dosyaUrl,
     teslim_dosyasi:     dosya,
     teslim_linki:       linki,
+    hareketler:         hareketler
   }
 }
 
 export async function getTeslimler() {
-  const { data, error } = await supabase.from('core_teslim').select('*').order('id', { ascending: false })
-  if (error) throw error
+  const { data, error } = await supabase
+    .from('core_teslim')
+    .select('*, hareketler:core_teslimhareketi(*)')
+    .order('id', { ascending: false })
+  if (error) {
+    const { data: rawData, error: rawErr } = await supabase
+      .from('core_teslim')
+      .select('*')
+      .order('id', { ascending: false })
+    if (rawErr) throw rawErr
+    return (rawData || []).map(t => ({
+      ...normalizeTeslim(t),
+      katilimci: t.katilimci_id,
+      takim: t.takim_id,
+      gorev: t.gorev_id
+    }))
+  }
   return (data || []).map(t => ({
     ...normalizeTeslim(t),
     katilimci: t.katilimci_id,
@@ -431,10 +486,23 @@ export async function getKatilimciTeslimlerMe(katilimciId) {
   if (!katilimciId) return []
   const { data, error } = await supabase
     .from('core_teslim')
-    .select('*')
+    .select('*, hareketler:core_teslimhareketi(*)')
     .eq('katilimci_id', katilimciId)
     .order('id', { ascending: false })
-  if (error) throw error
+  if (error) {
+    const { data: rawData, error: rawErr } = await supabase
+      .from('core_teslim')
+      .select('*')
+      .eq('katilimci_id', katilimciId)
+      .order('id', { ascending: false })
+    if (rawErr) throw rawErr
+    return (rawData || []).map(t => ({
+      ...normalizeTeslim(t),
+      katilimci: t.katilimci_id,
+      takim: t.takim_id,
+      gorev: t.gorev_id
+    }))
+  }
   return (data || []).map(t => ({
     ...normalizeTeslim(t),
     katilimci: t.katilimci_id,
@@ -508,22 +576,71 @@ export async function getMentorTakimlarim(mentorId) {
 export async function getMentorKatilimcilarim(mentorId) {
   const { data, error } = await supabase
     .from('core_katilimci')
-    .select('*')
+    .select('*, aday:core_aday(ad, soyad, eposta, universite), takim:core_takim(id, takim_adi)')
     .order('id', { ascending: false })
-  if (error) throw error
-  return (data || []).map(k => ({
-    ...k,
-    takim: k.takim_id,
-    aday: k.aday_id
-  }))
+  if (error) {
+    const { data: fallbackData, error: fbErr } = await supabase
+      .from('core_katilimci')
+      .select('*')
+      .order('id', { ascending: false })
+    if (fbErr) throw fbErr
+    return (fallbackData || []).map(k => ({
+      ...k,
+      takim_id: k.takim_id ? Number(k.takim_id) : null,
+      takim: k.takim_id ? Number(k.takim_id) : null,
+      aday: k.aday_id ?? null,
+      aday_id: k.aday_id ?? null,
+      aday_ad_soyad: k.ad_soyad || `${k.ad || ''} ${k.soyad || ''}`.trim() || `Katılımcı #${k.id}`,
+      ad_soyad: k.ad_soyad || `${k.ad || ''} ${k.soyad || ''}`.trim() || `Katılımcı #${k.id}`,
+      eposta: k.eposta || '',
+      universite: k.universite || ''
+    }))
+  }
+  return (data || []).map(k => {
+    const adayObj = k.aday || {}
+    const adayAdSoyad = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim()
+    const directAdSoyad = `${k.ad || ''} ${k.soyad || ''}`.trim() || k.ad_soyad || ''
+    const finalAdSoyad = adayAdSoyad || directAdSoyad || `Katılımcı #${k.id}`
+    const finalEposta = adayObj.eposta || k.eposta || ''
+    const finalUniversite = adayObj.universite || k.universite || ''
+    const rawTakimId = k.takim_id ?? (k.takim && typeof k.takim === 'object' ? k.takim.id : k.takim)
+    const takimId = rawTakimId !== undefined && rawTakimId !== null ? Number(rawTakimId) : null
+    const takimAdi = (k.takim && typeof k.takim === 'object' ? k.takim.takim_adi : null) || k.takim_adi || ''
+
+    return {
+      ...k,
+      id: k.id,
+      takim_id: takimId,
+      takim: takimId,
+      takim_adi: takimAdi,
+      aday: k.aday_id ?? null,
+      aday_id: k.aday_id ?? null,
+      aday_ad_soyad: finalAdSoyad,
+      ad_soyad: finalAdSoyad,
+      eposta: finalEposta,
+      universite: finalUniversite
+    }
+  })
 }
 
 export async function getMentorTeslimler(mentorId) {
   const { data, error } = await supabase
     .from('core_teslim')
-    .select('*')
+    .select('*, hareketler:core_teslimhareketi(*)')
     .order('id', { ascending: false })
-  if (error) throw error
+  if (error) {
+    const { data: rawData, error: rawErr } = await supabase
+      .from('core_teslim')
+      .select('*')
+      .order('id', { ascending: false })
+    if (rawErr) throw rawErr
+    return (rawData || []).map(t => ({
+      ...normalizeTeslim(t),
+      katilimci: t.katilimci_id,
+      takim: t.takim_id,
+      gorev: t.gorev_id
+    }))
+  }
   return (data || []).map(t => ({
     ...normalizeTeslim(t),
     katilimci: t.katilimci_id,
@@ -821,7 +938,7 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
     .from('profiles')
     .select('core_katilimci_id, ad_soyad')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!profile || !profile.core_katilimci_id) {
     throw new Error('Katılımcı profil kaydınız bulunamadı.')
@@ -830,7 +947,7 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
   const katilimciId = profile.core_katilimci_id
   const katilimciAdi = profile.ad_soyad || ''
 
-  const { data: katilimciRow } = await supabase.from('core_katilimci').select('takim_id').eq('id', katilimciId).single()
+  const { data: katilimciRow } = await supabase.from('core_katilimci').select('takim_id').eq('id', katilimciId).maybeSingle()
   const takimId = katilimciRow?.takim_id || null
 
   let finalFileLink = teslim_linki || ''
@@ -860,12 +977,15 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
 
   const nowIso = new Date().toISOString()
 
-  const { data: existingTeslim } = await supabase
+  const { data: existingTeslimList } = await supabase
     .from('core_teslim')
     .select('id')
     .eq('katilimci_id', katilimciId)
     .eq('gorev_id', gorev_id)
-    .maybeSingle()
+    .order('id', { ascending: false })
+    .limit(1)
+
+  const existingTeslim = existingTeslimList && existingTeslimList.length > 0 ? existingTeslimList[0] : null
 
   let teslimRecord = null
   if (existingTeslim) {
@@ -882,7 +1002,7 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
       })
       .eq('id', existingTeslim.id)
       .select()
-      .single()
+      .maybeSingle()
     if (uErr) throw new Error(uErr.message)
     teslimRecord = updated
   } else {
@@ -901,7 +1021,7 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
         degerlendirildi: false
       })
       .select()
-      .single()
+      .maybeSingle()
     if (iErr) throw new Error(iErr.message)
     teslimRecord = inserted
   }
