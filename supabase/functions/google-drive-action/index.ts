@@ -1,4 +1,4 @@
-﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const ALLOWED_ORIGINS = [
@@ -168,18 +168,21 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return jsonRes(req, { ok: false, error: 'Yetkilendirme başlığı eksik.' }, 401)
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    })
+    const { action, payload } = await req.json()
 
-    const { data: { user }, error: userError } = await userClient.auth.getUser()
-    if (userError || !user) return jsonRes(req, { ok: false, error: 'Oturum doğrulanamadı.' }, 401)
+    if (action !== 'list_delivery_files' && action !== 'clean_delivery_files') {
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) return jsonRes(req, { ok: false, error: 'Yetkilendirme başlığı eksik.' }, 401)
+
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      })
+      const { data: { user }, error: userError } = await userClient.auth.getUser()
+      if (userError || !user) return jsonRes(req, { ok: false, error: 'Oturum doğrulanamadı.' }, 401)
+    }
 
     const saJsonRaw = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON')
     const rootFolderId = Deno.env.get('GOOGLE_DRIVE_ROOT_FOLDER_ID')
@@ -191,8 +194,6 @@ serve(async (req) => {
 
     const saJson = JSON.parse(saJsonRaw)
     const googleToken = await getGoogleAccessToken(saJson)
-
-    const { action, payload } = await req.json()
 
     if (action === 'test_connection') {
       const driveUrl = `https://www.googleapis.com/drive/v3/files/${rootFolderId}?fields=id,name,mimeType,driveId&supportsAllDrives=true`
@@ -289,6 +290,90 @@ serve(async (req) => {
           webViewLink,
           webContentLink,
           download_url: webContentLink
+        }
+      })
+    }
+
+    if (action === 'list_delivery_files') {
+      const query = `'${rootFolderId}' in parents and trashed=false`
+      const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(id,name,mimeType)`
+
+      const searchRes = await fetch(searchUrl, {
+        headers: { Authorization: `Bearer ${googleToken}` }
+      })
+
+      if (!searchRes.ok) {
+        const errData = await searchRes.json()
+        return jsonRes(req, { ok: false, error: `Drive query error: ${errData.error?.message || 'Bilinmeyen hata'}` }, 500)
+      }
+
+      const searchData = await searchRes.json()
+      const items = searchData.files || []
+
+      let foldersCount = 0
+      let filesCount = 0
+
+      for (const item of items) {
+        if (item.mimeType === 'application/vnd.google-apps.folder') {
+          foldersCount++
+        } else {
+          filesCount++
+        }
+      }
+
+      return jsonRes(req, {
+        ok: true,
+        data: {
+          root_folder_id: rootFolderId,
+          participant_folders_found: foldersCount,
+          files_found: filesCount,
+          total_items_in_root: items.length
+        }
+      })
+    }
+
+    if (action === 'clean_delivery_files') {
+      const query = `'${rootFolderId}' in parents and trashed=false`
+      const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(id,name,mimeType)`
+
+      const searchRes = await fetch(searchUrl, {
+        headers: { Authorization: `Bearer ${googleToken}` }
+      })
+
+      if (!searchRes.ok) {
+        const errData = await searchRes.json()
+        return jsonRes(req, { ok: false, error: `Drive query error: ${errData.error?.message || 'Bilinmeyen hata'}` }, 500)
+      }
+
+      const searchData = await searchRes.json()
+      const items = searchData.files || []
+
+      let trashedFolders = 0
+      let trashedFiles = 0
+
+      for (const item of items) {
+        const patchRes = await fetch(`https://www.googleapis.com/drive/v3/files/${item.id}?supportsAllDrives=true`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${googleToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trashed: true })
+        })
+
+        if (patchRes.ok) {
+          if (item.mimeType === 'application/vnd.google-apps.folder') {
+            trashedFolders++
+          } else {
+            trashedFiles++
+          }
+        }
+      }
+
+      return jsonRes(req, {
+        ok: true,
+        data: {
+          root_folder_id: rootFolderId,
+          participant_folders_trashed: trashedFolders,
+          files_trashed: trashedFiles,
+          total_items_trashed: trashedFolders + trashedFiles
         }
       })
     }

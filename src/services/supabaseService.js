@@ -579,7 +579,7 @@ export async function getMentorTakimlarim(mentorId) {
 export async function getMentorKatilimcilarim(mentorId) {
   try {
     const res = await callMentorAction('get_my_participants', { mentor_id: mentorId })
-    if (res && res.ok && Array.isArray(res.data) && res.data.length > 0) {
+    if (res && res.ok && Array.isArray(res.data)) {
       return res.data
     }
   } catch (eErr) {
@@ -597,7 +597,7 @@ export async function getMentorKatilimcilarim(mentorId) {
 
   const { data: profData } = await supabase
     .from('profiles')
-    .select('core_katilimci_id, ad_soyad, eposta')
+    .select('core_katilimci_id, ad_soyad, email')
 
   const takimMap = new Map((takData || []).map(t => [Number(t.id), t.takim_adi]))
   const profMap = new Map((profData || []).filter(p => p.core_katilimci_id).map(p => [Number(p.core_katilimci_id), p]))
@@ -625,7 +625,7 @@ export async function getMentorKatilimcilarim(mentorId) {
     const directAdSoyad = `${k.ad || ''} ${k.soyad || ''}`.trim() || k.ad_soyad || profileObj.ad_soyad || ''
     const finalAdSoyad = adayAdSoyad || directAdSoyad || `Katılımcı #${k.id}`
 
-    const finalEposta = adayObj.eposta || k.eposta || profileObj.eposta || ''
+    const finalEposta = adayObj.eposta || k.eposta || profileObj.email || ''
     const finalUniversite = adayObj.universite || k.universite || ''
     const rawTakimId = k.takim_id ?? (k.takim && typeof k.takim === 'object' ? k.takim.id : k.takim)
     const takimId = rawTakimId !== undefined && rawTakimId !== null ? Number(rawTakimId) : null
@@ -653,10 +653,11 @@ function groupTeslimlerByTask(rawTeslimList) {
   const groups = new Map()
 
   for (const item of rawTeslimList) {
-    const kId = item.katilimci_id ?? item.katilimci ?? 0
-    const tId = item.takim_id ?? item.takim ?? 0
-    const gId = item.gorev_id ?? item.gorev ?? 0
-    const key = `${kId}_${tId}_${gId}`
+    const kId = item.katilimci_id ?? item.katilimci
+    const tId = item.takim_id ?? item.takim
+    const gId = item.gorev_id ?? item.gorev
+
+    const key = kId ? `kat_${Number(kId)}_${Number(gId)}` : `tak_${Number(tId)}_${Number(gId)}`
 
     if (!groups.has(key)) {
       groups.set(key, [])
