@@ -739,4 +739,125 @@ export async function addAdminPerformansNotu(katilimci_id, form) {
   return data
 }
 
+export async function uploadFileToGoogleDrive({ filename, file_base64, content_type }) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData?.session?.access_token
+  if (!token) throw new Error('Oturum açmanız gerekmektedir.')
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://wczupupflxvfnjbjkfrj.supabase.co'
+  const res = await fetch(`${supabaseUrl}/functions/v1/google-drive-action`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      action: 'upload_file',
+      payload: { filename, file_base64, content_type }
+    })
+  })
+
+  const body = await res.json()
+  if (!res.ok || !body.ok) {
+    throw new Error(body.error || 'Google Drive yükleme hatası oluştu.')
+  }
+  return body.data
+}
+
+export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, file }) {
+  const user = (await supabase.auth.getUser()).data.user
+  if (!user) throw new Error('Oturum açmanız gerekmektedir.')
+
+  const { data: profile } = await supabase.from('profiles').select('core_katilimci_id').eq('id', user.id).single()
+  if (!profile || !profile.core_katilimci_id) {
+    throw new Error('Katılımcı profil kaydınız bulunamadı.')
+  }
+
+  const katilimciId = profile.core_katilimci_id
+  const { data: katilimciRow } = await supabase.from('core_katilimci').select('takim_id').eq('id', katilimciId).single()
+  const takimId = katilimciRow?.takim_id || null
+
+  let finalFileLink = teslim_linki || ''
+  let finalFileDosya = ''
+
+  if (file) {
+    const fileBase64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+
+    const driveRes = await uploadFileToGoogleDrive({
+      filename: file.name,
+      file_base64: fileBase64,
+      content_type: file.type
+    })
+
+    finalFileDosya = driveRes.webViewLink || driveRes.download_url
+    if (!finalFileLink) {
+      finalFileLink = driveRes.webViewLink || driveRes.download_url
+    }
+  }
+
+  const nowIso = new Date().toISOString()
+
+  const { data: existingTeslim } = await supabase
+    .from('core_teslim')
+    .select('id')
+    .eq('katilimci_id', katilimciId)
+    .eq('gorev_id', gorev_id)
+    .maybeSingle()
+
+  let teslimRecord = null
+  if (existingTeslim) {
+    const { data: updated, error: uErr } = await supabase
+      .from('core_teslim')
+      .update({
+        teslim_linki: finalFileLink,
+        teslim_dosyasi: finalFileDosya,
+        aciklama: aciklama || '',
+        teslim_tarihi: nowIso,
+        durum: 'BEKLIYOR',
+        revizyon_istendi: false,
+        degerlendirildi: false
+      })
+      .eq('id', existingTeslim.id)
+      .select()
+      .single()
+    if (uErr) throw new Error(uErr.message)
+    teslimRecord = updated
+  } else {
+    const { data: inserted, error: iErr } = await supabase
+      .from('core_teslim')
+      .insert({
+        katilimci_id: katilimciId,
+        takim_id: takimId,
+        gorev_id: gorev_id,
+        teslim_linki: finalFileLink,
+        teslim_dosyasi: finalFileDosya,
+        aciklama: aciklama || '',
+        teslim_tarihi: nowIso,
+        durum: 'BEKLIYOR',
+        revizyon_istendi: false,
+        degerlendirildi: false
+      })
+      .select()
+      .single()
+    if (iErr) throw new Error(iErr.message)
+    teslimRecord = inserted
+  }
+
+  await supabase.from('core_teslimhareketi').insert({
+    teslim_id: teslimRecord.id,
+    islem_tipi: 'TESLIM_EDILDI',
+    aciklama: aciklama || 'Katılımcı görevi teslim etti',
+    teslim_linki: finalFileLink,
+    teslim_dosyasi: finalFileDosya,
+    olusturulma_tarihi: nowIso
+  })
+
+  return teslimRecord
+}
+
 

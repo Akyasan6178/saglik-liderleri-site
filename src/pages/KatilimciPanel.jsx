@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { API_BASE_URL } from '../config/api'
 import {
   getKatilimciMe,
   getGorevler,
@@ -8,10 +7,9 @@ import {
   getKatilimciDnaMe,
   getKatilimciPerformansMe,
   submitIcerikDna,
+  submitKatilimciTeslim,
   logoutUser
 } from '../services/supabaseService'
-
-const API = `${API_BASE_URL}/api`
 
 // Form soruları (20 adet final soru ve seçenekleri)
 const QUESTIONS = [
@@ -1322,36 +1320,22 @@ export default function KatilimciPanel() {
     if (!selectedGorev) return
 
     setSubmitting(true)
-    const token = localStorage.getItem('access')
-
-    const formData = new FormData()
-    formData.append('gorev', selectedGorev.id)
-    if (link) formData.append('teslim_linki', link)
-    if (not) formData.append('aciklama', not)
-    if (file) formData.append('teslim_dosyasi', file)
 
     try {
-      const res = await fetch(`${API}/teslimler/submit/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
+      await submitKatilimciTeslim({
+        gorev_id: selectedGorev.id,
+        teslim_linki: link,
+        aciklama: not,
+        file: file
       })
 
-      if (res.ok) {
-        setToast({ type: 'success', message: 'Tesliminiz başarıyla yüklendi!' })
-        setTimeout(() => setToast(null), 3000)
-        setSelectedGorev(null)
-        fetchData()
-      } else {
-        const errorData = await res.json().catch(() => ({}))
-        setToast({ type: 'error', message: errorData.detail || 'Gönderim sırasında hata oluştu.' })
-        setTimeout(() => setToast(null), 5000)
-      }
+      setToast({ type: 'success', message: 'Tesliminiz Google Drive ve Supabase üzerine başarıyla yüklendi!' })
+      setTimeout(() => setToast(null), 3000)
+      setSelectedGorev(null)
+      fetchData()
     } catch (err) {
       console.error('Gönderim başarısız:', err)
-      setToast({ type: 'error', message: 'Bağlantı hatası oluştu.' })
+      setToast({ type: 'error', message: err.message || 'Gönderim sırasında hata oluştu.' })
       setTimeout(() => setToast(null), 5000)
     } finally {
       setSubmitting(false)
