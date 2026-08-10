@@ -543,4 +543,155 @@ export async function evaluateDelivery(teslim_id, alinan_puan, mentor_yorumu) {
   return data.data
 }
 
+export async function getAdminPerformansList() {
+  const { data, error } = await supabase
+    .from('core_katilimciperformans')
+    .select(`
+      *,
+      katilimci:core_katilimci (
+        id,
+        aday:core_aday (ad, soyad, eposta),
+        takim:core_takim (id, takim_adi)
+      )
+    `)
+    .order('bireysel_puan', { ascending: false })
+
+  if (error) {
+    console.error('getAdminPerformansList error:', error)
+    return []
+  }
+
+  return (data || []).map(p => ({
+    id: p.id,
+    katilimci: p.katilimci_id,
+    katilimci_id: p.katilimci_id,
+    ad_soyad: p.katilimci?.aday ? `${p.katilimci.aday.ad || ''} ${p.katilimci.aday.soyad || ''}`.trim() : 'Katılımcı',
+    eposta: p.katilimci?.aday?.eposta || '',
+    takim_adi: p.katilimci?.takim?.takim_adi || '—',
+    bireysel_puan: p.bireysel_puan || 0,
+    gorev_puani: p.gorev_puani || 0,
+    toplanti_katilim_puani: p.toplanti_katilim_puani || 0,
+    etkilesim_bonus_puani: p.etkilesim_bonus_puani || 0,
+    manuel_puan: p.manuel_puan || 0,
+    admin_ici_not: p.admin_ici_not || '',
+    katilimciya_gorunen_not: p.katilimciya_gorunen_not || '',
+    olusturulma_tarihi: p.olusturulma_tarihi,
+    guncellenme_tarihi: p.guncellenme_tarihi
+  }))
+}
+
+export async function getAdminIcerikDnaList() {
+  const { data, error } = await supabase
+    .from('core_icerikdnatesti')
+    .select(`
+      *,
+      katilimci:core_katilimci (
+        id,
+        aday:core_aday (ad, soyad, eposta),
+        takim:core_takim (id, takim_adi)
+      )
+    `)
+    .order('gonderim_tarihi', { ascending: false })
+
+  if (error) {
+    console.error('getAdminIcerikDnaList error:', error)
+    return []
+  }
+
+  return (data || []).map(d => ({
+    id: d.id,
+    katilimci_id: d.katilimci_id,
+    katilimci_ad_soyad: d.katilimci?.aday ? `${d.katilimci.aday.ad || ''} ${d.katilimci.aday.soyad || ''}`.trim() : 'Katılımcı',
+    katilimci_eposta: d.katilimci?.aday?.eposta || '',
+    takim_adi: d.katilimci?.takim?.takim_adi || '—',
+    durum: d.durum || 'TAMAMLANDI',
+    ai_model: d.ai_model || 'Gemini 2.5 Flash',
+    gonderim_tarihi: d.gonderim_tarihi,
+    rapor_metni: d.rapor_metni || (d.rapor_json ? d.rapor_json.rapor_metni : ''),
+    cevaplar: d.cevaplar || (d.rapor_json ? d.rapor_json.cevaplar : {})
+  }))
+}
+
+export async function updateAdminPerformansScore(katilimci_id, scoreForm) {
+  const gPuan = Number(scoreForm.gorev_puani) || 0
+  const tPuan = Number(scoreForm.toplanti_katilim_puani) || 0
+  const ePuan = Number(scoreForm.etkilesim_bonus_puani) || 0
+  const mPuan = Number(scoreForm.manuel_puan) || 0
+  const birPuan = gPuan + tPuan + ePuan + mPuan
+
+  const { data, error } = await supabase
+    .from('core_katilimciperformans')
+    .update({
+      gorev_puani: gPuan,
+      toplanti_katilim_puani: tPuan,
+      etkilesim_bonus_puani: ePuan,
+      manuel_puan: mPuan,
+      bireysel_puan: birPuan,
+      admin_ici_not: String(scoreForm.admin_ici_not || ''),
+      katilimciya_gorunen_not: String(scoreForm.katilimciya_gorunen_not || ''),
+      guncellenme_tarihi: new Date().toISOString()
+    })
+    .eq('katilimci_id', katilimci_id)
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function addAdminToplantiKatilimi(katilimci_id, form) {
+  const { data, error } = await supabase
+    .from('core_toplantikatilimi')
+    .insert({
+      katilimci_id,
+      baslik: String(form.baslik || '').trim(),
+      tarih: form.tarih || new Date().toISOString().split('T')[0],
+      katildi_mi: Boolean(form.katildi_mi),
+      katilim_puani: Number(form.katilim_puani) || 0,
+      not_metni: String(form.not_metni || ''),
+      olusturulma_tarihi: new Date().toISOString()
+    })
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function addAdminSosyalMedya(katilimci_id, form) {
+  const { data, error } = await supabase
+    .from('core_sosyalmedyaperformansi')
+    .insert({
+      katilimci_id,
+      platform: String(form.platform || '').trim(),
+      takipci_sayisi: Number(form.takipci_sayisi) || 0,
+      etkilesim_sayisi: Number(form.etkilesim_sayisi) || 0,
+      bonus_puan: Number(form.bonus_puan) || 0,
+      not_metni: String(form.not_metni || ''),
+      olusturulma_tarihi: new Date().toISOString()
+    })
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data
+}
+
+export async function addAdminPerformansNotu(katilimci_id, form) {
+  const { data, error } = await supabase
+    .from('core_katilimciperformansnotu')
+    .insert({
+      katilimci_id,
+      kriter_id: form.kriter ? Number(form.kriter) : null,
+      puan: Number(form.puan) || 0,
+      not_metni: String(form.not_metni || ''),
+      olusturulma_tarihi: new Date().toISOString()
+    })
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data
+}
+
 

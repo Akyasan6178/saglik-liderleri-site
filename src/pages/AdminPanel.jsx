@@ -15,6 +15,12 @@ import {
   updateKatilimci,
   updateTakim,
   callAdminAction,
+  getAdminPerformansList,
+  getAdminIcerikDnaList,
+  updateAdminPerformansScore,
+  addAdminToplantiKatilimi,
+  addAdminSosyalMedya,
+  addAdminPerformansNotu,
   logoutUser
 } from '../services/supabaseService'
 
@@ -2355,16 +2361,12 @@ function DnaDurumBadge({ durum }) {
 
 function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dnaError, setDnaError, dnaDetail, setDnaDetail, dnaRegen, setDnaRegen, setToast }) {
 
-  const authHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-
   const fetchList = async () => {
     setDnaLoading(true)
     setDnaError(null)
     try {
-      const res = await fetch(`${API}/admin/icerik-dna/`, { headers: authHeaders })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
-      setDnaList(Array.isArray(data) ? data : (data.results ?? []))
+      const data = await getAdminIcerikDnaList()
+      setDnaList(data || [])
     } catch (e) {
       setDnaError(`Liste yüklenemedi: ${e.message}`)
     } finally {
@@ -2372,33 +2374,14 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
     }
   }
 
-  // İlk açılışta listeyi çek
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchList() }, [])
 
-  const openDetail = async (item) => {
-    // Liste kaydını direkt kullan, arka planda detay isteği at
+  const openDetail = (item) => {
     setDnaDetail(item)
-    try {
-      const res = await fetch(`${API}/admin/icerik-dna/${item.id}/`, { headers: authHeaders })
-      if (res.ok) setDnaDetail(await res.json())
-    } catch (_) {}
   }
 
   const regenerate = async (id) => {
-    setDnaRegen(id)
-    try {
-      const res = await fetch(`${API}/admin/icerik-dna/${id}/regenerate/`, { method: 'POST', headers: authHeaders })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const updated = await res.json()
-      setDnaList(prev => prev.map(d => d.id === id ? updated : d))
-      setDnaDetail(updated)
-      setToast({ msg: 'Rapor başarıyla yeniden oluşturuldu!', type: 'success' })
-    } catch (e) {
-      setToast({ msg: `Yeniden oluşturma başarısız: ${e.message}`, type: 'error' })
-    } finally {
-      setDnaRegen(null)
-    }
+    setToast({ msg: 'İçerik DNA raporu katılımcı gönderimi sırasında otomatik üretilmektedir.', type: 'info' })
   }
 
   const fmtDate = (d) => d ? new Date(d).toLocaleDateString('tr-TR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—'
@@ -2476,9 +2459,9 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-200 to-indigo-100 flex items-center justify-center flex-shrink-0 text-purple-700 font-bold text-xs">
-                              {(item.katilimci_adi ?? '?')[0].toUpperCase()}
+                              {((item.katilimci_ad_soyad || item.katilimci_adi) ?? '?')[0].toUpperCase()}
                             </div>
-                            <span className="font-medium text-gray-800 whitespace-nowrap">{item.katilimci_adi ?? '—'}</span>
+                            <span className="font-medium text-gray-800 whitespace-nowrap">{item.katilimci_ad_soyad || item.katilimci_adi || '—'}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap"><DnaDurumBadge durum={item.durum} /></td>
@@ -2737,16 +2720,14 @@ function PerformansSection({ token, setToast }) {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API}/admin/performans/`, { headers: authHeaders })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
-      setPerformansList(Array.isArray(data) ? data : (data?.results && Array.isArray(data.results) ? data.results : []))
+      const data = await getAdminPerformansList()
+      setPerformansList(data || [])
     } catch (e) {
       setError(`Performans verileri yüklenemedi: ${e.message}`)
     } finally {
       setLoading(false)
     }
-  }, [authHeaders])
+  }, [])
 
   useEffect(() => { fetchList() }, [fetchList])
 
@@ -2755,22 +2736,22 @@ function PerformansSection({ token, setToast }) {
     setSelectedKatilimciId(katilimciId)
     setDetailLoading(true)
     try {
-      const res = await fetch(`${API}/admin/performans/${katilimciId}/`, { headers: authHeaders })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
-      setDetail(data || {})
-      if (data && data.performans) {
+      const item = (performansList || []).find(p => p.katilimci_id === katilimciId || p.katilimci === katilimciId)
+      if (item) {
+        setDetail({ performans: item })
         setScoreForm({
-          gorev_puani: Number(data.performans.gorev_puani) || 0,
-          toplanti_katilim_puani: Number(data.performans.toplanti_katilim_puani) || 0,
-          etkilesim_bonus_puani: Number(data.performans.etkilesim_bonus_puani) || 0,
-          manuel_puan: Number(data.performans.manuel_puan) || 0,
-          admin_ici_not: String(data.performans.admin_ici_not || ''),
-          katilimciya_gorunen_not: String(data.performans.katilimciya_gorunen_not || ''),
+          gorev_puani: Number(item.gorev_puani) || 0,
+          toplanti_katilim_puani: Number(item.toplanti_katilim_puani) || 0,
+          etkilesim_bonus_puani: Number(item.etkilesim_bonus_puani) || 0,
+          manuel_puan: Number(item.manuel_puan) || 0,
+          admin_ici_not: String(item.admin_ici_not || ''),
+          katilimciya_gorunen_not: String(item.katilimciya_gorunen_not || ''),
         })
+      } else {
+        setDetail({})
       }
     } catch (e) {
-      setToast({ msg: `Detay çekilemedi: ${e.message}`, type: 'error' })
+      setToast({ msg: `Detay yüklenemedi: ${e.message}`, type: 'error' })
     } finally {
       setDetailLoading(false)
     }
@@ -2780,22 +2761,8 @@ function PerformansSection({ token, setToast }) {
     if (!selectedKatilimciId || savingScore) return
     setSavingScore(true)
     try {
-      const payload = {
-        gorev_puani: Number(scoreForm.gorev_puani) || 0,
-        toplanti_katilim_puani: Number(scoreForm.toplanti_katilim_puani) || 0,
-        etkilesim_bonus_puani: Number(scoreForm.etkilesim_bonus_puani) || 0,
-        manuel_puan: Number(scoreForm.manuel_puan) || 0,
-        admin_ici_not: String(scoreForm.admin_ici_not || ''),
-        katilimciya_gorunen_not: String(scoreForm.katilimciya_gorunen_not || ''),
-      }
-      const res = await fetch(`${API}/admin/performans/${selectedKatilimciId}/`, {
-        method: 'PATCH',
-        headers: authHeaders,
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const updated = await res.json()
-      setPerformansList(prev => (Array.isArray(prev) ? prev : []).map(p => p?.katilimci === selectedKatilimciId ? updated : p))
+      await updateAdminPerformansScore(selectedKatilimciId, scoreForm)
+      await fetchList()
       await fetchDetail(selectedKatilimciId)
       setToast({ msg: 'Performans puanları güncellendi!', type: 'success' })
     } catch (e) {
@@ -2810,19 +2777,7 @@ function PerformansSection({ token, setToast }) {
     if (!selectedKatilimciId || !String(toplantiForm.baslik || '').trim() || savingToplanti) return
     setSavingToplanti(true)
     try {
-      const payload = {
-        baslik: String(toplantiForm.baslik).trim(),
-        tarih: toplantiForm.tarih || new Date().toISOString().split('T')[0],
-        katildi_mi: Boolean(toplantiForm.katildi_mi),
-        katilim_puani: Number(toplantiForm.katilim_puani) || 0,
-        not_metni: String(toplantiForm.not_metni || ''),
-      }
-      const res = await fetch(`${API}/admin/performans/${selectedKatilimciId}/toplanti-katilimi/`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await addAdminToplantiKatilimi(selectedKatilimciId, toplantiForm)
       setToplantiForm({
         baslik: '',
         tarih: new Date().toISOString().split('T')[0],
@@ -2830,8 +2785,8 @@ function PerformansSection({ token, setToast }) {
         katilim_puani: 10,
         not_metni: '',
       })
-      await fetchDetail(selectedKatilimciId)
       await fetchList()
+      await fetchDetail(selectedKatilimciId)
       setToast({ msg: 'Toplantı katılımı eklendi!', type: 'success' })
     } catch (e) {
       setToast({ msg: `Toplantı ekleme hatası: ${e.message}`, type: 'error' })
@@ -2845,22 +2800,10 @@ function PerformansSection({ token, setToast }) {
     if (!selectedKatilimciId || !String(sosyalForm.platform || '').trim() || savingSosyal) return
     setSavingSosyal(true)
     try {
-      const payload = {
-        platform: String(sosyalForm.platform).trim(),
-        takipci_sayisi: Number(sosyalForm.takipci_sayisi) || 0,
-        etkilesim_sayisi: Number(sosyalForm.etkilesim_sayisi) || 0,
-        bonus_puan: Number(sosyalForm.bonus_puan) || 0,
-        not_metni: String(sosyalForm.not_metni || ''),
-      }
-      const res = await fetch(`${API}/admin/performans/${selectedKatilimciId}/sosyal-medya/`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await addAdminSosyalMedya(selectedKatilimciId, sosyalForm)
       setSosyalForm({ platform: 'Instagram', takipci_sayisi: 0, etkilesim_sayisi: 0, bonus_puan: 5, not_metni: '' })
-      await fetchDetail(selectedKatilimciId)
       await fetchList()
+      await fetchDetail(selectedKatilimciId)
       setToast({ msg: 'Sosyal medya performansı eklendi!', type: 'success' })
     } catch (e) {
       setToast({ msg: `Sosyal medya ekleme hatası: ${e.message}`, type: 'error' })
@@ -2874,17 +2817,7 @@ function PerformansSection({ token, setToast }) {
     if (!selectedKatilimciId || savingNot) return
     setSavingNot(true)
     try {
-      const payload = {
-        kriter: notForm.kriter ? Number(notForm.kriter) : null,
-        puan: Number(notForm.puan) || 0,
-        not_metni: String(notForm.not_metni || ''),
-      }
-      const res = await fetch(`${API}/admin/performans/${selectedKatilimciId}/not-ekle/`, {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await addAdminPerformansNotu(selectedKatilimciId, notForm)
       setNotForm({ kriter: '', puan: 10, not_metni: '' })
       await fetchDetail(selectedKatilimciId)
       setToast({ msg: 'Kriter bazlı performans notu eklendi!', type: 'success' })
@@ -2900,7 +2833,7 @@ function PerformansSection({ token, setToast }) {
 
   const filtered = safePerformansList.filter(p => {
     if (!p || typeof p !== 'object') return false
-    const kAdi = String(p.katilimci_adi || '')
+    const kAdi = String(p.ad_soyad || p.katilimci_adi || '')
     const tAdi = String(p.takim_adi || '')
     return kAdi.toLowerCase().includes(searchQuery) || tAdi.toLowerCase().includes(searchQuery)
   })
@@ -2993,7 +2926,7 @@ function PerformansSection({ token, setToast }) {
                     if (!item || typeof item !== 'object') return null
                     const targetId = item.katilimci || item.id
                     const isSelected = selectedKatilimciId === targetId
-                    const kAdi = String(item.katilimci_adi || 'Bilinmeyen Katılımcı')
+                    const kAdi = String(item.ad_soyad || item.katilimci_adi || 'Bilinmeyen Katılımcı')
                     const tAdi = item.takim_adi ? String(item.takim_adi) : null
                     const birPuan = Number(item.bireysel_puan) || 0
                     const gPuan = Number(item.gorev_puani) || 0
