@@ -1,4 +1,4 @@
-﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const ALLOWED_ORIGINS = [
@@ -376,6 +376,104 @@ serve(async (req) => {
           hareket: insertedHareket
         }
       })
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ACTION: get_my_participants (Mentor/Admin Katılımcılarını Güvenli Getir)
+    // ─────────────────────────────────────────────────────────────────────────
+    if (action === 'get_my_participants') {
+      let callerMentorId = profile.core_mentor_id
+
+      if (!callerMentorId && profile.role === 'mentor') {
+        const { data: mData } = await adminClient
+          .from('core_mentor')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle()
+        if (mData) callerMentorId = mData.id
+      }
+
+      if (profile.role === 'admin' && payload?.mentor_id) {
+        callerMentorId = Number(payload.mentor_id)
+      }
+
+      let takimQuery = adminClient.from('core_takim').select('id, takim_adi, mentor_id')
+      if (callerMentorId) {
+        takimQuery = takimQuery.eq('mentor_id', callerMentorId)
+      }
+
+      const { data: takimlar, error: takimErr } = await takimQuery
+      if (takimErr) return jsonRes(req, { ok: false, error: takimErr.message }, 500)
+
+      const takimMap = new Map((takimlar || []).map((t: any) => [Number(t.id), t.takim_adi]))
+      const teamIds = (takimlar || []).map((t: any) => Number(t.id)).filter(Boolean)
+
+      let katQuery = adminClient.from('core_katilimci').select('*').order('id', { ascending: false })
+      if (profile.role === 'mentor') {
+        if (teamIds.length === 0) {
+          return jsonRes(req, { ok: true, data: [] })
+        }
+        katQuery = katQuery.in('takim_id', teamIds)
+      }
+
+      const { data: katilimcilar, error: katErr } = await katQuery
+      if (katErr) return jsonRes(req, { ok: false, error: katErr.message }, 500)
+
+      const adayIds = (katilimcilar || []).map((k: any) => k.aday_id).filter(Boolean)
+      const katilimciIds = (katilimcilar || []).map((k: any) => k.id).filter(Boolean)
+
+      let adayMap = new Map()
+      if (adayIds.length > 0) {
+        const { data: adaylar } = await adminClient
+          .from('core_aday')
+          .select('id, ad, soyad, eposta, universite')
+          .in('id', adayIds)
+        if (adaylar) {
+          adayMap = new Map(adaylar.map((a: any) => [Number(a.id), a]))
+        }
+      }
+
+      let profMap = new Map()
+      if (katilimciIds.length > 0) {
+        const { data: profs } = await adminClient
+          .from('profiles')
+          .select('core_katilimci_id, ad_soyad, eposta')
+          .in('core_katilimci_id', katilimciIds)
+        if (profs) {
+          profMap = new Map(profs.map((p: any) => [Number(p.core_katilimci_id), p]))
+        }
+      }
+
+      const result = (katilimcilar || []).map((k: any) => {
+        const directAday = k.aday_id ? adayMap.get(Number(k.aday_id)) : null
+        const adayObj = directAday || {}
+        const profileObj = profMap.get(Number(k.id)) || {}
+
+        const adayAdSoyad = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim()
+        const directAdSoyad = `${k.ad || ''} ${k.soyad || ''}`.trim() || k.ad_soyad || profileObj.ad_soyad || ''
+        const finalAdSoyad = adayAdSoyad || directAdSoyad || `Katılımcı #${k.id}`
+
+        const finalEposta = adayObj.eposta || k.eposta || profileObj.eposta || ''
+        const finalUniversite = adayObj.universite || k.universite || ''
+        const rawTakimId = k.takim_id ?? k.takim
+        const takimId = rawTakimId !== undefined && rawTakimId !== null ? Number(rawTakimId) : null
+        const takimAdi = (takimId ? takimMap.get(takimId) : null) || k.takim_adi || ''
+
+        return {
+          id: k.id,
+          aday_id: k.aday_id ?? null,
+          takim_id: takimId,
+          takim_adi: takimAdi,
+          ad: adayObj.ad || k.ad || '',
+          soyad: adayObj.soyad || k.soyad || '',
+          ad_soyad: finalAdSoyad,
+          eposta: finalEposta,
+          universite: finalUniversite,
+          sinif: k.sinif || ''
+        }
+      })
+
+      return jsonRes(req, { ok: true, data: result })
     }
 
     return jsonRes(req, { ok: false, error: `Bilinmeyen action: ${action}` }, 400)

@@ -577,6 +577,15 @@ export async function getMentorTakimlarim(mentorId) {
 }
 
 export async function getMentorKatilimcilarim(mentorId) {
+  try {
+    const res = await callMentorAction('get_my_participants', { mentor_id: mentorId })
+    if (res && res.ok && Array.isArray(res.data) && res.data.length > 0) {
+      return res.data
+    }
+  } catch (eErr) {
+    console.warn('mentor-actions get_my_participants call failed, falling back to client query:', eErr)
+  }
+
   const { data: katData, error: katErr } = await supabase
     .from('core_katilimci')
     .select('*, aday:core_aday(ad, soyad, eposta, universite)')
@@ -638,30 +647,77 @@ export async function getMentorKatilimcilarim(mentorId) {
   })
 }
 
+function groupTeslimlerByTask(rawTeslimList) {
+  if (!Array.isArray(rawTeslimList) || rawTeslimList.length === 0) return []
+
+  const groups = new Map()
+
+  for (const item of rawTeslimList) {
+    const kId = item.katilimci_id ?? item.katilimci ?? 0
+    const tId = item.takim_id ?? item.takim ?? 0
+    const gId = item.gorev_id ?? item.gorev ?? 0
+    const key = `${kId}_${tId}_${gId}`
+
+    if (!groups.has(key)) {
+      groups.set(key, [])
+    }
+    groups.get(key).push(item)
+  }
+
+  const result = []
+
+  for (const items of groups.values()) {
+    items.sort((a, b) => Number(a.id || 0) - Number(b.id || 0))
+    const latestItem = items[items.length - 1]
+
+    const combinedMovements = []
+    for (const it of items) {
+      const norm = normalizeTeslim(it)
+      if (Array.isArray(norm.hareketler)) {
+        combinedMovements.push(...norm.hareketler)
+      }
+    }
+
+    const seenIds = new Set()
+    const uniqueMovements = combinedMovements.filter(h => {
+      const hKey = h.id ? String(h.id) : `${h.islem_tipi}_${h.olusturulma_tarihi || h.tarih}`
+      if (seenIds.has(hKey)) return false
+      seenIds.add(hKey)
+      return true
+    })
+
+    uniqueMovements.sort((a, b) => {
+      const tA = new Date(a.olusturulma_tarihi || a.tarih || 0).getTime()
+      const tB = new Date(b.olusturulma_tarihi || b.tarih || 0).getTime()
+      return tA - tB
+    })
+
+    const normLatest = normalizeTeslim(latestItem)
+
+    result.push({
+      ...normLatest,
+      katilimci: latestItem.katilimci_id || latestItem.katilimci,
+      takim: latestItem.takim_id || latestItem.takim,
+      gorev: latestItem.gorev_id || latestItem.gorev,
+      hareketler: uniqueMovements
+    })
+  }
+
+  result.sort((a, b) => Number(b.id || 0) - Number(a.id || 0))
+  return result
+}
+
 export async function getMentorTeslimler(mentorId) {
   const { data, error } = await supabase
     .from('core_teslim')
     .select('*, hareketler:core_teslimhareketi(*)')
     .order('id', { ascending: false })
-  if (error) {
-    const { data: rawData, error: rawErr } = await supabase
-      .from('core_teslim')
-      .select('*')
-      .order('id', { ascending: false })
-    if (rawErr) throw rawErr
-    return (rawData || []).map(t => ({
-      ...normalizeTeslim(t),
-      katilimci: t.katilimci_id,
-      takim: t.takim_id,
-      gorev: t.gorev_id
-    }))
-  }
-  return (data || []).map(t => ({
-    ...normalizeTeslim(t),
-    katilimci: t.katilimci_id,
-    takim: t.takim_id,
-    gorev: t.gorev_id
-  }))
+
+  const rawList = error
+    ? ((await supabase.from('core_teslim').select('*').order('id', { ascending: false })).data || [])
+    : (data || [])
+
+  return groupTeslimlerByTask(rawList)
 }
 
 // ─── ADMIN EDGE FUNCTION ÇAĞRISI ─────────────────────────────────────────────

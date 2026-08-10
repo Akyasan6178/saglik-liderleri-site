@@ -1317,7 +1317,8 @@ export default function KatilimciPanel() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!selectedGorev || !selectedGorev.id) {
+    const effectiveGorevId = selectedGorev?.id || selectedGorev?.teslim?.gorev_id || selectedGorev?.teslim?.gorev
+    if (!effectiveGorevId) {
       setToast({ type: 'error', message: 'Görev bilgisi bulunamadı. Lütfen sayfayı yenileyip tekrar deneyin.' })
       return
     }
@@ -1332,7 +1333,7 @@ export default function KatilimciPanel() {
 
     try {
       await submitKatilimciTeslim({
-        gorev_id: selectedGorev.id,
+        gorev_id: effectiveGorevId,
         teslim_linki: cleanLink,
         aciklama: not || '',
         file: file
