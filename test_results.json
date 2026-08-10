@@ -1,0 +1,106 @@
+[
+  {
+    "Test": "Anon insert aday",
+    "Role": "anon",
+    "Table": "core_aday",
+    "Expected": "ALLOWED",
+    "Actual": "ALLOWED",
+    "PASS": true
+  },
+  {
+    "Test": "Anon select aday",
+    "Role": "anon",
+    "Table": "core_aday",
+    "Expected": "DENIED",
+    "Actual": "DENIED (0 rows)",
+    "PASS": true
+  },
+  {
+    "Test": "Anon select katilimci",
+    "Role": "anon",
+    "Table": "core_katilimci",
+    "Expected": "DENIED",
+    "Actual": "DENIED (0 rows)",
+    "PASS": true
+  },
+  {
+    "Test": "Anon select teslim",
+    "Role": "anon",
+    "Table": "core_teslim",
+    "Expected": "DENIED",
+    "Actual": "DENIED (0 rows)",
+    "PASS": true
+  },
+  {
+    "Test": "Katilimci select profiles",
+    "Role": "katilimci",
+    "Table": "profiles",
+    "Expected": "ALLOWED (Only self)",
+    "Actual": "ALLOWED (Only self - 1 row)",
+    "PASS": true
+  },
+  {
+    "Test": "Katilimci select teslim",
+    "Role": "katilimci",
+    "Table": "core_teslim",
+    "Expected": "ALLOWED (Only self)",
+    "Actual": "ALLOWED (Only self)",
+    "PASS": true
+  },
+  {
+    "Test": "Katilimci update performans",
+    "Role": "katilimci",
+    "Table": "core_katilimciperformans",
+    "Expected": "DENIED",
+    "Actual": "DENIED",
+    "PASS": true
+  },
+  {
+    "Test": "Katilimci update DNA",
+    "Role": "katilimci",
+    "Table": "core_icerikdnatesti",
+    "Expected": "DENIED",
+    "Actual": "DENIED",
+    "PASS": true
+  },
+  {
+    "Test": "Mentor select katilimci",
+    "Role": "mentor",
+    "Table": "core_katilimci",
+    "Expected": "ALLOWED (Only own team)",
+    "Actual": "ALLOWED (Only own team)",
+    "PASS": true
+  },
+  {
+    "Test": "Mentor select teslim",
+    "Role": "mentor",
+    "Table": "core_teslim",
+    "Expected": "ALLOWED (Only own team)",
+    "Actual": "ALLOWED (Only own team)",
+    "PASS": true
+  },
+  {
+    "Test": "Admin select aday",
+    "Role": "admin",
+    "Table": "core_aday",
+    "Expected": "ALLOWED",
+    "Actual": "ALLOWED",
+    "PASS": true
+  },
+  {
+    "Test": "Admin select teslim",
+    "Role": "admin",
+    "Table": "core_teslim",
+    "Expected": "ALLOWED",
+    "Actual": "ALLOWED",
+    "PASS": true
+  },
+  {
+    "Test": "Admin update performans",
+    "Role": "admin",
+    "Table": "core_katilimciperformans",
+    "Expected": "ALLOWED",
+    "Actual": "ALLOWED",
+    "PASS": true
+  }
+]
