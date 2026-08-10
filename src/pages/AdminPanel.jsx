@@ -2805,13 +2805,15 @@ function PerformansSection({ token, setToast }) {
 
   useEffect(() => { fetchList() }, [fetchList])
 
-  const fetchDetail = async (katilimciId) => {
+  const fetchDetail = async (katilimciId, baseRow = null) => {
     if (!katilimciId) return
     setSelectedKatilimciId(katilimciId)
     setDetailLoading(true)
     try {
+      const baseItem = baseRow || (performansList || []).find(p => Number(p.katilimci_id || p.katilimci || p.id) === Number(katilimciId)) || null
+
       const [item, tList, sList, tesList] = await Promise.all([
-        (performansList || []).find(p => p.katilimci_id === katilimciId || p.katilimci === katilimciId) || null,
+        baseItem || (performansList || []).find(p => Number(p.katilimci_id || p.katilimci || p.id) === Number(katilimciId)) || null,
         getAdminKatilimciToplantilari(katilimciId).catch(() => []),
         getAdminKatilimciSosyalMedya(katilimciId).catch(() => []),
         getAdminKatilimciTeslimleri(katilimciId).catch(() => [])
@@ -2819,7 +2821,7 @@ function PerformansSection({ token, setToast }) {
 
       const perfItem = item || {
         katilimci_id: katilimciId,
-        ad_soyad: 'Katılımcı',
+        ad_soyad: baseItem?.ad_soyad || 'Katılımcı',
         gorev_puani: 0,
         toplanti_katilim_puani: 0,
         etkilesim_bonus_puani: 0,
@@ -2829,7 +2831,17 @@ function PerformansSection({ token, setToast }) {
         katilimciya_gorunen_not: ''
       }
 
+      const katilimciInfo = {
+        id: katilimciId,
+        ad_soyad: perfItem.ad_soyad || baseItem?.ad_soyad || baseItem?.katilimci_ad_soyad || `${baseItem?.ad || ''} ${baseItem?.soyad || ''}`.trim() || 'Katılımcı',
+        eposta: perfItem.eposta || baseItem?.eposta || '',
+        universite: perfItem.universite || baseItem?.universite || '',
+        takim_adi: perfItem.takim_adi || baseItem?.takim_adi || 'Takımsız',
+        program_katilim_durumu: 'AKTIF'
+      }
+
       setDetail({
+        katilimci: katilimciInfo,
         performans: perfItem,
         toplanti_katilimlari: tList || [],
         sosyal_medya: sList || [],
@@ -3077,7 +3089,7 @@ function PerformansSection({ token, setToast }) {
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <button
                             id={`btn-perf-detail-${targetId}`}
-                            onClick={() => fetchDetail(targetId)}
+                            onClick={() => fetchDetail(targetId, item)}
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                               isSelected
                                 ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
@@ -3109,15 +3121,30 @@ function PerformansSection({ token, setToast }) {
                   <Ic.Close c="w-3.5 h-3.5 text-gray-500" />
                   <span>Listeye Dön</span>
                 </button>
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-base shadow-2xs flex-shrink-0">
-                  {String(katilimciObj.ad_soyad || '?')[0].toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-bold text-gray-800 text-base leading-snug truncate">{String(katilimciObj.ad_soyad || 'Bilinmiyor')}</h3>
-                  <p className="text-xs text-gray-500 truncate">
-                    {String(katilimciObj.eposta || '—')} · {katilimciObj.takim ? String(katilimciObj.takim) : 'Takımsız'} · <span className="font-medium text-emerald-600">{String(katilimciObj.program_katilim_durumu || 'AKTIF')}</span>
-                  </p>
-                </div>
+
+                {(() => {
+                  const kName = String(katilimciObj.ad_soyad || katilimciObj.katilimci_ad_soyad || performansObj.ad_soyad || 'Bilinmeyen Katılımcı').trim()
+                  const kInitial = kName !== 'Bilinmeyen Katılımcı' && kName.length > 0 ? kName[0].toUpperCase() : '?'
+                  const tName = katilimciObj.takim_adi || katilimciObj.takim || performansObj.takim_adi || 'Takımsız'
+                  const email = katilimciObj.eposta || performansObj.eposta || ''
+                  const uni = katilimciObj.universite || performansObj.universite || ''
+
+                  return (
+                    <>
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-base shadow-2xs flex-shrink-0">
+                        {kInitial}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-gray-800 text-base leading-snug truncate">{kName}</h3>
+                        <p className="text-xs text-gray-500 truncate">
+                          {email ? `${email} · ` : ''}
+                          <span className="font-semibold text-gray-700">{tName}</span>
+                          {uni ? ` · ${uni}` : ''}
+                        </p>
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <div className="text-right">
