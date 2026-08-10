@@ -144,17 +144,31 @@ export async function getKatilimcilar() {
   if (error) throw error
   return (data || []).map(k => {
     const adayObj = k.aday || {}
-    const fullAd = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim()
+    const adayAdSoyad = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim()
+    const directAdSoyad = `${k.ad || ''} ${k.soyad || ''}`.trim() || k.ad_soyad || ''
+    const finalAdSoyad = adayAdSoyad || directAdSoyad || `Katılımcı #${k.id}`
+    const finalAd = adayObj.ad || k.ad || (finalAdSoyad.split(' ')[0] || '')
+    const finalSoyad = adayObj.soyad || k.soyad || (finalAdSoyad.split(' ').slice(1).join(' ') || '')
+    const finalEposta = adayObj.eposta || k.eposta || ''
+    const finalUniversite = adayObj.universite || k.universite || ''
+    const rawTakimId = k.takim_id ?? k.takim
+    const takimId = rawTakimId !== undefined && rawTakimId !== null ? Number(rawTakimId) : null
+
     return {
       ...k,
-      takim: k.takim_id,
-      aday: k.aday_id,
-      aday_adi: fullAd || `Katılımcı #${k.id}`,
-      aday_soyad: adayObj.soyad || '',
-      ad_soyad: fullAd || `Katılımcı #${k.id}`,
-      eposta: adayObj.eposta || '',
-      aday_universite: adayObj.universite || '',
-      universite: adayObj.universite || ''
+      id: k.id,
+      takim_id: takimId,
+      takim: takimId,
+      aday: k.aday_id ?? k.aday ?? null,
+      aday_id: k.aday_id ?? k.aday ?? null,
+      ad: finalAd,
+      soyad: finalSoyad,
+      aday_adi: finalAdSoyad,
+      aday_soyad: finalSoyad,
+      ad_soyad: finalAdSoyad,
+      eposta: finalEposta,
+      aday_universite: finalUniversite,
+      universite: finalUniversite
     }
   })
 }

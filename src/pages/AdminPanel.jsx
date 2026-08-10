@@ -531,7 +531,7 @@ export default function AdminPanel() {
     try {
       await updateKatilimci(katilimciId, { takim_id: takimId })
       await fetchAll()
-      setToast({ msg: 'Üye takıma eklendi!', type: 'success' })
+      setToast({ msg: 'Katılımcı takıma eklendi.', type: 'success' })
     } catch (e) { setToast({ msg: `Üye eklenemedi: ${e.message}`, type: 'error' }) }
     finally { setAddingMember(null) }
   }
@@ -541,7 +541,7 @@ export default function AdminPanel() {
     try {
       await updateKatilimci(katilimciId, { takim_id: null })
       await fetchAll()
-      setToast({ msg: `"${uyeAdi}" takımdan çıkarıldı.`, type: 'info' })
+      setToast({ msg: 'Katılımcı takımdan çıkarıldı.', type: 'info' })
     } catch (e) { setToast({ msg: `Üye çıkarılamadı: ${e.message}`, type: 'error' }) }
   }
 
@@ -642,8 +642,9 @@ export default function AdminPanel() {
     [a.ad_soyad, a.universite, a.sinif, a.eposta, a.sosyal_medya].some(v => v?.toLowerCase().includes(search.toLowerCase()))
   )
 
-  // Atanmamış katılımcılar (takımlar sekmesi dropdown için)
-  const serbest = katilimcilar.filter(k => !k.takim_id && !k.takim)
+  // Atanmamış (serbest) katılımcılar (takımlar sekmesi dropdown için)
+  const serbestUyeler = katilimcilar.filter(k => !k.takim_id)
+  const serbest = serbestUyeler
 
   /* ════════════════════════════════════════
      RENDER
@@ -891,7 +892,7 @@ export default function AdminPanel() {
                   : takimlar.length === 0
                     ? <div className="col-span-full text-center py-16 text-gray-400"><p className="text-4xl mb-3">🏆</p><p className="font-medium">{error ? 'Veri yüklenemedi.' : 'Henüz takım yok.'}</p></div>
                     : takimlar.map((takim) => {
-                      const uyeler   = katilimcilar.filter(k => Number(k.takim_id ?? k.takim) === Number(takim.id))
+                      const takimUyeleri = katilimcilar.filter(k => k.takim_id && Number(k.takim_id) === Number(takim.id))
                       const isAdding = addingMember === takim.id
                       const isDeleting = deletingTakim === takim.id
                       const dropOpen = activeDropdown === takim.id
@@ -940,35 +941,43 @@ export default function AdminPanel() {
                           </div>
 
                           {/* Üye Listesi */}
-                          <div className="px-6 pb-2">
-                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Üyeler ({uyeler.length})</p>
-                            {uyeler.length === 0
+                          <div className="px-6 pb-4 flex-1">
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Mevcut Üyeler ({takimUyeleri.length})</p>
+                            {takimUyeleri.length === 0
                               ? <p className="text-xs text-gray-400 italic py-2">Bu takımda henüz katılımcı yok.</p>
                               : (
-                                <div className="space-y-1.5">
-                                  {uyeler.map(uye => (
-                                    <div key={uye.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 group/uye">
-                                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet/20 to-purple-100 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-[10px] font-bold text-violet">{((uye.aday_adi || uye.ad_soyad || '?')[0] || '?').toUpperCase()}</span>
+                                <div className="space-y-2">
+                                  {takimUyeleri.map(uye => {
+                                    const isim = uye.ad_soyad || uye.aday_adi || `Katılımcı #${uye.id}`
+                                    const eposta = uye.eposta || ''
+                                    const uni = uye.universite || uye.aday_universite || ''
+                                    return (
+                                      <div key={uye.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl bg-gray-50 border border-gray-100 hover:bg-gray-100/80 transition-colors">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet/20 to-purple-100 flex items-center justify-center flex-shrink-0">
+                                            <span className="text-xs font-bold text-violet">{(isim[0] || '?').toUpperCase()}</span>
+                                          </div>
+                                          <div className="min-w-0">
+                                            <p className="text-xs font-semibold text-gray-800 truncate">{isim}</p>
+                                            <div className="flex items-center gap-2 text-[11px] text-gray-400 truncate">
+                                              {eposta && <span className="truncate">{eposta}</span>}
+                                              {eposta && uni && <span>•</span>}
+                                              {uni && <span className="truncate">{uni}</span>}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        {/* Üye Çıkar Butonu */}
+                                        <button
+                                          id={`btn-uye-cikar-${uye.id}`}
+                                          title="Takımdan Çıkar"
+                                          onClick={() => uyeCikar(uye.id, isim)}
+                                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 hover:text-red-700 border border-red-200/60 transition-all flex-shrink-0"
+                                        >
+                                          <Ic.X c="w-3.5 h-3.5" /> Takımdan Çıkar
+                                        </button>
                                       </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium text-gray-700 truncate">{uye.aday_adi || uye.ad_soyad || `Katılımcı #${uye.id}`}</p>
-                                        <p className="text-[10px] text-gray-400 truncate">{uye.aday_universite || uye.universite || ''}</p>
-                                      </div>
-                                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${uye.program_katilim_durumu === 'AKTIF' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                                        {uye.program_katilim_durumu}
-                                      </span>
-                                      {/* Üye Çıkar */}
-                                      <button
-                                        id={`btn-uye-cikar-${uye.id}`}
-                                        title="Takımdan Çıkar"
-                                        onClick={() => uyeCikar(uye.id, uye.aday_adi || uye.ad_soyad || `Katılımcı #${uye.id}`)}
-                                        className="p-1 rounded-md text-red-300 hover:text-red-600 hover:bg-red-50 transition-all opacity-0 group-hover/uye:opacity-100 ml-1"
-                                      >
-                                        <Ic.X c="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  ))}
+                                    )
+                                  })}
                                 </div>
                               )
                             }
@@ -976,7 +985,7 @@ export default function AdminPanel() {
 
                           {/* Üye Ekle */}
                           <div className="px-6 pb-6 pt-3 border-t border-gray-100 mt-auto relative">
-                            {serbest.length === 0
+                            {serbestUyeler.length === 0
                               ? <p className="text-xs text-gray-400 italic text-center py-1">Takıma eklenebilecek serbest üye yok.</p>
                               : (
                                 <>
@@ -995,22 +1004,23 @@ export default function AdminPanel() {
                                   {dropOpen && (
                                     <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 animate-slide-up" style={{boxShadow: '0 20px 60px -10px rgba(0,0,0,0.15)'}}>
                                       <div className="px-4 py-3 border-b border-gray-100">
-                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Atanmamış Üyeler</p>
+                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Atanmamış (Serbest) Üyeler</p>
                                       </div>
                                       <div className="max-h-48 overflow-y-auto rounded-b-2xl">
-                                        {serbest.map(k => {
+                                        {serbestUyeler.map(k => {
                                           const aday = adaylar.find(a => a.id === k.aday)
-                                          const isim = k.aday_adi ?? k.aday_ad_soyad ?? aday?.ad_soyad ?? `Aday #${k.aday}`
-                                          const uni  = k.aday_universite ?? aday?.universite ?? ''
+                                          const isim = k.ad_soyad ?? k.aday_adi ?? aday?.ad_soyad ?? `Aday #${k.aday}`
+                                          const uni  = k.universite ?? k.aday_universite ?? aday?.universite ?? ''
+                                          const email = k.eposta ?? aday?.eposta ?? ''
                                           return (
                                             <button key={k.id} onClick={() => uyeEkle(takim.id, k.id)}
                                               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-violet-light text-left transition-colors border-b border-gray-50 last:border-0">
                                               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-coral/20 to-orange-100 flex items-center justify-center flex-shrink-0">
                                                 <span className="text-xs font-bold text-coral">{isim[0]?.toUpperCase()}</span>
                                               </div>
-                                              <div className="min-w-0">
+                                              <div className="min-w-0 flex-1">
                                                 <p className="text-sm font-medium text-gray-800 truncate">{isim}</p>
-                                                <p className="text-[11px] text-gray-400 truncate">{uni}</p>
+                                                <p className="text-[11px] text-gray-400 truncate">{email ? `${email} ${uni ? '• ' + uni : ''}` : uni}</p>
                                               </div>
                                               <Ic.Plus c="w-3.5 h-3.5 text-violet ml-auto flex-shrink-0" />
                                             </button>
