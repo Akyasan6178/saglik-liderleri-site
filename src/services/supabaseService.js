@@ -510,3 +510,37 @@ export async function requestRevision(teslim_id, revizyon_notu) {
   return data.data
 }
 
+export async function evaluateDelivery(teslim_id, alinan_puan, mentor_yorumu) {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError || !session?.access_token) {
+    throw new Error('Oturum geçersiz veya süresi dolmuş.')
+  }
+
+  const { data, error } = await supabase.functions.invoke('mentor-actions', {
+    body: {
+      action: 'evaluate_delivery',
+      payload: { teslim_id, alinan_puan, mentor_yorumu }
+    },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`
+    }
+  })
+
+  if (error) {
+    let msg = error.message || 'Değerlendirme kaydedilemedi.'
+    if (error.context && typeof error.context.json === 'function') {
+      try {
+        const body = await error.context.json()
+        if (body?.error) msg = body.error
+      } catch (_) {}
+    }
+    throw new Error(msg)
+  }
+
+  if (!data?.ok) {
+    throw new Error(data?.error || 'Nihai değerlendirme işlenirken bir hata oluştu.')
+  }
+  return data.data
+}
+
+

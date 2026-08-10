@@ -8,6 +8,7 @@ import {
   getMentorTeslimler,
   getGorevler,
   requestRevision,
+  evaluateDelivery,
   logoutUser
 } from '../services/supabaseService'
 
@@ -219,29 +220,13 @@ export default function MentorPanel() {
     }
 
     setSaving(true)
-    const token = localStorage.getItem('access')
     try {
-      const res = await fetch(`${API}/teslimler/${selectedTeslim.id}/nihai-degerlendir/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          alinan_puan: pVal,
-          mentor_yorumu: yorum
-        })
-      })
-
-      if (res.ok) {
-        setSelectedTeslim(null)
-        fetchAll()
-      } else {
-        const errData = await res.json().catch(() => ({}))
-        setModalError(errData.detail || 'Nihai değerlendirme kaydedilemedi.')
-      }
+      await evaluateDelivery(selectedTeslim.id, pVal, yorum ? yorum.trim() : '')
+      setSelectedTeslim(null)
+      fetchAll()
     } catch (err) {
-      setModalError('Bağlantı hatası oluştu.')
+      console.error('Nihai değerlendirme hatası:', err)
+      setModalError(err.message || 'Nihai değerlendirme kaydedilemedi.')
     } finally {
       setSaving(false)
     }
