@@ -480,6 +480,10 @@ export async function callAdminAction(action, payload = {}) {
   return data
 }
 
+export async function importCandidatesCsvText(filename, csvText) {
+  return await callAdminAction('import_candidates_csv', { filename, csv_text: csvText })
+}
+
 // ─── MENTOR EDGE FUNCTION ÇAĞRISI ────────────────────────────────────────────
 export async function requestRevision(teslim_id, revizyon_notu) {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()

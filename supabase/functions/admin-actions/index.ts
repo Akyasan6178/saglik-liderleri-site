@@ -27,6 +27,26 @@ function jsonRes(req: Request, data: unknown, status = 200) {
   })
 }
 
+function parseCsvLine(line: string): string[] {
+  const result: string[] = []
+  let current = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    if (char === '"') {
+      inQuotes = !inQuotes
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim().replace(/^"|"$/g, ''))
+      current = ''
+    } else {
+      current += char
+    }
+  }
+  result.push(current.trim().replace(/^"|"$/g, ''))
+  return result
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     const origin = req.headers.get('origin') || ''
@@ -120,7 +140,6 @@ serve(async (req) => {
       const { ad_soyad, eposta, uzmanlik, gecici_sifre } = payload
       if (!ad_soyad || !eposta) return jsonRes(req, { ok: false, error: 'ad_soyad ve eposta zorunludur.' }, 400)
 
-      // 1. Check if soft-deleted mentor exists with this email
       const { data: existingMentor } = await adminClient
         .from('core_mentor')
         .select('*')
@@ -147,7 +166,6 @@ serve(async (req) => {
         return jsonRes(req, { ok: true, data: { mentor: reactivatedMentor, action: 'create_mentor', reactivated: true } })
       }
 
-      // 2. Standard creation for new mentor
       const password = gecici_sifre || Math.random().toString(36).slice(-10) + 'A1!'
       const { data: authUser, error: authErr } = await adminClient.auth.admin.createUser({
         email: eposta, password, email_confirm: true,
@@ -184,7 +202,6 @@ serve(async (req) => {
 
       const now = new Date().toISOString()
 
-      // 1. Soft delete core_mentor: set aktif = false, silinme_tarihi = now
       const { error: softDelErr } = await adminClient
         .from('core_mentor')
         .update({ aktif: false, silinme_tarihi: now })
@@ -195,10 +212,128 @@ serve(async (req) => {
         return jsonRes(req, { ok: false, error: 'Mentor pasif hale getirilemedi.' }, 500)
       }
 
-      // 2. Unassign active teams from this mentor so teams can be reassigned
       await adminClient.from('core_takim').update({ mentor_id: null }).eq('mentor_id', mentor_id)
 
       return jsonRes(req, { ok: true, data: { mentor_id, action: 'delete_mentor', soft_deleted: true } })
+    }
+
+    if (action === 'import_candidates_csv') {
+      const { csv_text, filename } = payload
+      if (!csv_text || typeof csv_text !== 'string' || !csv_text.trim()) {
+        return jsonRes(req, { ok: false, error: 'CSV metni boş olamaz.' }, 400)
+      }
+
+      const rawLines = csv_text.split(/\r?\n/).filter(line => line.trim().length > 0)
+      if (rawLines.length < 2) {
+        return jsonRes(req, { ok: false, error: 'CSV dosyası başlık ve en az 1 veri satırı içermelidir.' }, 400)
+      }
+
+      if (rawLines.length > 501) {
+        return jsonRes(req, { ok: false, error: 'Bir defada en fazla 500 satır içe aktarılabilir.' }, 400)
+      }
+
+      const headers = parseCsvLine(rawLines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9_]/g, ''))
+
+      function getColIndex(possibleNames: string[]): number {
+        return headers.findIndex(h => possibleNames.includes(h))
+      }
+
+      const colAd = getColIndex(['ad', 'first_name', 'firstname', 'name', 'isim'])
+      const colSoyad = getColIndex(['soyad', 'last_name', 'lastname', 'surname', 'soyisim'])
+      const colEposta = getColIndex(['eposta', 'email', 'e_posta', 'mail'])
+      const colTelefon = getColIndex(['telefon', 'phone', 'tel', 'mobile'])
+      const colUniversite = getColIndex(['universite', 'university', 'okul'])
+      const colSinif = getColIndex(['sinif', 'class', 'grade', 'yil'])
+      const colKaynak = getColIndex(['kaynak', 'source'])
+      const colAdSoyadCombined = headers.indexOf('ad_soyad')
+
+      if (colEposta === -1 || (colAd === -1 && colSoyad === -1 && colAdSoyadCombined === -1)) {
+        return jsonRes(req, { ok: false, error: 'CSV dosyasında en az eposta ve ad/soyad kolonları bulunmalıdır.' }, 400)
+      }
+
+      const { data: existingAdaylar } = await adminClient.from('core_aday').select('eposta')
+      const existingEmails = new Set((existingAdaylar || []).map(a => (a.eposta || '').trim().toLowerCase()))
+
+      const nowIso = new Date().toISOString()
+      const rowsToInsert: any[] = []
+      const errors: string[] = []
+      let skippedCount = 0
+
+      for (let i = 1; i < rawLines.length; i++) {
+        const cols = parseCsvLine(rawLines[i])
+        if (cols.length === 0 || (cols.length === 1 && !cols[0])) continue
+
+        let email = colEposta !== -1 ? (cols[colEposta] || '').trim().toLowerCase() : ''
+        let ad = colAd !== -1 ? (cols[colAd] || '').trim() : ''
+        let soyad = colSoyad !== -1 ? (cols[colSoyad] || '').trim() : ''
+
+        if (!ad && !soyad && colAdSoyadCombined !== -1) {
+          const parts = (cols[colAdSoyadCombined] || '').trim().split(' ')
+          ad = parts[0] || ''
+          soyad = parts.slice(1).join(' ') || ''
+        }
+
+        const rowNum = i + 1
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!email || !emailRegex.test(email)) {
+          errors.push(`Satır ${rowNum}: Geçersiz veya boş e-posta adresi ("${email}")`)
+          continue
+        }
+
+        if (!ad) {
+          errors.push(`Satır ${rowNum}: Ad alanı boş`)
+          continue
+        }
+
+        if (existingEmails.has(email)) {
+          skippedCount++
+          continue
+        }
+
+        const telefon = colTelefon !== -1 ? (cols[colTelefon] || '').trim() : null
+        const universite = colUniversite !== -1 ? (cols[colUniversite] || '').trim() : null
+        const sinif = colSinif !== -1 ? (cols[colSinif] || '').trim() : null
+        const kaynakVal = colKaynak !== -1 && cols[colKaynak] ? cols[colKaynak].trim() : 'Admin CSV Import'
+
+        existingEmails.add(email)
+        rowsToInsert.push({
+          ad,
+          soyad: soyad || ad,
+          eposta: email,
+          telefon: telefon || null,
+          universite: universite || null,
+          sinif: sinif || null,
+          kaynak: kaynakVal,
+          basvuru_tarihi: nowIso,
+          basvuru_durumu: 'BEKLIYOR',
+          takvim_onay: false,
+        })
+      }
+
+      let insertedCount = 0
+      if (rowsToInsert.length > 0) {
+        const { data: insertedData, error: insertErr } = await adminClient
+          .from('core_aday')
+          .insert(rowsToInsert)
+          .select()
+
+        if (insertErr) {
+          console.error('CSV Bulk Insert Error:', insertErr)
+          return jsonRes(req, { ok: false, error: 'Adaylar veritabanına eklenirken hata oluştu: ' + insertErr.message }, 500)
+        }
+        insertedCount = insertedData ? insertedData.length : rowsToInsert.length
+      }
+
+      return jsonRes(req, {
+        ok: true,
+        data: {
+          inserted: insertedCount,
+          skipped: skippedCount,
+          total: rawLines.length - 1,
+          errors: errors,
+          filename: filename || 'adaylar.csv'
+        }
+      })
     }
 
     return jsonRes(req, { ok: false, error: 'Bilinmeyen action: ' + action }, 400)

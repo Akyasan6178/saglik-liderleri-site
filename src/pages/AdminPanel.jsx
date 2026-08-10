@@ -20,6 +20,7 @@ import {
   addAdminToplantiKatilimi,
   addAdminSosyalMedya,
   addAdminPerformansNotu,
+  importCandidatesCsvText,
   logoutUser
 } from '../services/supabaseService'
 
@@ -593,14 +594,42 @@ export default function AdminPanel() {
     finally { setDeletingGorev(null) }
   }
 
-  /* ── CSV Import — TODO: DATA-05B Edge Function (CSV parse + bulk insert) ── */
+  /* ── CSV Import (import_candidates_csv via admin-actions) ── */
   const importCsv = async () => {
-    setToast({ msg: 'CSV içe aktarma şu an devre dışı. Google Sheets entegrasyonu (DATA-05B) bekleniyor.', type: 'error' })
+    if (!importFile) {
+      setToast({ msg: 'Lütfen içe aktarılacak bir CSV dosyası seçin.', type: 'error' })
+      return
+    }
+    setImporting(true)
+    setImportResult(null)
+    try {
+      const csvText = await importFile.text()
+      const res = await importCandidatesCsvText(importFile.name, csvText)
+      if (res && res.data) {
+        const { inserted, skipped, errors, total } = res.data
+        setImportResult({
+          olusturulan: inserted || 0,
+          guncellenen: 0,
+          atlanan: skipped || 0,
+          toplam: total || 0,
+          hatalar: errors || []
+        })
+        await fetchAll()
+        setToast({ msg: `${inserted} aday eklendi, ${skipped} aday atlandı.`, type: 'success' })
+      }
+    } catch (e) {
+      setToast({ msg: `CSV içe aktarma hatası: ${e.message}`, type: 'error' })
+    } finally {
+      setImporting(false)
+    }
   }
 
-  /* ── Sheets URL Import — TODO: DATA-05B Edge Function ── */
+  /* ── Sheets URL Import (Bilgilendirme Uyarısı) ── */
   const importSheetsUrl = async () => {
-    setToast({ msg: 'Google Sheets içe aktarma şu an devre dışı. Google Drive API entegrasyonu (GD fazı) bekleniyor.', type: 'error' })
+    setToast({
+      msg: 'Google Sheets doğrudan içe aktarma sonraki fazda eklenecektir. Lütfen Google Sheets dosyanızı Dosya → İndir → CSV (.csv) olarak indirip CSV sekmesinden yükleyin.',
+      type: 'info'
+    })
   }
 
 
