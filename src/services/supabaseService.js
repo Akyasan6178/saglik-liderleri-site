@@ -107,7 +107,15 @@ export async function getTakimlar() {
 }
 
 export async function createTakim(takimData) {
-  const { data, error } = await supabase.from('core_takim').insert([takimData]).select().single()
+  const today = new Date().toISOString().split('T')[0]
+  const payload = {
+    takim_adi: (takimData.takim_adi || '').trim(),
+    toplam_puan: typeof takimData.toplam_puan === 'number' ? takimData.toplam_puan : 0,
+    olusturulma_tarihi: takimData.olusturulma_tarihi || today,
+    mentor_id: takimData.mentor_id || takimData.mentor || null,
+    buyuk_gorev_basligi: takimData.buyuk_gorev_basligi || null
+  }
+  const { data, error } = await supabase.from('core_takim').insert([payload]).select().single()
   if (error) throw error
   return data
 }
@@ -119,6 +127,9 @@ export async function updateTakim(id, updates) {
 }
 
 export async function deleteTakim(id) {
+  await supabase.from('core_katilimci').update({ takim_id: null }).eq('takim_id', id)
+  await supabase.from('core_teslim').update({ takim_id: null }).eq('takim_id', id)
+  await supabase.from('core_gorev').update({ hedef_takim_id: null }).eq('hedef_takim_id', id)
   const { error } = await supabase.from('core_takim').delete().eq('id', id)
   if (error) throw error
   return true
@@ -126,13 +137,22 @@ export async function deleteTakim(id) {
 
 // ─── KATILIMCILAR ──────────────────────────────────────────────────────────────
 export async function getKatilimcilar() {
-  const { data, error } = await supabase.from('core_katilimci').select('*').order('id', { ascending: false })
+  const { data, error } = await supabase
+    .from('core_katilimci')
+    .select('*, aday:core_aday(ad, soyad, eposta, universite)')
+    .order('id', { ascending: false })
   if (error) throw error
-  return (data || []).map(k => ({
-    ...k,
-    takim: k.takim_id,
-    aday: k.aday_id
-  }))
+  return (data || []).map(k => {
+    const adayObj = k.aday || {}
+    const fullAd = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim()
+    return {
+      ...k,
+      takim: k.takim_id,
+      aday: k.aday_id,
+      aday_adi: fullAd || `Katılımcı #${k.id}`,
+      aday_universite: adayObj.universite || ''
+    }
+  })
 }
 
 export async function createKatilimci(katilimciData) {
@@ -165,7 +185,20 @@ export async function getGorevler() {
 }
 
 export async function createGorev(gorevData) {
-  const { data, error } = await supabase.from('core_gorev').insert([gorevData]).select().single()
+  const nowIso = new Date().toISOString()
+  const payload = {
+    hafta: Number(gorevData.hafta) || 1,
+    gorev_adi: (gorevData.gorev_adi || '').trim(),
+    brief_aciklama: (gorevData.brief_aciklama || '').trim(),
+    puan_kriterleri: (gorevData.puan_kriterleri || '').trim(),
+    son_teslim_tarihi: gorevData.son_teslim_tarihi || nowIso,
+    olusturulma_tarihi: gorevData.olusturulma_tarihi || nowIso,
+    maksimum_puan: Number(gorevData.maksimum_puan) || 100,
+    gorev_tipi: gorevData.gorev_tipi || 'GENEL',
+    hedef_katilimci_id: gorevData.hedef_katilimci_id || null,
+    hedef_takim_id: gorevData.hedef_takim_id || null,
+  }
+  const { data, error } = await supabase.from('core_gorev').insert([payload]).select().single()
   if (error) throw error
   return data
 }

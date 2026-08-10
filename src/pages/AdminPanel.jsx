@@ -480,7 +480,7 @@ export default function AdminPanel() {
     try {
       await deleteTakim(takim.id)
       await fetchAll()
-      setToast({ msg: `"${takim.takim_adi}" takımı silindi.`, type: 'info' })
+      setToast({ msg: `"${takim.takim_adi}" takımı silindi, bağlı katılımcılar takımsız hale getirildi.`, type: 'info' })
     } catch (e) { setToast({ msg: `Takım silinemedi: ${e.message}`, type: 'error' }) }
     finally { setDeletingTakim(null) }
   }

@@ -27,7 +27,7 @@ function jsonRes(req: Request, data: unknown, status = 200) {
   })
 }
 
-function parseCsvLine(line: string): string[] {
+function parseCsvLine(line: string, delim: string = ','): string[] {
   const result: string[] = []
   let current = ''
   let inQuotes = false
@@ -36,7 +36,7 @@ function parseCsvLine(line: string): string[] {
     const char = line[i]
     if (char === '"') {
       inQuotes = !inQuotes
-    } else if (char === ',' && !inQuotes) {
+    } else if (char === delim && !inQuotes) {
       result.push(current.trim().replace(/^"|"$/g, ''))
       current = ''
     } else {
@@ -45,6 +45,19 @@ function parseCsvLine(line: string): string[] {
   }
   result.push(current.trim().replace(/^"|"$/g, ''))
   return result
+}
+
+function normalizeHeader(h: string): string {
+  return h
+    .toLowerCase()
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/İ/g, 'i')
+    .replace(/[^a-z0-9]/g, '')
 }
 
 serve(async (req) => {
@@ -110,6 +123,7 @@ serve(async (req) => {
             kabul_durumu: true,
             kabul_tarihi: new Date().toISOString().split('T')[0],
             program_katilim_durumu: 'AKTIF',
+            notlar: '',
           })
           .select().single()
         if (kErr) return jsonRes(req, { ok: false, error: 'Katılımcı kaydı oluşturulamadı.' }, 500)
@@ -223,7 +237,9 @@ serve(async (req) => {
         return jsonRes(req, { ok: false, error: 'CSV metni boş olamaz.' }, 400)
       }
 
-      const rawLines = csv_text.split(/\r?\n/).filter(line => line.trim().length > 0)
+      // Strip UTF-8 BOM
+      const cleanCsv = csv_text.replace(/^\uFEFF/, '')
+      const rawLines = cleanCsv.split(/\r?\n/).filter(line => line.trim().length > 0)
       if (rawLines.length < 2) {
         return jsonRes(req, { ok: false, error: 'CSV dosyası başlık ve en az 1 veri satırı içermelidir.' }, 400)
       }
@@ -232,23 +248,30 @@ serve(async (req) => {
         return jsonRes(req, { ok: false, error: 'Bir defada en fazla 500 satır içe aktarılabilir.' }, 400)
       }
 
-      const headers = parseCsvLine(rawLines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9_]/g, ''))
+      // Auto detect delimiter: comma vs semicolon
+      const firstLine = rawLines[0]
+      const semicolonCount = (firstLine.match(/;/g) || []).length
+      const commaCount = (firstLine.match(/,/g) || []).length
+      const delimiter = semicolonCount > commaCount ? ';' : ','
 
-      function getColIndex(possibleNames: string[]): number {
-        return headers.findIndex(h => possibleNames.includes(h))
+      const headers = parseCsvLine(rawLines[0], delimiter).map(normalizeHeader)
+
+      function getColIndex(aliases: string[]): number {
+        const normAliases = aliases.map(normalizeHeader)
+        return headers.findIndex(h => normAliases.includes(h))
       }
 
-      const colAd = getColIndex(['ad', 'first_name', 'firstname', 'name', 'isim'])
-      const colSoyad = getColIndex(['soyad', 'last_name', 'lastname', 'surname', 'soyisim'])
-      const colEposta = getColIndex(['eposta', 'email', 'e_posta', 'mail'])
-      const colTelefon = getColIndex(['telefon', 'phone', 'tel', 'mobile'])
+      const colAd = getColIndex(['ad', 'adi', 'first_name', 'firstname', 'name', 'isim'])
+      const colSoyad = getColIndex(['soyad', 'soyadi', 'last_name', 'lastname', 'surname', 'soyisim'])
+      const colEposta = getColIndex(['eposta', 'e-posta', 'e posta', 'email', 'mail'])
+      const colTelefon = getColIndex(['telefon', 'telefon numarasi', 'phone', 'tel', 'mobile', 'gsm'])
       const colUniversite = getColIndex(['universite', 'university', 'okul'])
       const colSinif = getColIndex(['sinif', 'class', 'grade', 'yil'])
       const colKaynak = getColIndex(['kaynak', 'source'])
-      const colAdSoyadCombined = headers.indexOf('ad_soyad')
+      const colAdSoyadCombined = getColIndex(['ad_soyad', 'ad soyad', 'isim soyisim', 'adi soyadi', 'fullname', 'full_name'])
 
       if (colEposta === -1 || (colAd === -1 && colSoyad === -1 && colAdSoyadCombined === -1)) {
-        return jsonRes(req, { ok: false, error: 'CSV dosyasında en az eposta ve ad/soyad kolonları bulunmalıdır.' }, 400)
+        return jsonRes(req, { ok: false, error: 'CSV başlıkları tanınamadı. Lütfen eposta/email ve ad/soyad veya ad_soyad kolonları kullanın.' }, 400)
       }
 
       const { data: existingAdaylar } = await adminClient.from('core_aday').select('eposta')
@@ -260,7 +283,7 @@ serve(async (req) => {
       let skippedCount = 0
 
       for (let i = 1; i < rawLines.length; i++) {
-        const cols = parseCsvLine(rawLines[i])
+        const cols = parseCsvLine(rawLines[i], delimiter)
         if (cols.length === 0 || (cols.length === 1 && !cols[0])) continue
 
         let email = colEposta !== -1 ? (cols[colEposta] || '').trim().toLowerCase() : ''
@@ -268,7 +291,8 @@ serve(async (req) => {
         let soyad = colSoyad !== -1 ? (cols[colSoyad] || '').trim() : ''
 
         if (!ad && !soyad && colAdSoyadCombined !== -1) {
-          const parts = (cols[colAdSoyadCombined] || '').trim().split(' ')
+          const combinedVal = (cols[colAdSoyadCombined] || '').trim()
+          const parts = combinedVal.split(/\s+/)
           ad = parts[0] || ''
           soyad = parts.slice(1).join(' ') || ''
         }
