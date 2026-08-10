@@ -72,7 +72,10 @@ export async function logoutUser() {
 export async function getAdaylar() {
   const { data, error } = await supabase.from('core_aday').select('*').order('id', { ascending: false })
   if (error) throw error
-  return data || []
+  return (data || []).map(a => ({
+    ...a,
+    ad_soyad: a.ad_soyad || `${a.ad || ''} ${a.soyad || ''}`.trim()
+  }))
 }
 
 export async function createAday(adayData) {
@@ -97,7 +100,10 @@ export async function deleteAday(id) {
 export async function getTakimlar() {
   const { data, error } = await supabase.from('core_takim').select('*').order('id', { ascending: false })
   if (error) throw error
-  return data || []
+  return (data || []).map(t => ({
+    ...t,
+    mentor: t.mentor_id
+  }))
 }
 
 export async function createTakim(takimData) {
@@ -122,7 +128,11 @@ export async function deleteTakim(id) {
 export async function getKatilimcilar() {
   const { data, error } = await supabase.from('core_katilimci').select('*').order('id', { ascending: false })
   if (error) throw error
-  return data || []
+  return (data || []).map(k => ({
+    ...k,
+    takim: k.takim_id,
+    aday: k.aday_id
+  }))
 }
 
 export async function createKatilimci(katilimciData) {
@@ -147,7 +157,11 @@ export async function deleteKatilimci(id) {
 export async function getGorevler() {
   const { data, error } = await supabase.from('core_gorev').select('*').order('id', { ascending: false })
   if (error) throw error
-  return data || []
+  return (data || []).map(g => ({
+    ...g,
+    hedef_katilimci: g.hedef_katilimci_id,
+    hedef_takim: g.hedef_takim_id
+  }))
 }
 
 export async function createGorev(gorevData) {
@@ -172,7 +186,12 @@ export async function deleteGorev(id) {
 export async function getTeslimler() {
   const { data, error } = await supabase.from('core_teslim').select('*').order('id', { ascending: false })
   if (error) throw error
-  return data || []
+  return (data || []).map(t => ({
+    ...t,
+    katilimci: t.katilimci_id,
+    takim: t.takim_id,
+    gorev: t.gorev_id
+  }))
 }
 
 export async function submitTeslim(teslimData) {

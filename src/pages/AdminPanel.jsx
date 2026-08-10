@@ -1,7 +1,21 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '../config/api'
-import { logoutUser } from '../services/supabaseService'
+import {
+  getAdaylar,
+  getTakimlar,
+  getKatilimcilar,
+  getGorevler,
+  getMentorlar,
+  getTeslimler,
+  createTakim,
+  deleteTakim,
+  createGorev,
+  deleteGorev,
+  updateKatilimci,
+  updateTakim,
+  logoutUser
+} from '../services/supabaseService'
 
 /* ════════════════════════════════════════
    SABİTLER
@@ -179,12 +193,7 @@ function MentorDropdown({ takimId, currentMentorId, mentorlar, onSaved }) {
     if (saving) return
     setSaving(true)
     try {
-      const res = await fetch(`${API}/takimlar/${takimId}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mentor: val === '' ? null : Number(val) }),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await updateTakim(takimId, { mentor_id: val === '' ? null : Number(val) })
       onSaved(val === '' ? null : Number(val))
     } catch (e) {
       alert(`Mentor güncellenemedi: ${e.message}`)
@@ -215,11 +224,14 @@ function MentorDropdown({ takimId, currentMentorId, mentorlar, onSaved }) {
    TESLİM TIMELINE BİLEŞENİ
 ════════════════════════════════════════ */
 function TeslimTimeline({ hareketler }) {
-  const BACKEND = 'http://localhost:8000'
+  // DATA-WARN-01: Safe resolution for legacy media URLs without hardcoding localhost in production
   const resolveUrl = (url) => {
     if (!url || typeof url !== 'string') return null
     if (url.startsWith('http://') || url.startsWith('https://')) return url
-    return BACKEND + (url.startsWith('/') ? url : '/' + url)
+    if (import.meta.env.DEV) {
+      return 'http://localhost:8000' + (url.startsWith('/') ? url : '/' + url)
+    }
+    return url
   }
 
   const safeList = Array.isArray(hareketler)
@@ -397,34 +409,27 @@ export default function AdminPanel() {
   const fetchAll = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const token = localStorage.getItem('access')
-    const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {}
     try {
-      const [aRes, tRes, kRes, gRes, mRes, tesRes] = await Promise.all([
-        fetch(`${API}/adaylar/?page_size=200`),
-        fetch(`${API}/takimlar/`),
-        fetch(`${API}/katilimcilar/?page_size=200`),
-        fetch(`${API}/gorevler/?page_size=200`),
-        fetch(`${API}/mentorlar/`),
-        fetch(`${API}/teslimler/?page_size=200`, { headers: authHeaders }),
+      const [aD, tD, kD, gD, mD, tesD] = await Promise.all([
+        getAdaylar(),
+        getTakimlar(),
+        getKatilimcilar(),
+        getGorevler(),
+        getMentorlar(),
+        getTeslimler(),
       ])
-      if (!aRes.ok) throw new Error(`Adaylar: ${aRes.status}`)
-      if (!tRes.ok) throw new Error(`Takımlar: ${tRes.status}`)
-      if (!kRes.ok) throw new Error(`Katılımcılar: ${kRes.status}`)
-      if (!gRes.ok) throw new Error(`Görevler: ${gRes.status}`)
-      if (!mRes.ok) throw new Error(`Mentorlar: ${mRes.status}`)
-      const [aD, tD, kD, gD, mD] = await Promise.all([aRes.json(), tRes.json(), kRes.json(), gRes.json(), mRes.json()])
-      setAdaylar(Array.isArray(aD) ? aD : (aD.results ?? []))
-      setTakimlar(Array.isArray(tD) ? tD : (tD.results ?? []))
-      setKatilimcilar(Array.isArray(kD) ? kD : (kD.results ?? []))
-      setGorevler(Array.isArray(gD) ? gD : (gD.results ?? []))
-      setMentorlar(Array.isArray(mD) ? mD : (mD.results ?? []))
-      if (tesRes && tesRes.ok) {
-        const tesD = await tesRes.json()
-        setTeslimler(Array.isArray(tesD) ? tesD : (tesD.results ?? []))
-      }
-    } catch (e) { setError(e.message) }
-    finally { setLoading(false) }
+      setAdaylar(aD)
+      setTakimlar(tD)
+      setKatilimcilar(kD)
+      setGorevler(gD)
+      setMentorlar(mD)
+      setTeslimler(tesD)
+    } catch (e) {
+      console.error('Supabase fetchAll error:', e)
+      setError(e.message || 'Veriler yüklenirken bir hata oluştu.')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { fetchAll() }, [fetchAll])
@@ -436,7 +441,7 @@ export default function AdminPanel() {
     return () => clearTimeout(t)
   }, [toast])
 
-  /* ── Aday durum güncelle (PATCH) ── */
+  /* ── Aday durum güncelle (PATCH) — TODO: DATA-05 Edge Function ── */
   const durumGuncelle = async (aday, yeniDurum) => {
     if (updating) return
     setUpdating(aday.id)
@@ -451,31 +456,21 @@ export default function AdminPanel() {
       const nDurum = updated.basvuru_durumu ?? yeniDurum
       setAdaylar(prev => prev.map(a => a.id === aday.id ? { ...a, basvuru_durumu: nDurum } : a))
       setModal(prev => (prev && prev.id === aday.id) ? { ...prev, basvuru_durumu: nDurum } : prev)
-      // Sinyal tetiklenmiş olabilir → katilimcilari da güncelle
       if (yeniDurum === 'ONAYLANDI') {
-        const kRes = await fetch(`${API}/katilimcilar/?page_size=200`)
-        const kD   = await kRes.json()
-        setKatilimcilar(Array.isArray(kD) ? kD : (kD.results ?? []))
+        const kD = await getKatilimcilar()
+        setKatilimcilar(kD)
       }
       setToast({ msg: `"${aday.ad_soyad}" → ${DURUM_MAP[yeniDurum]?.label ?? yeniDurum}`, type: 'success' })
-    } catch (e) { setToast({ msg: `Güncelleme başarısız: ${e.message}`, type: 'error' }) }
+    } catch (e) { setToast({ msg: `Güncelleme başarısız (DATA-05 Edge Function gerekli): ${e.message}`, type: 'error' }) }
     finally { setUpdating(null) }
   }
 
-  /* ── Takım oluştur (POST) ── */
+  /* ── Takım oluştur (Supabase Client) ── */
   const takimOlustur = async () => {
     if (!yeniTakimAdi.trim() || creatingTakim) return
     setCreatingTakim(true)
     try {
-      const res = await fetch(`${API}/takimlar/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ takim_adi: yeniTakimAdi.trim() }),
-      })
-      if (!res.ok) {
-        const body = await res.text()
-        throw new Error(`HTTP ${res.status}: ${body}`)
-      }
+      await createTakim({ takim_adi: yeniTakimAdi.trim() })
       setYeniTakimAdi('')
       await fetchAll()
       setToast({ msg: `"${yeniTakimAdi.trim()}" takımı oluşturuldu!`, type: 'success' })
@@ -483,12 +478,11 @@ export default function AdminPanel() {
     finally { setCreatingTakim(false) }
   }
 
-  /* ── Takım sil (DELETE) ── */
+  /* ── Takım sil (Supabase Client) ── */
   const takimSil = async (takim) => {
     setDeletingTakim(takim.id)
     try {
-      const res = await fetch(`${API}/takimlar/${takim.id}/`, { method: 'DELETE' })
-      if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+      await deleteTakim(takim.id)
       await fetchAll()
       setToast({ msg: `"${takim.takim_adi}" takımı silindi.`, type: 'info' })
     } catch (e) { setToast({ msg: `Takım silinemedi: ${e.message}`, type: 'error' }) }
@@ -501,7 +495,7 @@ export default function AdminPanel() {
     setToast({ msg: 'Mentor atandı!', type: 'success' })
   }
 
-  /* ── Mentor oluştur (POST) ── */
+  /* ── Mentor oluştur (POST) — TODO: DATA-05 Edge Function (Auth user creation) ── */
   const mentorOlustur = async () => {
     const { ad_soyad, eposta, uzmanlik, gecici_sifre } = mentorForm
     if (!ad_soyad.trim() || !eposta.trim()) {
@@ -525,11 +519,11 @@ export default function AdminPanel() {
       setShowMentorForm(false)
       await fetchAll()
       setToast({ msg: `"${ad_soyad.trim()}" mentor olarak eklendi! 🎉`, type: 'success' })
-    } catch (e) { setToast({ msg: `Mentor eklenemedi: ${e.message}`, type: 'error' }) }
+    } catch (e) { setToast({ msg: `Mentor eklenemedi (DATA-05 Edge Function gerekli): ${e.message}`, type: 'error' }) }
     finally { setSavingMentor(false) }
   }
 
-  /* ── Mentor sil (DELETE) ── */
+  /* ── Mentor sil (DELETE) — TODO: DATA-05 Edge Function (Auth user deletion) ── */
   const mentorSil = async (mentor) => {
     setDeletingMentor(mentor.id)
     try {
@@ -541,38 +535,28 @@ export default function AdminPanel() {
     finally { setDeletingMentor(null) }
   }
 
-  /* ── Üye ekle (PATCH katilimci.takim) ── */
+  /* ── Üye ekle (Supabase Client) ── */
   const uyeEkle = async (takimId, katilimciId) => {
     setAddingMember(takimId)
     setActiveDropdown(null)
     try {
-      const res = await fetch(`${API}/katilimcilar/${katilimciId}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ takim: takimId }),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await updateKatilimci(katilimciId, { takim_id: takimId })
       await fetchAll()
       setToast({ msg: 'Üye takıma eklendi!', type: 'success' })
     } catch (e) { setToast({ msg: `Üye eklenemedi: ${e.message}`, type: 'error' }) }
     finally { setAddingMember(null) }
   }
 
-  /* ── Üye çıkar (PATCH katilimci.takim = null) ── */
+  /* ── Üye çıkar (Supabase Client) ── */
   const uyeCikar = async (katilimciId, uyeAdi) => {
     try {
-      const res = await fetch(`${API}/katilimcilar/${katilimciId}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ takim: null }),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await updateKatilimci(katilimciId, { takim_id: null })
       await fetchAll()
       setToast({ msg: `"${uyeAdi}" takımdan çıkarıldı.`, type: 'info' })
     } catch (e) { setToast({ msg: `Üye çıkarılamadı: ${e.message}`, type: 'error' }) }
   }
 
-  /* ── Görev oluştur (POST) ── */
+  /* ── Görev oluştur (Supabase Client) ── */
   const gorevOlustur = async () => {
     const { hafta, gorev_adi, brief_aciklama, puan_kriterleri, son_teslim_tarihi, gorev_tipi } = gorevForm
     if (!hafta || !gorev_adi.trim() || !brief_aciklama.trim() || !puan_kriterleri.trim() || !son_teslim_tarihi) {
@@ -597,15 +581,10 @@ export default function AdminPanel() {
         son_teslim_tarihi: gorevForm.son_teslim_tarihi,
         maksimum_puan: Number(gorevForm.maksimum_puan) || 100,
         gorev_tipi: gorev_tipi,
-        hedef_katilimci: gorev_tipi === 'BIREYSEL' ? Number(gorevForm.hedef_katilimci) : null,
-        hedef_takim:     gorev_tipi === 'TAKIMSAL' ? Number(gorevForm.hedef_takim)     : null,
+        hedef_katilimci_id: gorev_tipi === 'BIREYSEL' ? Number(gorevForm.hedef_katilimci) : null,
+        hedef_takim_id:     gorev_tipi === 'TAKIMSAL' ? Number(gorevForm.hedef_takim)     : null,
       }
-      const res = await fetch(`${API}/gorevler/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) { const b = await res.text(); throw new Error(`HTTP ${res.status}: ${b}`) }
+      await createGorev(payload)
       setGorevModal(false)
       setGorevForm(GOREV_BOSH)
       await fetchAll()
@@ -614,12 +593,11 @@ export default function AdminPanel() {
     finally { setSavingGorev(false) }
   }
 
-  /* ── Görev sil (DELETE) ── */
+  /* ── Görev sil (Supabase Client) ── */
   const gorevSil = async (gorev) => {
     setDeletingGorev(gorev.id)
     try {
-      const res = await fetch(`${API}/gorevler/${gorev.id}/`, { method: 'DELETE' })
-      if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`)
+      await deleteGorev(gorev.id)
       await fetchAll()
       setToast({ msg: `"${gorev.gorev_adi}" silindi.`, type: 'info' })
     } catch (e) { setToast({ msg: `Görev silinemedi: ${e.message}`, type: 'error' }) }
