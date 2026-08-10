@@ -21,7 +21,9 @@ import {
   getAdminIcerikDnaList,
   updateAdminPerformansScore,
   addAdminToplantiKatilimi,
+  deleteAdminToplantiKatilimi,
   addAdminSosyalMedya,
+  deleteAdminSosyalMedya,
   importCandidatesCsvText,
   logoutUser
 } from '../services/supabaseService'
@@ -2784,7 +2786,9 @@ function PerformansSection({ token, setToast }) {
     bonus_puan: 5,
     not_metni: '',
   })
-  const [savingSosyal, setSavingSosyal] = useState(false)
+  const [savingSosyal, setSavingSosyal]     = useState(false)
+  const [deletingToplanti, setDeletingToplanti] = useState(null)
+  const [deletingSosyal, setDeletingSosyal]     = useState(null)
 
   const fetchList = useCallback(async () => {
     setLoading(true)
@@ -2886,6 +2890,21 @@ function PerformansSection({ token, setToast }) {
     }
   }
 
+  const handleToplantiDelete = async (toplantiId) => {
+    if (!selectedKatilimciId || !window.confirm('Bu toplantı kaydını silmek istediğinize emin misiniz?')) return
+    setDeletingToplanti(toplantiId)
+    try {
+      await deleteAdminToplantiKatilimi(toplantiId, selectedKatilimciId)
+      await fetchList()
+      await fetchDetail(selectedKatilimciId)
+      setToast({ msg: 'Toplantı kaydı silindi ve puanlar güncellendi.', type: 'success' })
+    } catch (e) {
+      setToast({ msg: `Silme hatası: ${e.message}`, type: 'error' })
+    } finally {
+      setDeletingToplanti(null)
+    }
+  }
+
   const handleSosyalSubmit = async (e) => {
     e.preventDefault()
     if (!selectedKatilimciId || !String(sosyalForm.platform || '').trim() || savingSosyal) return
@@ -2900,6 +2919,21 @@ function PerformansSection({ token, setToast }) {
       setToast({ msg: `Sosyal medya ekleme hatası: ${e.message}`, type: 'error' })
     } finally {
       setSavingSosyal(false)
+    }
+  }
+
+  const handleSosyalDelete = async (sosyalId) => {
+    if (!selectedKatilimciId || !window.confirm('Bu sosyal medya kaydını silmek istediğinize emin misiniz?')) return
+    setDeletingSosyal(sosyalId)
+    try {
+      await deleteAdminSosyalMedya(sosyalId, selectedKatilimciId)
+      await fetchList()
+      await fetchDetail(selectedKatilimciId)
+      setToast({ msg: 'Sosyal medya kaydı silindi ve puanlar güncellendi.', type: 'success' })
+    } catch (e) {
+      setToast({ msg: `Silme hatası: ${e.message}`, type: 'error' })
+    } finally {
+      setDeletingSosyal(null)
     }
   }
 
@@ -3130,26 +3164,6 @@ function PerformansSection({ token, setToast }) {
               {/* 1. TAB: PUAN DÜZENLEME & NOTLAR */}
               {!detailLoading && activeTab === 'puanlar' && (
                 <div className="space-y-6">
-                  {/* Puan Kartları Özeti */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
-                      <p className="text-[10px] font-bold text-blue-600 uppercase">Görev Puanı</p>
-                      <p className="text-xl font-extrabold text-blue-800 mt-0.5">{Number(scoreForm.gorev_puani) || 0}</p>
-                    </div>
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center">
-                      <p className="text-[10px] font-bold text-emerald-600 uppercase">Toplantı Puanı</p>
-                      <p className="text-xl font-extrabold text-emerald-800 mt-0.5">{Number(scoreForm.toplanti_katilim_puani) || 0}</p>
-                    </div>
-                    <div className="bg-purple-50 border border-purple-100 rounded-xl p-3 text-center">
-                      <p className="text-[10px] font-bold text-purple-600 uppercase">Etkileşim Bonusu</p>
-                      <p className="text-xl font-extrabold text-purple-800 mt-0.5">{Number(scoreForm.etkilesim_bonus_puani) || 0}</p>
-                    </div>
-                    <div className="bg-slate-100 border border-slate-200 rounded-xl p-3 text-center">
-                      <p className="text-[10px] font-bold text-slate-600 uppercase">Manuel Puan</p>
-                      <p className="text-xl font-extrabold text-slate-800 mt-0.5">{Number(scoreForm.manuel_puan) || 0}</p>
-                    </div>
-                  </div>
-
                   {/* Form */}
                   <div className="bg-gray-50/70 border border-gray-100 rounded-2xl p-5 space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-gray-200">
@@ -3164,37 +3178,41 @@ function PerformansSection({ token, setToast }) {
                         <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Görev Puanı</label>
                         <input
                           type="number"
+                          readOnly
                           value={scoreForm.gorev_puani}
-                          onChange={e => setScoreForm(f => ({ ...f, gorev_puani: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-100/80 text-gray-600 font-semibold cursor-not-allowed"
                         />
+                        <span className="text-[10px] text-gray-400 block mt-1">Teslim değerlendirmelerinden gelir</span>
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Toplantı Puanı</label>
                         <input
                           type="number"
+                          readOnly
                           value={scoreForm.toplanti_katilim_puani}
-                          onChange={e => setScoreForm(f => ({ ...f, toplanti_katilim_puani: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-100/80 text-gray-600 font-semibold cursor-not-allowed"
                         />
+                        <span className="text-[10px] text-gray-400 block mt-1">Toplantı kayıtlarından gelir</span>
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Etkileşim Bonusu</label>
                         <input
                           type="number"
+                          readOnly
                           value={scoreForm.etkilesim_bonus_puani}
-                          onChange={e => setScoreForm(f => ({ ...f, etkilesim_bonus_puani: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-100/80 text-gray-600 font-semibold cursor-not-allowed"
                         />
+                        <span className="text-[10px] text-gray-400 block mt-1">Sosyal medya kayıtlarından gelir</span>
                       </div>
                       <div>
-                        <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Manuel Puan</label>
+                        <label className="block text-[11px] font-bold text-amber-800 uppercase mb-1">Manuel Puan ★</label>
                         <input
                           type="number"
                           value={scoreForm.manuel_puan}
                           onChange={e => setScoreForm(f => ({ ...f, manuel_puan: e.target.value }))}
-                          className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
+                          className="w-full px-3 py-2 text-sm rounded-xl border border-amber-300 bg-white focus:ring-2 focus:ring-amber-400 font-extrabold text-amber-900 shadow-2xs"
                         />
+                        <span className="text-[10px] text-amber-600 font-semibold block mt-1">Admin tarafından elle girilir</span>
                       </div>
                     </div>
 
@@ -3235,7 +3253,7 @@ function PerformansSection({ token, setToast }) {
                         className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition-all disabled:opacity-50"
                       >
                         {savingScore ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Ic.Check c="w-4 h-4" />}
-                        Puan & Notları Kaydet
+                        Manuel Puan & Notları Kaydet
                       </button>
                     </div>
                   </div>
@@ -3335,9 +3353,20 @@ function PerformansSection({ token, setToast }) {
                                 </div>
                                 <p className="text-[11px] text-gray-400 mt-0.5">{String(tk.tarih || '—')} {tk.not_metni ? `· Not: ${String(tk.not_metni)}` : ''}</p>
                               </div>
-                              <span className="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
-                                +{Number(tk.katilim_puani) || 0} puan
-                              </span>
+                              <div className="flex items-center gap-3">
+                                <span className="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+                                  +{Number(tk.katilim_puani) || 0} puan
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToplantiDelete(tk.id)}
+                                  disabled={deletingToplanti === tk.id}
+                                  className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition-all flex items-center gap-1 disabled:opacity-50"
+                                >
+                                  {deletingToplanti === tk.id ? <span className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" /> : <Ic.Trash c="w-3 h-3" />}
+                                  Sil
+                                </button>
+                              </div>
                             </div>
                           )
                         })}
@@ -3446,9 +3475,20 @@ function PerformansSection({ token, setToast }) {
                                 </div>
                                 {sm.not_metni && <p className="text-[11px] text-gray-400 mt-0.5">{String(sm.not_metni)}</p>}
                               </div>
-                              <span className="font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-100">
-                                +{Number(sm.bonus_puan) || 0} bonus
-                              </span>
+                              <div className="flex items-center gap-3">
+                                <span className="font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-100">
+                                  +{Number(sm.bonus_puan) || 0} bonus
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSosyalDelete(sm.id)}
+                                  disabled={deletingSosyal === sm.id}
+                                  className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] border border-red-200 transition-all flex items-center gap-1 disabled:opacity-50"
+                                >
+                                  {deletingSosyal === sm.id ? <span className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" /> : <Ic.Trash c="w-3 h-3" />}
+                                  Sil
+                                </button>
+                              </div>
                             </div>
                           )
                         })}
@@ -3468,26 +3508,89 @@ function PerformansSection({ token, setToast }) {
                     <div className="space-y-4">
                       {teslimlerList.map(t => {
                         if (!t || typeof t !== 'object') return null
+                        const fileUrl = t.teslim_dosyasi_url || t.teslim_dosyasi
+                        const extLink = t.teslim_linki
+                        const activeLink = fileUrl || extLink || t.dosya_linki
+
                         return (
-                          <div key={t.id || Math.random()} className="bg-white border border-gray-100 rounded-2xl p-4 text-xs shadow-2xs space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-gray-800 text-xs">{String(t.gorev_adi || 'Görev')}</span>
-                              <span className="font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100">
-                                {Number(t.alinan_puan) || 0} puan
-                              </span>
+                          <div key={t.id || Math.random()} className="bg-white border border-gray-100 rounded-2xl p-4 text-xs shadow-2xs space-y-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <div>
+                                <span className="font-bold text-gray-800 text-sm block">{String(t.gorev_adi || 'Görev')}</span>
+                                <span className="text-[11px] text-gray-400">
+                                  Son Teslim Tarihi: {t.teslim_tarihi ? new Date(t.teslim_tarihi).toLocaleDateString('tr-TR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—'}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100 text-xs">
+                                  {Number(t.alinan_puan) || 0} puan
+                                </span>
+                                <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                                  {String(t.durum_etiketi || t.durum || 'BEKLIYOR')}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center justify-between text-[11px] text-gray-400">
-                              <span>Durum: <strong className="text-gray-600">{String(t.durum_etiketi || t.durum || '—')}</strong></span>
-                              <span>{t.teslim_tarihi ? new Date(t.teslim_tarihi).toLocaleDateString('tr-TR') : '—'}</span>
+
+                            {t.aciklama && (
+                              <div className="bg-gray-50/80 p-2.5 rounded-xl border border-gray-100 text-[11px] text-gray-700">
+                                <span className="font-bold block text-[10px] text-gray-400 uppercase mb-0.5">Katılımcı Açıklaması</span>
+                                {String(t.aciklama)}
+                              </div>
+                            )}
+
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                              {fileUrl ? (
+                                <a
+                                  href={fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs border border-indigo-200 transition-all"
+                                >
+                                  <span>📎</span>
+                                  <span>Yüklenen Dosyayı Aç</span>
+                                </a>
+                              ) : null}
+
+                              {extLink ? (
+                                <a
+                                  href={extLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs border border-purple-200 transition-all"
+                                >
+                                  <span>🔗</span>
+                                  <span>Harici Bağlantıyı Aç</span>
+                                </a>
+                              ) : null}
+
+                              {!fileUrl && !extLink && activeLink ? (
+                                <a
+                                  href={activeLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs border border-indigo-200 transition-all"
+                                >
+                                  <span>📎</span>
+                                  <span>Dosyayı / Linki Aç</span>
+                                </a>
+                              ) : null}
+
+                              {!fileUrl && !extLink && !activeLink && (
+                                <span className="text-[11px] text-gray-400 italic bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-100">
+                                  Dosya veya bağlantı bulunmuyor.
+                                </span>
+                              )}
                             </div>
+
                             {t.mentor_yorumu && (
-                              <p className="text-[11px] text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-100 italic">
-                                Mentor Yorumu: "{String(t.mentor_yorumu)}"
+                              <p className="text-[11px] text-gray-600 bg-amber-50/50 p-2.5 rounded-xl border border-amber-100/80 italic">
+                                <strong>Mentor Yorumu:</strong> "{String(t.mentor_yorumu)}"
                               </p>
                             )}
+
                             {/* TIMELINE */}
                             <div className="pt-2 border-t border-gray-100">
-                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
                                 📜 İşlem Geçmişi & Revizyon Timeline'ı
                               </span>
                               <TeslimTimeline hareketler={t.hareketler || t.teslim_hareketleri || t.timeline} />
@@ -3497,115 +3600,6 @@ function PerformansSection({ token, setToast }) {
                       })}
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* 5. TAB: KRİTER BAZLI NOTLAR */}
-              {!detailLoading && activeTab === 'notlar' && (
-                <div className="space-y-6">
-                  {/* Kriter yoksa sade mesaj */}
-                  {kriterlerList.length === 0 && (
-                    <div className="bg-amber-50 border border-amber-200/80 text-amber-800 rounded-xl p-3 text-xs flex items-center gap-2">
-                      <span>ℹ️</span>
-                      <span>Henüz performans kriteri tanımlanmamış. Kriterleri Django admin panelinden ekleyebilirsiniz.</span>
-                    </div>
-                  )}
-
-                  {/* Form */}
-                  <form onSubmit={handleNotSubmit} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                      <span>📝</span> Performans Notu / Değerlendirme Ekle
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">
-                          Kriter {kriterlerList.length > 0 ? 'Seçimi' : 'ID (Opsiyonel)'}
-                        </label>
-                        {kriterlerList.length > 0 ? (
-                          <select
-                            value={notForm.kriter}
-                            onChange={e => setNotForm(f => ({ ...f, kriter: e.target.value }))}
-                            className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-slate-300 focus:outline-none"
-                          >
-                            <option value="">— Lütfen Kriter Seçin —</option>
-                            {kriterlerList.map(k => (
-                              <option key={k.id} value={k.id}>{String(k.kriter_adi || k.ad || `Kriter #${k.id}`)}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type="number"
-                            value={notForm.kriter}
-                            onChange={e => setNotForm(f => ({ ...f, kriter: e.target.value }))}
-                            placeholder="Örn: 1 (İsteğe bağlı)"
-                            className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-slate-300 focus:outline-none"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Puan</label>
-                        <input
-                          type="number"
-                          value={notForm.puan}
-                          onChange={e => setNotForm(f => ({ ...f, puan: e.target.value }))}
-                          className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-slate-300 focus:outline-none"
-                        />
-                      </div>
-                      <div className="sm:col-span-1">
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Not Metni</label>
-                        <input
-                          type="text"
-                          value={notForm.not_metni}
-                          onChange={e => setNotForm(f => ({ ...f, not_metni: e.target.value }))}
-                          placeholder="Değerlendirme notu…"
-                          className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-slate-300 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end pt-1">
-                      <button
-                        type="submit"
-                        disabled={savingNot}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition-all disabled:opacity-50"
-                      >
-                        {savingNot ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Ic.Plus c="w-3.5 h-3.5" />}
-                        Not Ekle
-                      </button>
-                    </div>
-                  </form>
-
-                  {/* Liste */}
-                  <div className="space-y-2">
-                    <h5 className="text-xs font-bold text-gray-500 uppercase">Eklenen Performans Notları</h5>
-                    {performansNotlari.length === 0 ? (
-                      <p className="text-xs text-gray-400 italic">Henüz not eklenmemiş.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {performansNotlari.map(n => {
-                          if (!n || typeof n !== 'object') return null
-                          const kriterBaslik = typeof n.kriter_adi === 'string' && n.kriter_adi.trim() ? n.kriter_adi : 'Genel Değerlendirme'
-                          const verenIsim = typeof n.veren_adi === 'string' ? n.veren_adi : ''
-                          const notMetin = typeof n.not_metni === 'string' ? n.not_metni : ''
-                          const puanVal = typeof n.puan === 'number' || typeof n.puan === 'string' ? n.puan : 0
-
-                          return (
-                            <div key={n.id || Math.random()} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center justify-between text-xs shadow-2xs">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-slate-800">{kriterBaslik}</span>
-                                  {verenIsim && <span className="text-[10px] text-gray-400">Veren: {verenIsim}</span>}
-                                </div>
-                                {notMetin && <p className="text-[11px] text-gray-600 mt-0.5">{notMetin}</p>}
-                              </div>
-                              <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                                {puanVal} puan
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
             </div>

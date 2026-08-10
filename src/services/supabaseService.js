@@ -854,6 +854,76 @@ export async function getAdminKatilimciPerformansNotlari(katilimciId) {
   })
 }
 
+export async function recalculateAndSyncKatilimciPerformans(katilimciId) {
+  if (!katilimciId) return null
+
+  // 1. Calculate sum of meeting points
+  const { data: toplantilar } = await supabase
+    .from('core_toplantikatilimi')
+    .select('katilim_puani')
+    .eq('katilimci_id', katilimciId)
+
+  const toplantiPuan = (toplantilar || []).reduce((acc, curr) => acc + (Number(curr.katilim_puani) || 0), 0)
+
+  // 2. Calculate sum of social media bonus points
+  const { data: sosyalMedya } = await supabase
+    .from('core_sosyalmedyaperformansi')
+    .select('bonus_puan')
+    .eq('katilimci_id', katilimciId)
+
+  const etkilesimPuan = (sosyalMedya || []).reduce((acc, curr) => acc + (Number(curr.bonus_puan) || 0), 0)
+
+  // 3. Calculate sum of task scores from core_teslim
+  const { data: teslimler } = await supabase
+    .from('core_teslim')
+    .select('alinan_puan')
+    .eq('katilimci_id', katilimciId)
+
+  const gorevPuan = (teslimler || []).reduce((acc, curr) => acc + (Number(curr.alinan_puan) || 0), 0)
+
+  // 4. Fetch existing performance record or lazy-create
+  const { data: existing } = await supabase
+    .from('core_katilimciperformans')
+    .select('*')
+    .eq('katilimci_id', katilimciId)
+    .maybeSingle()
+
+  const manuelPuan = Number(existing?.manuel_puan) || 0
+  const totalPuan = gorevPuan + toplantiPuan + etkilesimPuan + manuelPuan
+
+  const payload = {
+    katilimci_id: katilimciId,
+    gorev_puani: gorevPuan,
+    toplanti_katilim_puani: toplantiPuan,
+    etkilesim_bonus_puani: etkilesimPuan,
+    manuel_puan: manuelPuan,
+    bireysel_puan: totalPuan,
+    admin_ici_not: existing?.admin_ici_not || '',
+    katilimciya_gorunen_not: existing?.katilimciya_gorunen_not || '',
+    guncellenme_tarihi: new Date().toISOString()
+  }
+
+  if (existing) {
+    const { data } = await supabase
+      .from('core_katilimciperformans')
+      .update(payload)
+      .eq('id', existing.id)
+      .select()
+      .maybeSingle()
+    return data
+  } else {
+    const { data } = await supabase
+      .from('core_katilimciperformans')
+      .insert({
+        ...payload,
+        olusturulma_tarihi: new Date().toISOString()
+      })
+      .select()
+      .maybeSingle()
+    return data
+  }
+}
+
 export async function getAdminKatilimciTeslimleri(katilimciId) {
   if (!katilimciId) return []
 
@@ -900,42 +970,54 @@ export async function getAdminKatilimciTeslimleri(katilimciId) {
     }
   }
 
-  return teslimler.map(t => {
-    const gId = Number(t.gorev_id || t.gorev)
-    const gAdi = (gId && gorevMap.get(gId)) ? gorevMap.get(gId) : (gId ? `Görev #${gId}` : 'Görev bilgisi yok')
-    const dosyaLink = t.teslim_dosyasi_url || t.teslim_dosyasi || t.teslim_linki || ''
-    const itemHareketler = hareketlerMap.get(Number(t.id)) || t.hareketler || t.teslim_hareketleri || []
-
-    return {
-      id: t.id,
-      katilimci_id: t.katilimci_id,
-      gorev_id: gId || null,
-      gorev_adi: gAdi,
-      durum: t.durum || 'BEKLIYOR',
-      durum_etiketi: t.durum_etiketi || t.durum || '—',
-      teslim_tarihi: t.teslim_tarihi || t.olusturulma_tarihi || null,
-      aciklama: t.aciklama || t.not_metni || '',
-      alinan_puan: Number(t.alinan_puan) || 0,
-      mentor_yorumu: t.mentor_yorumu || '',
-      teslim_dosyasi_url: t.teslim_dosyasi_url || '',
-      teslim_dosyasi: t.teslim_dosyasi || '',
-      teslim_linki: t.teslim_linki || '',
-      dosya_linki: dosyaLink,
-      hareketler: itemHareketler
+  // Group deliveries by task ID
+  const taskGroups = new Map()
+  teslimler.forEach(t => {
+    const gId = Number(t.gorev_id || t.gorev) || 'unassigned'
+    if (!taskGroups.has(gId)) {
+      taskGroups.set(gId, [])
     }
+    taskGroups.get(gId).push(t)
   })
-}
 
-export async function getAdminPerformansKriterleri() {
-  const { data, error } = await supabase
-    .from('core_performanskriteri')
-    .select('*')
-    .order('id', { ascending: true })
-  if (error) {
-    console.warn('getAdminPerformansKriterleri warning:', error)
-    return []
-  }
-  return data || []
+  const groupedResults = []
+  taskGroups.forEach((tList, gId) => {
+    tList.sort((a, b) => b.id - a.id)
+    const latest = tList[0]
+    const taskTitle = (gId !== 'unassigned' && gorevMap.get(gId)) ? gorevMap.get(gId) : (gId !== 'unassigned' ? `Görev #${gId}` : 'Görev bilgisi yok')
+
+    let combinedMovements = []
+    tList.forEach(t => {
+      const hList = hareketlerMap.get(Number(t.id)) || t.hareketler || t.teslim_hareketleri || []
+      combinedMovements = combinedMovements.concat(hList)
+    })
+    combinedMovements.sort((a, b) => (new Date(a.olusturulma_tarihi || a.tarih || 0) - new Date(b.olusturulma_tarihi || b.tarih || 0)) || (a.id - b.id))
+
+    const primaryFileUrl = latest.teslim_dosyasi_url || latest.teslim_dosyasi || ''
+    const externalLink = latest.teslim_linki || ''
+    const activeFileLink = primaryFileUrl || externalLink || ''
+
+    groupedResults.push({
+      id: latest.id,
+      katilimci_id: katilimciId,
+      gorev_id: gId !== 'unassigned' ? gId : null,
+      gorev_adi: taskTitle,
+      durum: latest.durum || 'BEKLIYOR',
+      durum_etiketi: latest.durum_etiketi || latest.durum || '—',
+      teslim_tarihi: latest.teslim_tarihi || latest.olusturulma_tarihi || null,
+      aciklama: latest.aciklama || latest.not_metni || '',
+      alinan_puan: Number(latest.alinan_puan) || 0,
+      mentor_yorumu: latest.mentor_yorumu || '',
+      teslim_dosyasi_url: primaryFileUrl,
+      teslim_dosyasi: latest.teslim_dosyasi || '',
+      teslim_linki: externalLink,
+      dosya_linki: activeFileLink,
+      hareketler: combinedMovements,
+      allSubmissions: tList
+    })
+  })
+
+  return groupedResults
 }
 
 export async function getAdminIcerikDnaList() {
@@ -980,10 +1062,17 @@ export async function getAdminIcerikDnaList() {
 }
 
 export async function updateAdminPerformansScore(katilimci_id, scoreForm) {
-  const gPuan = Number(scoreForm.gorev_puani) || 0
-  const tPuan = Number(scoreForm.toplanti_katilim_puani) || 0
-  const ePuan = Number(scoreForm.etkilesim_bonus_puani) || 0
   const mPuan = Number(scoreForm.manuel_puan) || 0
+
+  const { data: existing } = await supabase
+    .from('core_katilimciperformans')
+    .select('*')
+    .eq('katilimci_id', katilimci_id)
+    .maybeSingle()
+
+  const gPuan = Number(existing?.gorev_puani) || 0
+  const tPuan = Number(existing?.toplanti_katilim_puani) || 0
+  const ePuan = Number(existing?.etkilesim_bonus_puani) || 0
   const birPuan = gPuan + tPuan + ePuan + mPuan
 
   const payload = {
@@ -998,12 +1087,6 @@ export async function updateAdminPerformansScore(katilimci_id, scoreForm) {
     guncellenme_tarihi: new Date().toISOString()
   }
 
-  const { data: existing } = await supabase
-    .from('core_katilimciperformans')
-    .select('id')
-    .eq('katilimci_id', katilimci_id)
-    .maybeSingle()
-
   if (existing) {
     const { data, error } = await supabase
       .from('core_katilimciperformans')
@@ -1013,6 +1096,7 @@ export async function updateAdminPerformansScore(katilimci_id, scoreForm) {
       .maybeSingle()
 
     if (error) throw new Error(error.message)
+    await recalculateAndSyncKatilimciPerformans(katilimci_id)
     return data
   } else {
     const { data, error } = await supabase
@@ -1025,6 +1109,7 @@ export async function updateAdminPerformansScore(katilimci_id, scoreForm) {
       .maybeSingle()
 
     if (error) throw new Error(error.message)
+    await recalculateAndSyncKatilimciPerformans(katilimci_id)
     return data
   }
 }
@@ -1045,7 +1130,19 @@ export async function addAdminToplantiKatilimi(katilimci_id, form) {
     .single()
 
   if (error) throw new Error(error.message)
+  await recalculateAndSyncKatilimciPerformans(katilimci_id)
   return data
+}
+
+export async function deleteAdminToplantiKatilimi(id, katilimci_id) {
+  const { error } = await supabase
+    .from('core_toplantikatilimi')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  await recalculateAndSyncKatilimciPerformans(katilimci_id)
+  return true
 }
 
 export async function addAdminSosyalMedya(katilimci_id, form) {
@@ -1069,7 +1166,19 @@ export async function addAdminSosyalMedya(katilimci_id, form) {
     .single()
 
   if (error) throw new Error("Sosyal medya kaydı eklenemedi. Lütfen alanları kontrol edin.")
+  await recalculateAndSyncKatilimciPerformans(katilimci_id)
   return data
+}
+
+export async function deleteAdminSosyalMedya(id, katilimci_id) {
+  const { error } = await supabase
+    .from('core_sosyalmedyaperformansi')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  await recalculateAndSyncKatilimciPerformans(katilimci_id)
+  return true
 }
 
 export async function addAdminPerformansNotu(katilimci_id, form) {
