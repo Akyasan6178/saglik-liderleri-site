@@ -220,11 +220,37 @@ export async function deleteGorev(id) {
 }
 
 // ─── TESLİMLER ─────────────────────────────────────────────────────────────────
+// DRIVE-LINK-FIX-01: Normalize file link fields so UI always has a consistent
+// teslim_dosyasi_url regardless of which DB column was written by the uploader.
+function normalizeTeslim(t) {
+  const dosyaUrl =
+    (typeof t.teslim_dosyasi_url === 'string' && t.teslim_dosyasi_url) ||
+    (typeof t.teslim_dosyasi     === 'string' && t.teslim_dosyasi)     ||
+    (typeof t.teslim_linki       === 'string' && t.teslim_linki)       ||
+    null
+  const dosya =
+    (typeof t.teslim_dosyasi     === 'string' && t.teslim_dosyasi)     ||
+    (typeof t.teslim_dosyasi_url === 'string' && t.teslim_dosyasi_url) ||
+    (typeof t.teslim_linki       === 'string' && t.teslim_linki)       ||
+    null
+  const linki =
+    (typeof t.teslim_linki       === 'string' && t.teslim_linki)       ||
+    (typeof t.teslim_dosyasi     === 'string' && t.teslim_dosyasi)     ||
+    (typeof t.teslim_dosyasi_url === 'string' && t.teslim_dosyasi_url) ||
+    null
+  return {
+    ...t,
+    teslim_dosyasi_url: dosyaUrl,
+    teslim_dosyasi:     dosya,
+    teslim_linki:       linki,
+  }
+}
+
 export async function getTeslimler() {
   const { data, error } = await supabase.from('core_teslim').select('*').order('id', { ascending: false })
   if (error) throw error
   return (data || []).map(t => ({
-    ...t,
+    ...normalizeTeslim(t),
     katilimci: t.katilimci_id,
     takim: t.takim_id,
     gorev: t.gorev_id
@@ -396,7 +422,7 @@ export async function getKatilimciTeslimlerMe(katilimciId) {
     .order('id', { ascending: false })
   if (error) throw error
   return (data || []).map(t => ({
-    ...t,
+    ...normalizeTeslim(t),
     katilimci: t.katilimci_id,
     takim: t.takim_id,
     gorev: t.gorev_id
@@ -485,7 +511,7 @@ export async function getMentorTeslimler(mentorId) {
     .order('id', { ascending: false })
   if (error) throw error
   return (data || []).map(t => ({
-    ...t,
+    ...normalizeTeslim(t),
     katilimci: t.katilimci_id,
     takim: t.takim_id,
     gorev: t.gorev_id
@@ -875,7 +901,7 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
     olusturulma_tarihi: nowIso
   })
 
-  return teslimRecord
+  return normalizeTeslim(teslimRecord)
 }
 
 

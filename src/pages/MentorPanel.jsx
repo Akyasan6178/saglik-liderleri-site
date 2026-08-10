@@ -747,9 +747,9 @@ export default function MentorPanel() {
 
                   <div>
                     <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Yüklenen Dosya</h4>
-                    {selectedTeslim.teslim_dosyasi_url ? (
+                    {(selectedTeslim.teslim_dosyasi_url || selectedTeslim.teslim_dosyasi) ? (
                       <a 
-                        href={selectedTeslim.teslim_dosyasi_url} 
+                        href={selectedTeslim.teslim_dosyasi_url || selectedTeslim.teslim_dosyasi} 
                         target="_blank" 
                         rel="noreferrer" 
                         className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-100 transition-colors"
@@ -958,8 +958,8 @@ export default function MentorPanel() {
                                   🔗 Linki Aç
                                 </a>
                               )}
-                              {h.teslim_dosyasi_url && (
-                                <a href={h.teslim_dosyasi_url} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline font-bold text-[11px] inline-flex items-center gap-1">
+                              {(h.teslim_dosyasi_url || h.teslim_dosyasi) && (
+                                <a href={h.teslim_dosyasi_url || h.teslim_dosyasi} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline font-bold text-[11px] inline-flex items-center gap-1">
                                   📎 Dosyayı İndir
                                 </a>
                               )}

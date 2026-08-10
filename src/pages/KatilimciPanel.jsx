@@ -1688,11 +1688,11 @@ export default function KatilimciPanel() {
                               <p className="text-slate-600 leading-relaxed text-xs whitespace-pre-line">
                                 {gorev?.brief_aciklama || 'Açıklama bulunmuyor.'}
                               </p>
-                              {teslim?.teslim_dosyasi_url && (
+                              {(teslim?.teslim_dosyasi_url || teslim?.teslim_dosyasi || teslim?.teslim_linki) && (
                                 <div className="mt-3 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
                                   <span className="font-semibold text-slate-500">Yüklenen Dosya:</span>
                                   <a
-                                    href={teslim.teslim_dosyasi_url}
+                                    href={teslim.teslim_dosyasi_url || teslim.teslim_dosyasi || teslim.teslim_linki}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="font-bold text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-1.5"
@@ -2272,15 +2272,15 @@ export default function KatilimciPanel() {
                 {teslim && (
                   <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-xs space-y-2 text-xs">
                     <h4 className="font-bold text-slate-800 text-xs border-b border-slate-100 pb-2">Mevcut Teslim Bilgileriniz</h4>
-                    {teslim.teslim_dosyasi_url && (
+                    {(teslim.teslim_dosyasi_url || teslim.teslim_dosyasi) && (
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500 font-medium">Dosya:</span>
-                        <a href={teslim.teslim_dosyasi_url} target="_blank" rel="noreferrer" className="font-bold text-orange-600 hover:underline">
+                        <a href={teslim.teslim_dosyasi_url || teslim.teslim_dosyasi} target="_blank" rel="noreferrer" className="font-bold text-orange-600 hover:underline">
                           📎 Yüklenen Dosya
                         </a>
                       </div>
                     )}
-                    {teslim.teslim_linki && (
+                    {teslim.teslim_linki && (teslim.teslim_linki !== teslim.teslim_dosyasi_url && teslim.teslim_linki !== teslim.teslim_dosyasi) && (
                       <div className="flex items-center justify-between">
                         <span className="text-slate-500 font-medium">Harici Link:</span>
                         <a href={teslim.teslim_linki} target="_blank" rel="noreferrer" className="font-bold text-indigo-600 hover:underline truncate max-w-[220px]">
@@ -2399,8 +2399,8 @@ export default function KatilimciPanel() {
                                     🔗 Link
                                   </a>
                                 )}
-                                {h.teslim_dosyasi_url && (
-                                  <a href={h.teslim_dosyasi_url} target="_blank" rel="noreferrer" className="text-orange-600 hover:underline font-bold text-[10px] inline-flex items-center gap-1">
+                                {(h.teslim_dosyasi_url || h.teslim_dosyasi) && (
+                                  <a href={h.teslim_dosyasi_url || h.teslim_dosyasi} target="_blank" rel="noreferrer" className="text-orange-600 hover:underline font-bold text-[10px] inline-flex items-center gap-1">
                                     📎 Dosya
                                   </a>
                                 )}
