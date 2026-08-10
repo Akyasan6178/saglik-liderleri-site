@@ -226,14 +226,13 @@ function MentorDropdown({ takimId, currentMentorId, mentorlar, onSaved }) {
    TESLİM TIMELINE BİLEŞENİ
 ════════════════════════════════════════ */
 function TeslimTimeline({ hareketler }) {
-  // DATA-WARN-01: Safe resolution for legacy media URLs without hardcoding localhost in production
+  // DATA-WARN-01 cleanup: Drive webViewLink URLs start with https:// and pass through directly.
+  // Legacy /media/ relative paths from Django are no longer supported; return null so UI hides the link.
   const resolveUrl = (url) => {
     if (!url || typeof url !== 'string') return null
     if (url.startsWith('http://') || url.startsWith('https://')) return url
-    if (import.meta.env.DEV) {
-      return 'http://localhost:8000' + (url.startsWith('/') ? url : '/' + url)
-    }
-    return url
+    // Relative /media/ path — no longer has a backend; suppress rather than emit broken localhost link
+    return null
   }
 
   const safeList = Array.isArray(hareketler)
