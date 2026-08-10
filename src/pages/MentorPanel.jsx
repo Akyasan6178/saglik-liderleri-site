@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { API_BASE_URL } from '../config/api'
 import {
   getMentorMe,
   getMentorTakimlarim,
@@ -11,8 +10,6 @@ import {
   evaluateDelivery,
   logoutUser
 } from '../services/supabaseService'
-
-const API = `${API_BASE_URL}/api`
 
 // SVG İkonlar
 const Ic = {
