@@ -60,7 +60,7 @@ export default function Login() {
           <span className="text-white font-black text-xl">GD</span>
         </div>
 
-        <h1 className="text-3xl font-black text-slate-900 mb-3">Sisteme Giriş</h1>
+        <h1 className="text-3xl font-black text-slate-900 mb-3">Giriş</h1>
         <p className="text-slate-400 mb-8 leading-relaxed">
           Geleceğin Dijital Sağlık Liderleri<br />
           Yönetim Paneli
