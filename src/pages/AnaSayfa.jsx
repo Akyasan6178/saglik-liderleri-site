@@ -229,7 +229,7 @@ function Navbar({ onLoginClick }) {
               onClick={onLoginClick}
               className="hidden md:flex text-slate-600 hover:text-slate-900 font-semibold px-4 py-2.5 rounded-xl text-sm items-center gap-2 cursor-pointer transition-colors"
             >
-              <span>Sisteme Giriş</span>
+              <span>Giriş</span>
             </button>
             <a
               href="https://markamutfagi.co/saglikliderleri/"
@@ -629,7 +629,7 @@ function CTABanner({ onLoginClick }) {
                 onClick={onLoginClick}
                 className="bg-white/10 border border-white/20 text-white font-bold px-12 py-5 rounded-2xl text-lg inline-flex items-center gap-3 cursor-pointer shadow-xl hover:bg-white/20 transition-all duration-300"
               >
-                <span>Sisteme Giriş</span>
+                <span>Giriş</span>
               </button>
             </div>
           </div>
