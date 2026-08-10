@@ -869,6 +869,7 @@ export async function getAdminKatilimciTeslimleri(katilimciId) {
   }
 
   const gorevIds = [...new Set(teslimler.map(t => t.gorev_id || t.gorev).filter(Boolean))]
+  const teslimIds = teslimler.map(t => t.id).filter(Boolean)
 
   let gorevMap = new Map()
   if (gorevIds.length > 0) {
@@ -882,10 +883,28 @@ export async function getAdminKatilimciTeslimleri(katilimciId) {
     }
   }
 
+  let hareketlerMap = new Map()
+  if (teslimIds.length > 0) {
+    const { data: hareketler } = await supabase
+      .from('core_teslimhareketi')
+      .select('*')
+      .in('teslim_id', teslimIds)
+      .order('id', { ascending: true })
+
+    if (hareketler) {
+      hareketler.forEach(h => {
+        const tId = Number(h.teslim_id)
+        if (!hareketlerMap.has(tId)) hareketlerMap.set(tId, [])
+        hareketlerMap.get(tId).push(h)
+      })
+    }
+  }
+
   return teslimler.map(t => {
     const gId = Number(t.gorev_id || t.gorev)
     const gAdi = (gId && gorevMap.get(gId)) ? gorevMap.get(gId) : (gId ? `Görev #${gId}` : 'Görev bilgisi yok')
     const dosyaLink = t.teslim_dosyasi_url || t.teslim_dosyasi || t.teslim_linki || ''
+    const itemHareketler = hareketlerMap.get(Number(t.id)) || t.hareketler || t.teslim_hareketleri || []
 
     return {
       id: t.id,
@@ -895,13 +914,14 @@ export async function getAdminKatilimciTeslimleri(katilimciId) {
       durum: t.durum || 'BEKLIYOR',
       durum_etiketi: t.durum_etiketi || t.durum || '—',
       teslim_tarihi: t.teslim_tarihi || t.olusturulma_tarihi || null,
+      aciklama: t.aciklama || t.not_metni || '',
       alinan_puan: Number(t.alinan_puan) || 0,
       mentor_yorumu: t.mentor_yorumu || '',
       teslim_dosyasi_url: t.teslim_dosyasi_url || '',
       teslim_dosyasi: t.teslim_dosyasi || '',
       teslim_linki: t.teslim_linki || '',
       dosya_linki: dosyaLink,
-      hareketler: t.hareketler || t.teslim_hareketleri || []
+      hareketler: itemHareketler
     }
   })
 }
@@ -1037,19 +1057,18 @@ export async function addAdminSosyalMedya(katilimci_id, form) {
     .from('core_sosyalmedyaperformansi')
     .insert({
       katilimci_id,
-      platform: String(form.platform || 'Instagram').trim(),
+      platform: String(form.platform || 'Instagram').trim() || 'Instagram',
       takipci_sayisi: tSayisi,
       etkilesim_sayisi: eSayisi,
       etkilesim_orani: etkilesimOrani,
       bonus_puan: Number(form.bonus_puan) || 0,
       not_metni: String(form.not_metni || ''),
-      tarih: form.tarih || new Date().toISOString().split('T')[0],
       olusturulma_tarihi: new Date().toISOString()
     })
     .select()
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error("Sosyal medya kaydı eklenemedi. Lütfen alanları kontrol edin.")
   return data
 }
 

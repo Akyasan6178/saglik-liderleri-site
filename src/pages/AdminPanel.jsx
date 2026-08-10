@@ -17,14 +17,11 @@ import {
   getAdminPerformansList,
   getAdminKatilimciToplantilari,
   getAdminKatilimciSosyalMedya,
-  getAdminKatilimciPerformansNotlari,
   getAdminKatilimciTeslimleri,
-  getAdminPerformansKriterleri,
   getAdminIcerikDnaList,
   updateAdminPerformansScore,
   addAdminToplantiKatilimi,
   addAdminSosyalMedya,
-  addAdminPerformansNotu,
   importCandidatesCsvText,
   logoutUser
 } from '../services/supabaseService'
@@ -2647,30 +2644,54 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
               </div>
 
               {/* 3. CEVAPLAR */}
-              {dnaDetail.cevaplar && Object.keys(dnaDetail.cevaplar).length > 0 && (
-                <div className="bg-gray-50/70 border border-gray-100 rounded-2xl p-4">
-                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/60">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">💬</span>
-                      <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Katılımcı Cevapları</h4>
-                    </div>
-                    <span className="text-[10px] font-semibold bg-gray-200/70 text-gray-600 px-2 py-0.5 rounded-full">
-                      {Object.keys(dnaDetail.cevaplar).length} Soru
-                    </span>
-                  </div>
+              {(() => {
+                let safeCevaplarList = []
+                if (dnaDetail && dnaDetail.cevaplar) {
+                  let raw = dnaDetail.cevaplar
+                  if (typeof raw === 'string') {
+                    try { raw = JSON.parse(raw) } catch (e) { raw = { cevap: raw } }
+                  }
+                  if (Array.isArray(raw)) {
+                    safeCevaplarList = raw.map((v, idx) => [`soru_${idx + 1}`, v])
+                  } else if (typeof raw === 'object' && raw !== null) {
+                    safeCevaplarList = Object.entries(raw)
+                  }
+                }
 
-                  <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
-                    {Object.entries(dnaDetail.cevaplar).map(([k, v]) => (
-                      <div key={k} className="bg-white rounded-xl p-3 border border-gray-200/70 shadow-2xs">
-                        <span className="inline-block text-[10px] font-bold text-purple-800 bg-purple-50 border border-purple-100 px-2.5 py-1 rounded mb-1.5 uppercase tracking-wider">
-                          {DNA_QUESTION_MAP[k] || `Soru: ${k.replace(/_/g, ' ')}`}
-                        </span>
-                        <p className="text-xs text-gray-800 leading-relaxed break-words font-medium">{v || '—'}</p>
+                if (safeCevaplarList.length === 0) return null
+
+                return (
+                  <div className="bg-gray-50/70 border border-gray-100 rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/60">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">💬</span>
+                        <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Katılımcı Cevapları</h4>
                       </div>
-                    ))}
+                      <span className="text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200/80 px-2.5 py-0.5 rounded-full">
+                        Toplam {safeCevaplarList.length} Cevap
+                      </span>
+                    </div>
+
+                    <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
+                      {safeCevaplarList.map(([k, v]) => {
+                        const qTitle = DNA_QUESTION_MAP[k] || (String(k).startsWith('soru_') ? `Soru ${String(k).replace('soru_', '')}` : String(k).replace(/_/g, ' '))
+                        const textVal = typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v || '').trim()
+
+                        return (
+                          <div key={k} className="bg-white rounded-2xl p-3.5 border border-purple-100/90 shadow-2xs space-y-1.5 transition-all hover:border-purple-200">
+                            <span className="inline-block text-[10px] font-bold text-purple-800 bg-purple-50 border border-purple-100 px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                              {qTitle}
+                            </span>
+                            <p className="text-xs text-gray-800 leading-relaxed break-words font-medium whitespace-pre-wrap pt-0.5">
+                              {textVal || 'Cevap girilmedi.'}
+                            </p>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
 
               {/* 4. RAPOR METNİ & DASHBOARD */}
               {dnaDetail.rapor_metni ? (
@@ -2732,8 +2753,7 @@ function PerformansSection({ token, setToast }) {
   const [selectedKatilimciId, setSelectedKatilimciId] = useState(null)
   const [detail, setDetail]                 = useState(null)
   const [detailLoading, setDetailLoading]   = useState(false)
-  const [activeTab, setActiveTab]           = useState('puanlar') // 'puanlar' | 'toplanti' | 'sosyal' | 'teslimler' | 'notlar'
-  const [kriterler, setKriterler]           = useState([])
+  const [activeTab, setActiveTab]           = useState('puanlar') // 'puanlar' | 'toplanti' | 'sosyal' | 'teslimler'
 
   // Score Form
   const [scoreForm, setScoreForm] = useState({
@@ -2766,14 +2786,6 @@ function PerformansSection({ token, setToast }) {
   })
   const [savingSosyal, setSavingSosyal] = useState(false)
 
-  // Kriter Bazlı Not Form
-  const [notForm, setNotForm] = useState({
-    kriter: '',
-    puan: 10,
-    not_metni: '',
-  })
-  const [savingNot, setSavingNot] = useState(false)
-
   const fetchList = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -2794,13 +2806,11 @@ function PerformansSection({ token, setToast }) {
     setSelectedKatilimciId(katilimciId)
     setDetailLoading(true)
     try {
-      const [item, tList, sList, nList, tesList, kList] = await Promise.all([
+      const [item, tList, sList, tesList] = await Promise.all([
         (performansList || []).find(p => p.katilimci_id === katilimciId || p.katilimci === katilimciId) || null,
         getAdminKatilimciToplantilari(katilimciId).catch(() => []),
         getAdminKatilimciSosyalMedya(katilimciId).catch(() => []),
-        getAdminKatilimciPerformansNotlari(katilimciId).catch(() => []),
-        getAdminKatilimciTeslimleri(katilimciId).catch(() => []),
-        getAdminPerformansKriterleri().catch(() => [])
+        getAdminKatilimciTeslimleri(katilimciId).catch(() => [])
       ])
 
       const perfItem = item || {
@@ -2820,11 +2830,8 @@ function PerformansSection({ token, setToast }) {
         toplanti_katilimlari: tList || [],
         sosyal_medya: sList || [],
         sosyal_medya_performanslari: sList || [],
-        notlar: nList || [],
-        performans_notlari: nList || [],
         teslimler: tesList || []
       })
-      setKriterler(kList || [])
 
       setScoreForm({
         gorev_puani: Number(perfItem.gorev_puani) || 0,
@@ -2896,27 +2903,6 @@ function PerformansSection({ token, setToast }) {
     }
   }
 
-  const handleNotSubmit = async (e) => {
-    e.preventDefault()
-    if (!selectedKatilimciId || savingNot) return
-    const selectedKriterId = notForm.kriter || (kriterler && kriterler.length > 0 ? String(kriterler[0].id) : null)
-    if (!selectedKriterId) {
-      setToast({ msg: 'Lütfen geçerli bir performans kriteri seçin.', type: 'error' })
-      return
-    }
-    setSavingNot(true)
-    try {
-      await addAdminPerformansNotu(selectedKatilimciId, { ...notForm, kriter: selectedKriterId })
-      setNotForm({ kriter: '', puan: 10, not_metni: '' })
-      await fetchDetail(selectedKatilimciId)
-      setToast({ msg: 'Kriter bazlı performans notu eklendi!', type: 'success' })
-    } catch (e) {
-      setToast({ msg: `Not ekleme hatası: ${e.message}`, type: 'error' })
-    } finally {
-      setSavingNot(false)
-    }
-  }
-
   const safePerformansList = Array.isArray(performansList) ? performansList : []
   const searchQuery = String(search || '').toLowerCase()
 
@@ -2936,11 +2922,9 @@ function PerformansSection({ token, setToast }) {
   )
 
   // Güvenli Array Tanımları
-  const performansNotlari   = Array.isArray(detail?.performans_notlari) ? detail.performans_notlari : []
   const toplantiKatilimlari = Array.isArray(detail?.toplanti_katilimlari) ? detail.toplanti_katilimlari : []
   const sosyalMedyaList     = Array.isArray(detail?.sosyal_medya_performanslari) ? detail.sosyal_medya_performanslari : []
   const teslimlerList       = Array.isArray(detail?.teslimler) ? detail.teslimler : []
-  const kriterlerList       = Array.isArray(kriterler) ? kriterler : []
 
   // Güvenli Katılımcı ve Performans Nesneleri
   const katilimciObj = detail?.katilimci && typeof detail.katilimci === 'object' ? detail.katilimci : {}
@@ -3123,7 +3107,6 @@ function PerformansSection({ token, setToast }) {
                 { key: 'toplanti', label: `📅 Toplantılar (${toplantiKatilimlari.length})` },
                 { key: 'sosyal', label: `📱 Sosyal Medya (${sosyalMedyaList.length})` },
                 { key: 'teslimler', label: `📋 Teslimler (${teslimlerList.length})` },
-                { key: 'notlar', label: `📝 Performans Notları (${performansNotlari.length})` },
               ].map(t => (
                 <button
                   key={t.key}
@@ -3477,12 +3460,12 @@ function PerformansSection({ token, setToast }) {
 
               {/* 4. TAB: TESLİMLER */}
               {!detailLoading && activeTab === 'teslimler' && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <h5 className="text-xs font-bold text-gray-500 uppercase">Görev Teslimleri Özeti & Timeline</h5>
                   {teslimlerList.length === 0 ? (
                     <p className="text-xs text-gray-400 italic">Bu katılımcıya ait görev teslimi bulunmuyor.</p>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {teslimlerList.map(t => {
                         if (!t || typeof t !== 'object') return null
                         return (
