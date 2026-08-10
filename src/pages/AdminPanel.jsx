@@ -590,7 +590,13 @@ export default function AdminPanel() {
       await deleteGorev(gorev.id)
       await fetchAll()
       setToast({ msg: `"${gorev.gorev_adi}" silindi.`, type: 'info' })
-    } catch (e) { setToast({ msg: `Görev silinemedi: ${e.message}`, type: 'error' }) }
+    } catch (e) {
+      let rawMsg = String(e.message || '')
+      if (rawMsg.toLowerCase().includes('foreign key') || rawMsg.toLowerCase().includes('violates') || rawMsg.toLowerCase().includes('core_teslim')) {
+        rawMsg = 'Bu göreve ait teslimler bulunduğu için görev silinemez. Geçmiş veriyi korumak için görev pasifleştirilmeli veya teslimler arşivlenmelidir.'
+      }
+      setToast({ msg: `Görev silinemedi: ${rawMsg}`, type: 'error' })
+    }
     finally { setDeletingGorev(null) }
   }
 

@@ -228,6 +228,7 @@ export async function updateGorev(id, updates) {
 }
 
 export async function deleteGorev(id) {
+  // 1. Check if any deliveries exist for this task ID
   const { count, error: countErr } = await supabase
     .from('core_teslim')
     .select('id', { count: 'exact', head: true })
@@ -237,9 +238,11 @@ export async function deleteGorev(id) {
     throw new Error('Bu göreve ait teslimler bulunduğu için görev silinemez. Geçmiş veriyi korumak için görev pasifleştirilmeli veya teslimler arşivlenmelidir.')
   }
 
+  // 2. Perform deletion
   const { error } = await supabase.from('core_gorev').delete().eq('id', id)
   if (error) {
-    if (error.message && (error.message.includes('foreign key constraint') || error.message.includes('violates foreign key'))) {
+    const errStr = (String(error.message || '') + String(error.details || '') + String(error.code || '')).toLowerCase()
+    if (error.code === '23503' || errStr.includes('foreign key') || errStr.includes('violates') || errStr.includes('core_teslim')) {
       throw new Error('Bu göreve ait teslimler bulunduğu için görev silinemez. Geçmiş veriyi korumak için görev pasifleştirilmeli veya teslimler arşivlenmelidir.')
     }
     throw error
@@ -574,29 +577,19 @@ export async function getMentorTakimlarim(mentorId) {
 }
 
 export async function getMentorKatilimcilarim(mentorId) {
-  const { data, error } = await supabase
+  const { data: katData, error: katErr } = await supabase
     .from('core_katilimci')
-    .select('*, aday:core_aday(ad, soyad, eposta, universite), takim:core_takim(id, takim_adi)')
+    .select('*, aday:core_aday(ad, soyad, eposta, universite)')
     .order('id', { ascending: false })
-  if (error) {
-    const { data: fallbackData, error: fbErr } = await supabase
-      .from('core_katilimci')
-      .select('*')
-      .order('id', { ascending: false })
-    if (fbErr) throw fbErr
-    return (fallbackData || []).map(k => ({
-      ...k,
-      takim_id: k.takim_id ? Number(k.takim_id) : null,
-      takim: k.takim_id ? Number(k.takim_id) : null,
-      aday: k.aday_id ?? null,
-      aday_id: k.aday_id ?? null,
-      aday_ad_soyad: k.ad_soyad || `${k.ad || ''} ${k.soyad || ''}`.trim() || `Katılımcı #${k.id}`,
-      ad_soyad: k.ad_soyad || `${k.ad || ''} ${k.soyad || ''}`.trim() || `Katılımcı #${k.id}`,
-      eposta: k.eposta || '',
-      universite: k.universite || ''
-    }))
-  }
-  return (data || []).map(k => {
+
+  const { data: takData } = await supabase
+    .from('core_takim')
+    .select('id, takim_adi')
+
+  const takimMap = new Map((takData || []).map(t => [Number(t.id), t.takim_adi]))
+  const rawList = katErr ? (await supabase.from('core_katilimci').select('*').order('id', { ascending: false })).data || [] : (katData || [])
+
+  return rawList.map(k => {
     const adayObj = k.aday || {}
     const adayAdSoyad = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim()
     const directAdSoyad = `${k.ad || ''} ${k.soyad || ''}`.trim() || k.ad_soyad || ''
@@ -605,7 +598,7 @@ export async function getMentorKatilimcilarim(mentorId) {
     const finalUniversite = adayObj.universite || k.universite || ''
     const rawTakimId = k.takim_id ?? (k.takim && typeof k.takim === 'object' ? k.takim.id : k.takim)
     const takimId = rawTakimId !== undefined && rawTakimId !== null ? Number(rawTakimId) : null
-    const takimAdi = (k.takim && typeof k.takim === 'object' ? k.takim.takim_adi : null) || k.takim_adi || ''
+    const takimAdi = (takimId ? takimMap.get(takimId) : null) || (k.takim && typeof k.takim === 'object' ? k.takim.takim_adi : null) || k.takim_adi || ''
 
     return {
       ...k,
@@ -987,53 +980,39 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
 
   const existingTeslim = existingTeslimList && existingTeslimList.length > 0 ? existingTeslimList[0] : null
 
-  let teslimRecord = null
-  if (existingTeslim) {
-    const { data: updated, error: uErr } = await supabase
-      .from('core_teslim')
-      .update({
-        teslim_linki: finalFileLink,
-        teslim_dosyasi: finalFileDosya,
-        aciklama: aciklama || '',
-        teslim_tarihi: nowIso,
-        durum: 'BEKLIYOR',
-        revizyon_istendi: false,
-        degerlendirildi: false
-      })
-      .eq('id', existingTeslim.id)
-      .select()
-      .maybeSingle()
-    if (uErr) throw new Error(uErr.message)
-    teslimRecord = updated
-  } else {
-    const { data: inserted, error: iErr } = await supabase
-      .from('core_teslim')
-      .insert({
-        katilimci_id: katilimciId,
-        takim_id: takimId,
-        gorev_id: gorev_id,
-        teslim_linki: finalFileLink,
-        teslim_dosyasi: finalFileDosya,
-        aciklama: aciklama || '',
-        teslim_tarihi: nowIso,
-        durum: 'BEKLIYOR',
-        revizyon_istendi: false,
-        degerlendirildi: false
-      })
-      .select()
-      .maybeSingle()
-    if (iErr) throw new Error(iErr.message)
-    teslimRecord = inserted
-  }
+  const { data: inserted, error: iErr } = await supabase
+    .from('core_teslim')
+    .insert({
+      katilimci_id: katilimciId,
+      takim_id: takimId,
+      gorev_id: gorev_id,
+      teslim_linki: finalFileLink,
+      teslim_dosyasi: finalFileDosya,
+      aciklama: aciklama || '',
+      teslim_tarihi: nowIso,
+      durum: 'BEKLIYOR',
+      revizyon_istendi: false,
+      degerlendirildi: false
+    })
+    .select()
 
-  await supabase.from('core_teslimhareketi').insert({
-    teslim_id: teslimRecord.id,
-    islem_tipi: 'TESLIM_EDILDI',
-    aciklama: aciklama || 'Katılımcı görevi teslim etti',
-    teslim_linki: finalFileLink,
-    teslim_dosyasi: finalFileDosya,
-    olusturulma_tarihi: nowIso
-  })
+  if (iErr) throw new Error(iErr.message)
+  const teslimRecord = (Array.isArray(inserted) && inserted.length > 0) ? inserted[0] : inserted
+
+  if (teslimRecord && teslimRecord.id) {
+    try {
+      await supabase.from('core_teslimhareketi').insert({
+        teslim_id: teslimRecord.id,
+        islem_tipi: existingTeslim ? 'REVIZE_TESLIM' : 'TESLIM_EDILDI',
+        aciklama: aciklama || (existingTeslim ? 'Katılımcı revize görevi teslim etti' : 'Katılımcı görevi teslim etti'),
+        teslim_linki: finalFileLink,
+        teslim_dosyasi: finalFileDosya,
+        olusturulma_tarihi: nowIso
+      })
+    } catch (hErr) {
+      console.warn('core_teslimhareketi insert skipped:', hErr)
+    }
+  }
 
   return normalizeTeslim(teslimRecord)
 }
