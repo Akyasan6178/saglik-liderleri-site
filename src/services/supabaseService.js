@@ -211,8 +211,12 @@ export async function evaluateTeslim(id, evaluationData) {
 }
 
 // ─── MENTORLAR ─────────────────────────────────────────────────────────────────
-export async function getMentorlar() {
-  const { data, error } = await supabase.from('core_mentor').select('*').order('id', { ascending: false })
+export async function getMentorlar(includeInactive = false) {
+  let query = supabase.from('core_mentor').select('*')
+  if (!includeInactive) {
+    query = query.eq('aktif', true)
+  }
+  const { data, error } = await query.order('id', { ascending: false })
   if (error) throw error
   return data || []
 }

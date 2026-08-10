@@ -519,7 +519,7 @@ export default function AdminPanel() {
     try {
       await callAdminAction('delete_mentor', { mentor_id: mentor.id })
       await fetchAll()
-      setToast({ msg: `"${mentor.ad_soyad}" silindi.`, type: 'info' })
+      setToast({ msg: `"${mentor.ad_soyad}" pasif hale getirildi.`, type: 'info' })
     } catch (e) { setToast({ msg: `Mentor silinemedi: ${e.message}`, type: 'error' }) }
     finally { setDeletingMentor(null) }
   }

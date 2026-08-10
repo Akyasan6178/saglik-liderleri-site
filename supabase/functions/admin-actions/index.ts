@@ -120,6 +120,34 @@ serve(async (req) => {
       const { ad_soyad, eposta, uzmanlik, gecici_sifre } = payload
       if (!ad_soyad || !eposta) return jsonRes(req, { ok: false, error: 'ad_soyad ve eposta zorunludur.' }, 400)
 
+      // 1. Check if soft-deleted mentor exists with this email
+      const { data: existingMentor } = await adminClient
+        .from('core_mentor')
+        .select('*')
+        .eq('eposta', eposta)
+        .maybeSingle()
+
+      if (existingMentor && existingMentor.aktif === false) {
+        const { data: reactivatedMentor, error: reactErr } = await adminClient
+          .from('core_mentor')
+          .update({ aktif: true, silinme_tarihi: null, ad_soyad, uzmanlik: uzmanlik || existingMentor.uzmanlik })
+          .eq('id', existingMentor.id)
+          .select()
+          .single()
+
+        if (reactErr) return jsonRes(req, { ok: false, error: 'Pasif mentor tekrar aktifleştirilemedi.' }, 500)
+
+        const { data: pRow } = await adminClient.from('profiles').select('id').eq('email', eposta).maybeSingle()
+        if (pRow) {
+          await adminClient.from('profiles').update({
+            role: 'mentor', ad_soyad, core_mentor_id: existingMentor.id
+          }).eq('id', pRow.id)
+        }
+
+        return jsonRes(req, { ok: true, data: { mentor: reactivatedMentor, action: 'create_mentor', reactivated: true } })
+      }
+
+      // 2. Standard creation for new mentor
       const password = gecici_sifre || Math.random().toString(36).slice(-10) + 'A1!'
       const { data: authUser, error: authErr } = await adminClient.auth.admin.createUser({
         email: eposta, password, email_confirm: true,
@@ -139,7 +167,7 @@ serve(async (req) => {
 
       const { data: mentorData, error: mentorErr } = await adminClient
         .from('core_mentor')
-        .insert({ ad_soyad, eposta, uzmanlik: uzmanlik || '' })
+        .insert({ ad_soyad, eposta, uzmanlik: uzmanlik || '', aktif: true })
         .select().single()
       if (mentorErr) return jsonRes(req, { ok: false, error: 'Mentor kaydı oluşturulamadı.' }, 500)
 
@@ -154,14 +182,23 @@ serve(async (req) => {
       const { mentor_id } = payload
       if (!mentor_id) return jsonRes(req, { ok: false, error: 'mentor_id zorunludur.' }, 400)
 
+      const now = new Date().toISOString()
+
+      // 1. Soft delete core_mentor: set aktif = false, silinme_tarihi = now
+      const { error: softDelErr } = await adminClient
+        .from('core_mentor')
+        .update({ aktif: false, silinme_tarihi: now })
+        .eq('id', mentor_id)
+
+      if (softDelErr) {
+        console.error('Soft delete mentor error:', softDelErr)
+        return jsonRes(req, { ok: false, error: 'Mentor pasif hale getirilemedi.' }, 500)
+      }
+
+      // 2. Unassign active teams from this mentor so teams can be reassigned
       await adminClient.from('core_takim').update({ mentor_id: null }).eq('mentor_id', mentor_id)
 
-      const { error: delErr } = await adminClient.from('core_mentor').delete().eq('id', mentor_id)
-      if (delErr) return jsonRes(req, { ok: false, error: 'Mentor silinemedi.' }, 500)
-
-      await adminClient.from('profiles').update({ core_mentor_id: null }).eq('core_mentor_id', mentor_id)
-
-      return jsonRes(req, { ok: true, data: { mentor_id, action: 'delete_mentor' } })
+      return jsonRes(req, { ok: true, data: { mentor_id, action: 'delete_mentor', soft_deleted: true } })
     }
 
     return jsonRes(req, { ok: false, error: 'Bilinmeyen action: ' + action }, 400)
