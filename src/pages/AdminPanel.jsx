@@ -2459,14 +2459,14 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
 
       <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-        {/* ── LİSTE GÖRÜNÜMÜ ── */}
-        <div className={`bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden w-full transition-all duration-300 ${
-          dnaDetail ? 'lg:w-[48%] xl:w-[45%]' : 'w-full'
-        }`}>
+      {/* ── İÇERİK DNA TESTLERİ ── */}
+      {!dnaDetail ? (
+        /* ── LİSTE GÖRÜNÜMÜ (TAM EKRAN / TAM GENİŞLİK) ── */
+        <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden w-full">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
             <div className="flex items-center gap-2">
               <span className="text-base">🧬</span>
-              <h3 className="text-sm font-bold text-gray-800">Analiz Listesi</h3>
+              <h3 className="text-sm font-bold text-gray-800">İçerik DNA Analizleri Listesi</h3>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -2489,17 +2489,17 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50/80 border-b border-gray-100">
-                  {['#', 'Katılımcı', 'Durum', 'Gönderim Tarihi', 'AI Model', 'İşlem'].map(h => (
+                  {['#', 'Katılımcı', 'Takım', 'Durum', 'Gönderim Tarihi', 'AI Model', 'İşlem'].map(h => (
                     <th key={h} className="text-left px-4 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {dnaLoading
-                  ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={6} />)
+                  ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={7} />)
                   : dnaList.length === 0
                   ? (
-                    <tr><td colSpan={6} className="text-center py-16 text-gray-400">
+                    <tr><td colSpan={7} className="text-center py-16 text-gray-400">
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-4xl">🧬</span>
                         <p className="font-semibold text-gray-700">Henüz İçerik DNA testi gönderilmemiş.</p>
@@ -2508,14 +2508,12 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
                     </td></tr>
                   )
                   : dnaList.map((item, idx) => {
-                    const isSelected = dnaDetail?.id === item.id
                     const itemKatName = item.katilimci_ad_soyad || item.katilimci_adi || 'Katılımcı'
+                    const tName = item.takim_adi || '—'
                     return (
                       <tr
                         key={item.id}
-                        className={`border-t border-gray-100 transition-colors duration-150 ${
-                          isSelected ? 'bg-purple-50/70 font-medium' : 'hover:bg-gray-50/80'
-                        }`}
+                        className="border-t border-gray-100 transition-colors duration-150 hover:bg-gray-50/80"
                       >
                         <td className="px-4 py-3.5 text-gray-400 font-mono text-xs">{idx + 1}</td>
                         <td className="px-4 py-3.5">
@@ -2523,8 +2521,14 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
                             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-200 to-indigo-100 flex items-center justify-center flex-shrink-0 text-purple-700 font-bold text-xs">
                               {itemKatName[0].toUpperCase()}
                             </div>
-                            <span className="font-medium text-gray-800 whitespace-nowrap">{itemKatName}</span>
+                            <div>
+                              <span className="font-medium text-gray-800 block whitespace-nowrap">{itemKatName}</span>
+                              {item.katilimci_eposta && <span className="text-[10px] text-gray-400 block">{item.katilimci_eposta}</span>}
+                            </div>
                           </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-xs text-gray-600 whitespace-nowrap">
+                          {tName !== '—' ? <span className="bg-purple-50 text-purple-700 border border-purple-200/70 font-semibold px-2 py-0.5 rounded-md">{tName}</span> : <span className="text-gray-400 italic">Takımsız</span>}
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap"><DnaDurumBadge durum={item.durum} /></td>
                         <td className="px-4 py-3.5 text-gray-500 whitespace-nowrap text-xs">{fmtDate(item.gonderim_tarihi)}</td>
@@ -2533,13 +2537,9 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
                           <button
                             id={`btn-dna-detail-${item.id}`}
                             onClick={() => openDetail(item)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                              isSelected
-                                ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                                : 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200/70'
-                            }`}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/70 transition-all shadow-2xs"
                           >
-                            <Ic.Eye c="w-3.5 h-3.5" /> Detay Gör
+                            <Ic.Eye c="w-3.5 h-3.5" /> Detayı Gör
                           </button>
                         </td>
                       </tr>
@@ -2550,195 +2550,178 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
             </table>
           </div>
         </div>
+      ) : (
+        /* ── DETAY GÖRÜNÜMÜ (TAM EKRAN / TAM GENİŞLİK) ── */
+        <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden w-full flex flex-col space-y-6 p-6">
+          
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 bg-purple-50/50 -mx-6 -mt-6 p-6">
+            <div className="flex items-center gap-3">
+              <button
+                id="btn-close-dna-detail"
+                onClick={() => setDnaDetail(null)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-gray-100 text-gray-700 text-xs font-bold border border-gray-200 shadow-2xs transition-all flex-shrink-0"
+              >
+                <Ic.Close c="w-3.5 h-3.5 text-gray-500" />
+                <span>← Analiz Listesine Dön</span>
+              </button>
 
-        {/* ── DETAY PANELİ ── */}
-        {dnaDetail && (
-          <div className="w-full lg:w-[52%] xl:w-[55%] bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden flex flex-col transition-all duration-300">
-            
-            {/* Detay Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-purple-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">
-                  {detailKatName[0].toUpperCase()}
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-800 text-sm leading-snug">{detailKatName}</h3>
-                  <p className="text-[11px] text-gray-400">Rapor Detayı & AI Analizi</p>
-                </div>
+              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-base shadow-2xs flex-shrink-0">
+                {detailKatName[0].toUpperCase()}
               </div>
-              
-              <div className="flex items-center gap-2">
-                <button
-                  id={`btn-dna-regen-${dnaDetail.id}`}
-                  onClick={() => regenerate(dnaDetail.id)}
-                  disabled={dnaRegen === dnaDetail.id}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm disabled:opacity-50"
-                >
-                  {dnaRegen === dnaDetail.id ? (
-                    <>
-                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>İşleniyor…</span>
-                    </>
-                  ) : (
-                    <>
-                      <Ic.Refresh c="w-3.5 h-3.5" />
-                      <span>Raporu Yeniden Oluştur</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => setDnaDetail(null)}
-                  className="p-2 rounded-xl hover:bg-gray-200/60 text-gray-400 hover:text-gray-600 transition-colors"
-                  title="Detayı Kapat"
-                >
-                  <Ic.Close c="w-4 h-4" />
-                </button>
+
+              <div className="min-w-0">
+                <h3 className="font-bold text-gray-800 text-base leading-snug truncate">{detailKatName}</h3>
+                <p className="text-xs text-gray-500 truncate">
+                  {dnaDetail.katilimci_eposta ? `${dnaDetail.katilimci_eposta} · ` : ''}
+                  <span className="font-semibold text-gray-700">{dnaDetail.takim_adi || 'Takımsız'}</span>
+                  {dnaDetail.universite ? ` · ${dnaDetail.universite}` : ''}
+                </p>
               </div>
             </div>
 
-            <div className="overflow-y-auto max-h-[calc(100vh-220px)] p-6 space-y-6">
-
-              {/* 1. KATILIMCI BİLGİLERİ */}
-              <div className="bg-gray-50/70 border border-gray-100 rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200/60">
-                  <span className="text-sm">👤</span>
-                  <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Katılımcı Bilgileri</h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase font-semibold">Ad Soyad</span>
-                    <span className="font-semibold text-gray-800">{detailKatName}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase font-semibold">Gönderim Tarihi</span>
-                    <span className="font-semibold text-gray-800">{fmtDate(dnaDetail.gonderim_tarihi)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. TEST DURUMU */}
-              <div className="bg-gray-50/70 border border-gray-100 rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-200/60">
-                  <span className="text-sm">📊</span>
-                  <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Test Durumu & AI Meta</h4>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase font-semibold mb-1">Durum</span>
-                    <DnaDurumBadge durum={dnaDetail.durum} />
-                  </div>
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase font-semibold">AI Modeli</span>
-                    <span className="font-medium text-gray-700 font-mono">{dnaDetail.ai_model || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase font-semibold">Prompt Versiyonu</span>
-                    <span className="font-medium text-gray-700">{dnaDetail.prompt_versiyonu || '—'}</span>
-                  </div>
-                </div>
-
-                {dnaDetail.hata_mesaji && (
-                  <div className="mt-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-xs">
-                    <p className="font-bold mb-0.5">⚠️ Hata Mesajı:</p>
-                    <p className="font-mono text-[11px] leading-relaxed">{dnaDetail.hata_mesaji}</p>
-                  </div>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <button
+                id={`btn-dna-regen-${dnaDetail.id}`}
+                onClick={() => regenerate(dnaDetail.id)}
+                disabled={dnaRegen === dnaDetail.id}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm disabled:opacity-50"
+              >
+                {dnaRegen === dnaDetail.id ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>İşleniyor…</span>
+                  </>
+                ) : (
+                  <>
+                    <Ic.Refresh c="w-3.5 h-3.5" />
+                    <span>Raporu Yeniden Oluştur</span>
+                  </>
                 )}
-              </div>
+              </button>
+            </div>
+          </div>
 
-              {/* 3. CEVAPLAR */}
-              {(() => {
-                let safeCevaplarList = []
-                if (dnaDetail && dnaDetail.cevaplar) {
-                  let raw = dnaDetail.cevaplar
-                  if (typeof raw === 'string') {
-                    try { raw = JSON.parse(raw) } catch (e) { raw = { cevap: raw } }
-                  }
-                  if (Array.isArray(raw)) {
-                    safeCevaplarList = raw.map((v, idx) => [`soru_${idx + 1}`, v])
-                  } else if (typeof raw === 'object' && raw !== null) {
-                    safeCevaplarList = Object.entries(raw)
-                  }
-                }
+          {/* Özet Kartları Barı */}
+          {(() => {
+            let safeCevaplarList = []
+            if (dnaDetail && dnaDetail.cevaplar) {
+              let raw = dnaDetail.cevaplar
+              if (typeof raw === 'string') {
+                try { raw = JSON.parse(raw) } catch (e) { raw = { cevap: raw } }
+              }
+              if (Array.isArray(raw)) {
+                safeCevaplarList = raw.map((v, idx) => [`soru_${idx + 1}`, v])
+              } else if (typeof raw === 'object' && raw !== null) {
+                safeCevaplarList = Object.entries(raw)
+              }
+            }
 
-                if (safeCevaplarList.length === 0) return null
+            return (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="bg-purple-50/70 border border-purple-100 rounded-xl p-3 text-center">
+                    <span className="text-[10px] font-bold text-purple-700 uppercase">Katılımcı & Takım</span>
+                    <p className="text-sm font-extrabold text-purple-900 mt-0.5 truncate">{detailKatName}</p>
+                    <span className="text-[10px] text-purple-600 font-semibold">{dnaDetail.takim_adi || 'Takımsız'}</span>
+                  </div>
+                  <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 text-center">
+                    <span className="text-[10px] font-bold text-emerald-700 uppercase">Test Durumu</span>
+                    <div className="mt-1 flex justify-center"><DnaDurumBadge durum={dnaDetail.durum} /></div>
+                    <span className="text-[10px] text-gray-500 block mt-1">{fmtDate(dnaDetail.gonderim_tarihi)}</span>
+                  </div>
+                  <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3 text-center">
+                    <span className="text-[10px] font-bold text-blue-700 uppercase">AI Modeli</span>
+                    <p className="text-xs font-bold text-blue-900 font-mono mt-1">{dnaDetail.ai_model || '—'}</p>
+                    <span className="text-[10px] text-blue-600 block">Prompt {dnaDetail.prompt_versiyonu || 'v1'}</span>
+                  </div>
+                  <div className="bg-slate-100 border border-slate-200 rounded-xl p-3 text-center">
+                    <span className="text-[10px] font-bold text-slate-700 uppercase">Cevaplanan Soru Sayısı</span>
+                    <p className="text-xl font-black text-slate-800 mt-0.5">{safeCevaplarList.length}</p>
+                    <span className="text-[10px] text-slate-500 block">Toplam Cevap</span>
+                  </div>
+                </div>
 
-                return (
-                  <div className="bg-gray-50/70 border border-gray-100 rounded-2xl p-4">
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/60">
+                {/* Katılımcı Cevapları (Full-Width Responsive 2-Column Grid) */}
+                {safeCevaplarList.length > 0 ? (
+                  <div className="bg-gray-50/70 border border-gray-200/80 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-gray-200">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm">💬</span>
-                        <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Katılımcı Cevapları</h4>
+                        <span className="text-base">💬</span>
+                        <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Katılımcı Cevapları</h4>
                       </div>
-                      <span className="text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200/80 px-2.5 py-0.5 rounded-full">
-                        Toplam {safeCevaplarList.length} Cevap
+                      <span className="text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200 px-3 py-1 rounded-full">
+                        Toplam {safeCevaplarList.length} Cevap {safeCevaplarList.length < 16 ? '(DB Kaydı)' : ''}
                       </span>
                     </div>
 
-                    <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-1">
                       {safeCevaplarList.map(([k, v]) => {
                         const qTitle = DNA_QUESTION_MAP[k] || (String(k).startsWith('soru_') ? `Soru ${String(k).replace('soru_', '')}` : String(k).replace(/_/g, ' '))
                         const textVal = typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v || '').trim()
 
                         return (
-                          <div key={k} className="bg-white rounded-2xl p-3.5 border border-purple-100/90 shadow-2xs space-y-1.5 transition-all hover:border-purple-200">
-                            <span className="inline-block text-[10px] font-bold text-purple-800 bg-purple-50 border border-purple-100 px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                          <div key={k} className="bg-white rounded-2xl p-4 border border-purple-100 shadow-2xs space-y-2 transition-all hover:border-purple-300">
+                            <span className="inline-block text-[11px] font-extrabold text-purple-900 bg-purple-50 border border-purple-200 px-3 py-1 rounded-xl uppercase tracking-wider">
                               {qTitle}
                             </span>
-                            <p className="text-xs text-gray-800 leading-relaxed break-words font-medium whitespace-pre-wrap pt-0.5">
-                              {textVal || 'Cevap girilmedi.'}
+                            <p className="text-xs text-gray-800 leading-relaxed break-words font-medium whitespace-pre-wrap pt-1">
+                              {textVal || 'Cevap verilmedi.'}
                             </p>
                           </div>
                         )
                       })}
                     </div>
                   </div>
-                )
-              })()}
-
-              {/* 4. RAPOR METNİ & DASHBOARD */}
-              {dnaDetail.rapor_metni ? (
-                <div className="bg-purple-50/40 border border-purple-100 rounded-2xl p-5 shadow-2xs">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-purple-100">
-                    <span className="text-base">📄</span>
-                    <h4 className="text-xs font-bold text-purple-900 uppercase tracking-wider">Rapor Metni & Dashboard</h4>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-xs text-gray-500 italic flex items-center gap-2">
+                    <span>💬</span> Bu kayıt için cevap verisi bulunamadı veya okunamadı.
                   </div>
-                  <div className="max-h-[600px] overflow-y-auto pr-1">
+                )}
+
+                {/* AI Raporu & Dashboard */}
+                {dnaDetail.rapor_metni ? (
+                  <div className="bg-purple-50/40 border border-purple-100 rounded-2xl p-5 shadow-2xs space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-purple-100">
+                      <span className="text-base">📄</span>
+                      <h4 className="text-xs font-bold text-purple-900 uppercase tracking-wider">AI Rapor Metni & Strateji Dashboard</h4>
+                    </div>
                     <AdminContentDNADashboard
                       reportText={dnaDetail.rapor_metni}
                       aiModel={dnaDetail.ai_model}
                       promptVersion={dnaDetail.prompt_versiyonu}
-                      katilimciAdi={dnaDetail.katilimci_adi}
+                      katilimciAdi={detailKatName}
                       cevaplar={dnaDetail.cevaplar}
                     />
                   </div>
-                </div>
-              ) : (
-                <div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 text-xs text-amber-800 flex items-center gap-2">
-                  <span>ℹ️</span> Henüz rapor metni oluşturulmamış veya işlem bekleniyor.
-                </div>
-              )}
-
-              {/* 5. TEKNİK JSON (DEBUG) */}
-              {dnaDetail.rapor_json && Object.keys(dnaDetail.rapor_json).length > 0 && (
-                <details className="group border border-gray-200 rounded-xl overflow-hidden bg-gray-50/50">
-                  <summary className="px-4 py-3 text-xs font-bold text-gray-500 cursor-pointer hover:bg-gray-100 flex items-center justify-between select-none">
-                    <span className="flex items-center gap-2">
-                      <span>🛠️</span>
-                      <span>Teknik JSON (Debug)</span>
-                    </span>
-                    <span className="text-gray-400 group-open:rotate-180 transition-transform text-xs">▼</span>
-                  </summary>
-                  <div className="p-4 border-t border-gray-200 bg-slate-900 text-emerald-400 rounded-b-xl">
-                    <pre className="text-[11px] font-mono leading-relaxed overflow-x-auto max-h-60 overflow-y-auto">
-                      {JSON.stringify(dnaDetail.rapor_json, null, 2)}
-                    </pre>
+                ) : (
+                  <div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-5 text-xs text-amber-800 flex items-center gap-2">
+                    <span>ℹ️</span> Bu kayıt için henüz AI rapor metni oluşturulmamış.
                   </div>
-                </details>
-              )}
+                )}
 
-            </div>
-          </div>
-        )}
+                {/* Teknik JSON (Debug) */}
+                {dnaDetail.rapor_json && Object.keys(dnaDetail.rapor_json).length > 0 && (
+                  <details className="group border border-gray-200 rounded-xl overflow-hidden bg-gray-50/50">
+                    <summary className="px-4 py-3 text-xs font-bold text-gray-500 cursor-pointer hover:bg-gray-100 flex items-center justify-between select-none">
+                      <span className="flex items-center gap-2">
+                        <span>🛠️</span>
+                        <span>Teknik JSON (Debug)</span>
+                      </span>
+                      <span className="text-gray-400 group-open:rotate-180 transition-transform text-xs">▼</span>
+                    </summary>
+                    <div className="p-4 border-t border-gray-200 bg-slate-900 text-emerald-400 rounded-b-xl">
+                      <pre className="text-[11px] font-mono leading-relaxed overflow-x-auto max-h-60 overflow-y-auto">
+                        {JSON.stringify(dnaDetail.rapor_json, null, 2)}
+                      </pre>
+                    </div>
+                  </details>
+                )}
+              </div>
+            )
+          })()}
+        </div>
+      )}
       </div>
     </div>
   )

@@ -1027,7 +1027,7 @@ export async function getAdminIcerikDnaList() {
       *,
       katilimci:core_katilimci (
         id,
-        aday:core_aday (ad, soyad, eposta),
+        aday:core_aday (ad, soyad, eposta, universite),
         takim:core_takim (id, takim_adi)
       )
     `)
@@ -1048,6 +1048,7 @@ export async function getAdminIcerikDnaList() {
       katilimci_ad_soyad: adSoyad,
       katilimci_adi: adSoyad,
       katilimci_eposta: adayObj.eposta || '',
+      universite: adayObj.universite || '',
       takim_adi: d.katilimci?.takim?.takim_adi || '—',
       durum: d.durum || 'TAMAMLANDI',
       ai_model: d.ai_model || 'Gemini 2.5 Flash',
