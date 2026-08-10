@@ -730,40 +730,144 @@ export async function evaluateDelivery(teslim_id, alinan_puan, mentor_yorumu) {
 }
 
 export async function getAdminPerformansList() {
-  const { data, error } = await supabase
-    .from('core_katilimciperformans')
+  const { data: katData, error: katErr } = await supabase
+    .from('core_katilimci')
     .select(`
-      *,
-      katilimci:core_katilimci (
-        id,
-        aday:core_aday (ad, soyad, eposta),
-        takim:core_takim (id, takim_adi)
-      )
+      id,
+      aday_id,
+      takim_id,
+      aday:core_aday (ad, soyad, eposta, universite),
+      takim:core_takim (id, takim_adi)
     `)
-    .order('bireysel_puan', { ascending: false })
+    .order('id', { ascending: false })
 
-  if (error) {
-    console.error('getAdminPerformansList error:', error)
+  if (katErr) {
+    console.error('getAdminPerformansList katilimci error:', katErr)
     return []
   }
 
-  return (data || []).map(p => ({
-    id: p.id,
-    katilimci: p.katilimci_id,
-    katilimci_id: p.katilimci_id,
-    ad_soyad: p.katilimci?.aday ? `${p.katilimci.aday.ad || ''} ${p.katilimci.aday.soyad || ''}`.trim() : 'Katılımcı',
-    eposta: p.katilimci?.aday?.eposta || '',
-    takim_adi: p.katilimci?.takim?.takim_adi || '—',
-    bireysel_puan: p.bireysel_puan || 0,
-    gorev_puani: p.gorev_puani || 0,
-    toplanti_katilim_puani: p.toplanti_katilim_puani || 0,
-    etkilesim_bonus_puani: p.etkilesim_bonus_puani || 0,
-    manuel_puan: p.manuel_puan || 0,
-    admin_ici_not: p.admin_ici_not || '',
-    katilimciya_gorunen_not: p.katilimciya_gorunen_not || '',
-    olusturulma_tarihi: p.olusturulma_tarihi,
-    guncellenme_tarihi: p.guncellenme_tarihi
+  const { data: perfData } = await supabase
+    .from('core_katilimciperformans')
+    .select('*')
+
+  const perfMap = new Map((perfData || []).map(p => [Number(p.katilimci_id), p]))
+
+  return (katData || []).map(k => {
+    const kId = Number(k.id)
+    const p = perfMap.get(kId) || {}
+    const adayObj = k.aday || {}
+    const adSoyad = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim() || `Katılımcı #${k.id}`
+
+    return {
+      id: p.id || null,
+      katilimci: kId,
+      katilimci_id: kId,
+      ad_soyad: adSoyad,
+      eposta: adayObj.eposta || '',
+      universite: adayObj.universite || '',
+      takim_id: k.takim_id || (k.takim?.id) || null,
+      takim_adi: k.takim?.takim_adi || '—',
+      bireysel_puan: Number(p.bireysel_puan) || 0,
+      gorev_puani: Number(p.gorev_puani) || 0,
+      toplanti_katilim_puani: Number(p.toplanti_katilim_puani) || 0,
+      etkilesim_bonus_puani: Number(p.etkilesim_bonus_puani) || 0,
+      manuel_puan: Number(p.manuel_puan) || 0,
+      admin_ici_not: p.admin_ici_not || '',
+      katilimciya_gorunen_not: p.katilimciya_gorunen_not || '',
+      olusturulma_tarihi: p.olusturulma_tarihi || null,
+      guncellenme_tarihi: p.guncellenme_tarihi || null
+    }
+  }).sort((a, b) => b.bireysel_puan - a.bireysel_puan)
+}
+
+export async function getAdminKatilimciToplantilari(katilimciId) {
+  if (!katilimciId) return []
+  const { data, error } = await supabase
+    .from('core_toplantikatilimi')
+    .select('*')
+    .eq('katilimci_id', katilimciId)
+    .order('tarih', { ascending: false })
+  if (error) {
+    console.warn('getAdminKatilimciToplantilari warning:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function getAdminKatilimciSosyalMedya(katilimciId) {
+  if (!katilimciId) return []
+  const { data, error } = await supabase
+    .from('core_sosyalmedyaperformansi')
+    .select('*')
+    .eq('katilimci_id', katilimciId)
+    .order('id', { ascending: false })
+  if (error) {
+    console.warn('getAdminKatilimciSosyalMedya warning:', error)
+    return []
+  }
+  return data || []
+}
+
+export async function getAdminKatilimciPerformansNotlari(katilimciId) {
+  if (!katilimciId) return []
+  const { data, error } = await supabase
+    .from('core_katilimciperformansnotu')
+    .select(`
+      *,
+      kriter:core_performanskriteri(id, kriter_adi)
+    `)
+    .eq('katilimci_id', katilimciId)
+    .order('id', { ascending: false })
+  if (error) {
+    const { data: rawNotlar } = await supabase
+      .from('core_katilimciperformansnotu')
+      .select('*')
+      .eq('katilimci_id', katilimciId)
+      .order('id', { ascending: false })
+    return rawNotlar || []
+  }
+  return data || []
+}
+
+export async function getAdminKatilimciTeslimleri(katilimciId) {
+  if (!katilimciId) return []
+  const { data, error } = await supabase
+    .from('core_teslim')
+    .select(`
+      *,
+      gorev:core_gorev(id, baslik)
+    `)
+    .eq('katilimci_id', katilimciId)
+    .order('id', { ascending: false })
+  if (error) {
+    const { data: rawTeslimler } = await supabase
+      .from('core_teslim')
+      .select('*')
+      .eq('katilimci_id', katilimciId)
+      .order('id', { ascending: false })
+    return (rawTeslimler || []).map(t => ({
+      ...t,
+      gorev_adi: `Görev #${t.gorev_id || t.gorev}`,
+      dosya_linki: t.teslim_dosyasi || t.teslim_linki || ''
+    }))
+  }
+  return (data || []).map(t => ({
+    ...t,
+    gorev_adi: t.gorev?.baslik || `Görev #${t.gorev_id || t.gorev}`,
+    dosya_linki: t.teslim_dosyasi || t.teslim_linki || ''
   }))
+}
+
+export async function getAdminPerformansKriterleri() {
+  const { data, error } = await supabase
+    .from('core_performanskriteri')
+    .select('*')
+    .order('id', { ascending: true })
+  if (error) {
+    console.warn('getAdminPerformansKriterleri warning:', error)
+    return []
+  }
+  return data || []
 }
 
 export async function getAdminIcerikDnaList() {
@@ -784,18 +888,27 @@ export async function getAdminIcerikDnaList() {
     return []
   }
 
-  return (data || []).map(d => ({
-    id: d.id,
-    katilimci_id: d.katilimci_id,
-    katilimci_ad_soyad: d.katilimci?.aday ? `${d.katilimci.aday.ad || ''} ${d.katilimci.aday.soyad || ''}`.trim() : 'Katılımcı',
-    katilimci_eposta: d.katilimci?.aday?.eposta || '',
-    takim_adi: d.katilimci?.takim?.takim_adi || '—',
-    durum: d.durum || 'TAMAMLANDI',
-    ai_model: d.ai_model || 'Gemini 2.5 Flash',
-    gonderim_tarihi: d.gonderim_tarihi,
-    rapor_metni: d.rapor_metni || (d.rapor_json ? d.rapor_json.rapor_metni : ''),
-    cevaplar: d.cevaplar || (d.rapor_json ? d.rapor_json.cevaplar : {})
-  }))
+  return (data || []).map(d => {
+    const adayObj = d.katilimci?.aday || {}
+    const adSoyad = `${adayObj.ad || ''} ${adayObj.soyad || ''}`.trim() || `Katılımcı #${d.katilimci_id}`
+
+    return {
+      id: d.id,
+      katilimci_id: d.katilimci_id,
+      katilimci_ad_soyad: adSoyad,
+      katilimci_adi: adSoyad,
+      katilimci_eposta: adayObj.eposta || '',
+      takim_adi: d.katilimci?.takim?.takim_adi || '—',
+      durum: d.durum || 'TAMAMLANDI',
+      ai_model: d.ai_model || 'Gemini 2.5 Flash',
+      prompt_versiyonu: d.prompt_versiyonu || 'v1',
+      gonderim_tarihi: d.gonderim_tarihi,
+      rapor_metni: d.rapor_metni || (d.rapor_json ? d.rapor_json.rapor_metni : ''),
+      rapor_json: d.rapor_json || null,
+      cevaplar: d.cevaplar || (d.rapor_json ? d.rapor_json.cevaplar : {}),
+      hata_mesaji: d.hata_mesaji || null
+    }
+  })
 }
 
 export async function updateAdminPerformansScore(katilimci_id, scoreForm) {
@@ -805,24 +918,47 @@ export async function updateAdminPerformansScore(katilimci_id, scoreForm) {
   const mPuan = Number(scoreForm.manuel_puan) || 0
   const birPuan = gPuan + tPuan + ePuan + mPuan
 
-  const { data, error } = await supabase
-    .from('core_katilimciperformans')
-    .update({
-      gorev_puani: gPuan,
-      toplanti_katilim_puani: tPuan,
-      etkilesim_bonus_puani: ePuan,
-      manuel_puan: mPuan,
-      bireysel_puan: birPuan,
-      admin_ici_not: String(scoreForm.admin_ici_not || ''),
-      katilimciya_gorunen_not: String(scoreForm.katilimciya_gorunen_not || ''),
-      guncellenme_tarihi: new Date().toISOString()
-    })
-    .eq('katilimci_id', katilimci_id)
-    .select()
-    .single()
+  const payload = {
+    katilimci_id,
+    gorev_puani: gPuan,
+    toplanti_katilim_puani: tPuan,
+    etkilesim_bonus_puani: ePuan,
+    manuel_puan: mPuan,
+    bireysel_puan: birPuan,
+    admin_ici_not: String(scoreForm.admin_ici_not || ''),
+    katilimciya_gorunen_not: String(scoreForm.katilimciya_gorunen_not || ''),
+    guncellenme_tarihi: new Date().toISOString()
+  }
 
-  if (error) throw new Error(error.message)
-  return data
+  const { data: existing } = await supabase
+    .from('core_katilimciperformans')
+    .select('id')
+    .eq('katilimci_id', katilimci_id)
+    .maybeSingle()
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from('core_katilimciperformans')
+      .update(payload)
+      .eq('id', existing.id)
+      .select()
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+    return data
+  } else {
+    const { data, error } = await supabase
+      .from('core_katilimciperformans')
+      .insert({
+        ...payload,
+        olusturulma_tarihi: new Date().toISOString()
+      })
+      .select()
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+    return data
+  }
 }
 
 export async function addAdminToplantiKatilimi(katilimci_id, form) {
@@ -845,15 +981,21 @@ export async function addAdminToplantiKatilimi(katilimci_id, form) {
 }
 
 export async function addAdminSosyalMedya(katilimci_id, form) {
+  const tSayisi = Number(form.takipci_sayisi) || 0
+  const eSayisi = Number(form.etkilesim_sayisi) || 0
+  const etkilesimOrani = tSayisi > 0 ? Number(((eSayisi / tSayisi) * 100).toFixed(2)) : 0
+
   const { data, error } = await supabase
     .from('core_sosyalmedyaperformansi')
     .insert({
       katilimci_id,
-      platform: String(form.platform || '').trim(),
-      takipci_sayisi: Number(form.takipci_sayisi) || 0,
-      etkilesim_sayisi: Number(form.etkilesim_sayisi) || 0,
+      platform: String(form.platform || 'Instagram').trim(),
+      takipci_sayisi: tSayisi,
+      etkilesim_sayisi: eSayisi,
+      etkilesim_orani: etkilesimOrani,
       bonus_puan: Number(form.bonus_puan) || 0,
       not_metni: String(form.not_metni || ''),
+      tarih: form.tarih || new Date().toISOString().split('T')[0],
       olusturulma_tarihi: new Date().toISOString()
     })
     .select()
@@ -864,13 +1006,19 @@ export async function addAdminSosyalMedya(katilimci_id, form) {
 }
 
 export async function addAdminPerformansNotu(katilimci_id, form) {
+  const kriterId = form.kriter ? Number(form.kriter) : null
+  if (!kriterId) {
+    throw new Error('Lütfen geçerli bir performans kriteri seçin.')
+  }
+
   const { data, error } = await supabase
     .from('core_katilimciperformansnotu')
     .insert({
       katilimci_id,
-      kriter_id: form.kriter ? Number(form.kriter) : null,
+      kriter_id: kriterId,
       puan: Number(form.puan) || 0,
       not_metni: String(form.not_metni || ''),
+      tarih: form.tarih || new Date().toISOString().split('T')[0],
       olusturulma_tarihi: new Date().toISOString()
     })
     .select()

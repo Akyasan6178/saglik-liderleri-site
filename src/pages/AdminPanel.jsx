@@ -15,6 +15,11 @@ import {
   updateTakim,
   callAdminAction,
   getAdminPerformansList,
+  getAdminKatilimciToplantilari,
+  getAdminKatilimciSosyalMedya,
+  getAdminKatilimciPerformansNotlari,
+  getAdminKatilimciTeslimleri,
+  getAdminPerformansKriterleri,
   getAdminIcerikDnaList,
   updateAdminPerformansScore,
   addAdminToplantiKatilimi,
@@ -2396,6 +2401,25 @@ function DnaDurumBadge({ durum }) {
   )
 }
 
+const DNA_QUESTION_MAP = {
+  soru_1: '1. Branş / Uzmanlık Alanınız',
+  soru_2: '2. Şehir / Çalıştığınız Kurum',
+  soru_3: '3. Hedef Kitle (Hasta, Danışan, Genel Kamuoyu)',
+  soru_4: '4. Sosyal Medya Kullanım Amacınız',
+  soru_5: '5. Aktif Kullandığınız Platformlar',
+  soru_6: '6. En Çok İlgi Çeken İçerik Türleriniz',
+  soru_7: '7. İçerik Üretiminde Karşılaştığınız En Büyük Zorluk',
+  soru_8: '8. Haftalık İçerik Üretimine Ayırabileceğiniz Süre',
+  soru_9: '9. Kamera Karşısında Rahatlık Dereceniz (1-10)',
+  soru_10: '10. Teknik / Ekipman Durumu (Işık, Mikrofon vb.)',
+  soru_11: '11. Görsel / Video Düzenleme Beceriniz',
+  soru_12: '12. İlham Aldığınız Hesaplar veya Rol Modeller',
+  soru_13: '13. İçerik Üretiminde Dijital Sağlık Vizyonunuz',
+  soru_14: '14. Haftalık İdeal İçerik Hedefiniz',
+  soru_15: '15. Mevcut Deneyim Seviyeniz',
+  soru_16: '16. İletişim Tarzınız ve Tonunuz'
+}
+
 function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dnaError, setDnaError, dnaDetail, setDnaDetail, dnaRegen, setDnaRegen, setToast }) {
 
   const fetchList = async () => {
@@ -2422,6 +2446,7 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
   }
 
   const fmtDate = (d) => d ? new Date(d).toLocaleDateString('tr-TR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—'
+  const detailKatName = dnaDetail ? (dnaDetail.katilimci_ad_soyad || dnaDetail.katilimci_adi || 'Katılımcı') : 'Katılımcı'
 
   return (
     <div className="space-y-6">
@@ -2485,6 +2510,7 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
                   )
                   : dnaList.map((item, idx) => {
                     const isSelected = dnaDetail?.id === item.id
+                    const itemKatName = item.katilimci_ad_soyad || item.katilimci_adi || 'Katılımcı'
                     return (
                       <tr
                         key={item.id}
@@ -2496,9 +2522,9 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-200 to-indigo-100 flex items-center justify-center flex-shrink-0 text-purple-700 font-bold text-xs">
-                              {((item.katilimci_ad_soyad || item.katilimci_adi) ?? '?')[0].toUpperCase()}
+                              {itemKatName[0].toUpperCase()}
                             </div>
-                            <span className="font-medium text-gray-800 whitespace-nowrap">{item.katilimci_ad_soyad || item.katilimci_adi || '—'}</span>
+                            <span className="font-medium text-gray-800 whitespace-nowrap">{itemKatName}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap"><DnaDurumBadge durum={item.durum} /></td>
@@ -2534,10 +2560,10 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-purple-50/50">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">
-                  {(dnaDetail.katilimci_adi ?? '?')[0].toUpperCase()}
+                  {detailKatName[0].toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-800 text-sm leading-snug">{dnaDetail.katilimci_adi ?? '—'}</h3>
+                  <h3 className="font-bold text-gray-800 text-sm leading-snug">{detailKatName}</h3>
                   <p className="text-[11px] text-gray-400">Rapor Detayı & AI Analizi</p>
                 </div>
               </div>
@@ -2582,7 +2608,7 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div>
                     <span className="text-gray-400 block text-[10px] uppercase font-semibold">Ad Soyad</span>
-                    <span className="font-semibold text-gray-800">{dnaDetail.katilimci_adi ?? '—'}</span>
+                    <span className="font-semibold text-gray-800">{detailKatName}</span>
                   </div>
                   <div>
                     <span className="text-gray-400 block text-[10px] uppercase font-semibold">Gönderim Tarihi</span>
@@ -2633,13 +2659,13 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
                     </span>
                   </div>
 
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
                     {Object.entries(dnaDetail.cevaplar).map(([k, v]) => (
                       <div key={k} className="bg-white rounded-xl p-3 border border-gray-200/70 shadow-2xs">
-                        <span className="inline-block text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded mb-1 uppercase tracking-wider">
-                          {k.replace(/_/g, ' ')}
+                        <span className="inline-block text-[10px] font-bold text-purple-800 bg-purple-50 border border-purple-100 px-2.5 py-1 rounded mb-1.5 uppercase tracking-wider">
+                          {DNA_QUESTION_MAP[k] || `Soru: ${k.replace(/_/g, ' ')}`}
                         </span>
-                        <p className="text-xs text-gray-700 leading-relaxed break-words">{v || '—'}</p>
+                        <p className="text-xs text-gray-800 leading-relaxed break-words font-medium">{v || '—'}</p>
                       </div>
                     ))}
                   </div>
@@ -2768,20 +2794,46 @@ function PerformansSection({ token, setToast }) {
     setSelectedKatilimciId(katilimciId)
     setDetailLoading(true)
     try {
-      const item = (performansList || []).find(p => p.katilimci_id === katilimciId || p.katilimci === katilimciId)
-      if (item) {
-        setDetail({ performans: item })
-        setScoreForm({
-          gorev_puani: Number(item.gorev_puani) || 0,
-          toplanti_katilim_puani: Number(item.toplanti_katilim_puani) || 0,
-          etkilesim_bonus_puani: Number(item.etkilesim_bonus_puani) || 0,
-          manuel_puan: Number(item.manuel_puan) || 0,
-          admin_ici_not: String(item.admin_ici_not || ''),
-          katilimciya_gorunen_not: String(item.katilimciya_gorunen_not || ''),
-        })
-      } else {
-        setDetail({})
+      const [item, tList, sList, nList, tesList, kList] = await Promise.all([
+        (performansList || []).find(p => p.katilimci_id === katilimciId || p.katilimci === katilimciId) || null,
+        getAdminKatilimciToplantilari(katilimciId).catch(() => []),
+        getAdminKatilimciSosyalMedya(katilimciId).catch(() => []),
+        getAdminKatilimciPerformansNotlari(katilimciId).catch(() => []),
+        getAdminKatilimciTeslimleri(katilimciId).catch(() => []),
+        getAdminPerformansKriterleri().catch(() => [])
+      ])
+
+      const perfItem = item || {
+        katilimci_id: katilimciId,
+        ad_soyad: 'Katılımcı',
+        gorev_puani: 0,
+        toplanti_katilim_puani: 0,
+        etkilesim_bonus_puani: 0,
+        manuel_puan: 0,
+        bireysel_puan: 0,
+        admin_ici_not: '',
+        katilimciya_gorunen_not: ''
       }
+
+      setDetail({
+        performans: perfItem,
+        toplanti_katilimlari: tList || [],
+        sosyal_medya: sList || [],
+        sosyal_medya_performanslari: sList || [],
+        notlar: nList || [],
+        performans_notlari: nList || [],
+        teslimler: tesList || []
+      })
+      setKriterler(kList || [])
+
+      setScoreForm({
+        gorev_puani: Number(perfItem.gorev_puani) || 0,
+        toplanti_katilim_puani: Number(perfItem.toplanti_katilim_puani) || 0,
+        etkilesim_bonus_puani: Number(perfItem.etkilesim_bonus_puani) || 0,
+        manuel_puan: Number(perfItem.manuel_puan) || 0,
+        admin_ici_not: String(perfItem.admin_ici_not || ''),
+        katilimciya_gorunen_not: String(perfItem.katilimciya_gorunen_not || ''),
+      })
     } catch (e) {
       setToast({ msg: `Detay yüklenemedi: ${e.message}`, type: 'error' })
     } finally {
@@ -2847,9 +2899,14 @@ function PerformansSection({ token, setToast }) {
   const handleNotSubmit = async (e) => {
     e.preventDefault()
     if (!selectedKatilimciId || savingNot) return
+    const selectedKriterId = notForm.kriter || (kriterler && kriterler.length > 0 ? String(kriterler[0].id) : null)
+    if (!selectedKriterId) {
+      setToast({ msg: 'Lütfen geçerli bir performans kriteri seçin.', type: 'error' })
+      return
+    }
     setSavingNot(true)
     try {
-      await addAdminPerformansNotu(selectedKatilimciId, notForm)
+      await addAdminPerformansNotu(selectedKatilimciId, { ...notForm, kriter: selectedKriterId })
       setNotForm({ kriter: '', puan: 10, not_metni: '' })
       await fetchDetail(selectedKatilimciId)
       setToast({ msg: 'Kriter bazlı performans notu eklendi!', type: 'success' })
