@@ -20,7 +20,7 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return jsonRes({ ok: false, error: 'Yetkilendirme basligiD eksik.' }, 401)
+    if (!authHeader) return jsonRes({ ok: false, error: 'Yetkilendirme başlığı eksik.' }, 401)
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -31,7 +31,7 @@ serve(async (req) => {
     })
 
     const { data: { user }, error: userError } = await userClient.auth.getUser()
-    if (userError || !user) return jsonRes({ ok: false, error: 'Oturum dogrulanamadI.' }, 401)
+    if (userError || !user) return jsonRes({ ok: false, error: 'Oturum doğrulanamadı.' }, 401)
 
     const { data: profile, error: profileError } = await userClient
       .from('profiles')
@@ -39,9 +39,9 @@ serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (profileError || !profile) return jsonRes({ ok: false, error: 'Profil bulunamadI.' }, 403)
+    if (profileError || !profile) return jsonRes({ ok: false, error: 'Profil bulunamadı.' }, 403)
     if (profile.role !== 'katilimci' && profile.role !== 'admin') {
-      return jsonRes({ ok: false, error: 'Bu islem icin katilimci yetkisi gereklidir.' }, 403)
+      return jsonRes({ ok: false, error: 'Bu işlem için katılımcı yetkisi gereklidir.' }, 403)
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey)
@@ -61,23 +61,23 @@ serve(async (req) => {
       if (kData) katilimciId = kData.id
     }
 
-    if (!katilimciId) return jsonRes({ ok: false, error: 'Katilimci kaydI eslestirilemedi.' }, 400)
+    if (!katilimciId) return jsonRes({ ok: false, error: 'Katılımcı kaydı eşleştirilemedi.' }, 400)
 
-    const geminiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('OPENAI_API_KEY')
+    const geminiKey = Deno.env.get('GEMINI_API_KEY')
     let raporMetni = ""
-    let aiModel = "Gemini 2.5 Flash"
+    let aiModel = geminiKey ? "Gemini 2.5 Flash" : "Standart Analiz Şablonu"
     let promptVersiyonu = "v1.0"
 
     if (geminiKey) {
       try {
-        const prompt = `Dijital Saglik Liderleri programi icin Icerik DNA Analistisisiniz. Asagidaki form yanitlarina dayanarak katilimci icin detayli, ilham verici ve yapilandirilmis bir Icerik DNA Analiz Raporu hazirlayin. Raporu su markdown basliklariyla olusturun:
-## 1. Genel Strateji & Marka Kimligi
-## 2. Skor Kriterleri ve Performans Gostergeleri
-## 3. Onerilen Icerik Serileri ve Format Recetesi
-## 4. Riskler ve Gelisim Haritasi
-## 5. Yol Haritasi ve Aksiyon Adimlari
+        const prompt = `Dijital Sağlık Liderleri programı için İçerik DNA Analistisisiniz. Aşağıdaki form yanıtlarına dayanarak katılımcı için detaylı, ilham verici ve yapılandırılmış bir İçerik DNA Analiz Raporu hazırlayın. Raporu şu markdown başlıklarıyla oluşturun:
+## 1. Genel Strateji & Marka Kimliği
+## 2. Skor Kriterleri ve Performans Göstergeleri
+## 3. Önerilen İçerik Serileri ve Format Reçetesi
+## 4. Riskler ve Gelişim Haritası
+## 5. Yol Haritası ve Aksiyon Adımları
 
-Katilimci Yanitlari:
+Katılımcı Yanıtları:
 ${JSON.stringify(cevaplar, null, 2)}`
 
         const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
@@ -91,44 +91,46 @@ ${JSON.stringify(cevaplar, null, 2)}`
         if (geminiRes.ok) {
           const gData = await geminiRes.json()
           raporMetni = gData.candidates?.[0]?.content?.parts?.[0]?.text || ""
+        } else {
+          console.error('Gemini API call failed with status:', geminiRes.status)
         }
       } catch (err) {
-        console.error('Gemini API call error:', err)
+        console.error('Gemini API call exception:', err)
       }
     }
 
     if (!raporMetni) {
-      raporMetni = `## 1. Genel Strateji & Marka Kimligi
-**Saglik ve Dijital Icerik Odagi**: Yanitlariniz dogrultusunda bilimsel, guvenilir ve sürdürülebilir bir dijital saglik liderligi kimligi hedeflenmektedir.
-**Arketip & Ton**: Bilgi verici, pratik ve samimi anlatim dili.
+      raporMetni = `## 1. Genel Strateji & Marka Kimliği
+**Sağlık ve Dijital İçerik Odağı**: Yanıtlarınız doğrultusunda bilimsel, güvenilir ve sürdürülebilir bir dijital sağlık liderliği kimliği hedeflenmektedir.
+**Arketip & Ton**: Bilgi verici, pratik ve samimi anlatım dili.
 
-## 2. Skor Kriterleri ve Performans Gostergeleri
-- **Icerik Uretim Seviyesi**: ${cevaplar?.soru_15 || 'Orta Seviye'}
-- **Haftalik Kapasite**: ${cevaplar?.soru_14 || '2-3 Icerik'} / Hafta
-- **Kamera Rahatligi**: ${cevaplar?.soru_9 || '4'}/5
-- **Iletisim Odak Noktasi**: ${cevaplar?.soru_11 || 'Fayda & Bilgi'}
+## 2. Skor Kriterleri ve Performans Göstergeleri
+- **İçerik Üretim Seviyesi**: ${cevaplar?.soru_15 || 'Orta Seviye'}
+- **Haftalık Kapasite**: ${cevaplar?.soru_14 || '2-3 İçerik'} / Hafta
+- **Kamera Rahatlığı**: ${cevaplar?.soru_9 || '4'}/5
+- **İletişim Odak Noktası**: ${cevaplar?.soru_11 || 'Fayda & Bilgi'}
 
-## 3. Onerilen Icerik Serileri ve Format Recetesi
-### 1. Icerik Serisi: 1 Dakikada Dogru Bilinen Yanlislar
+## 3. Önerilen İçerik Serileri ve Format Reçetesi
+### 1. İçerik Serisi: 1 Dakikada Doğru Bilinen Yanlışlar
 - **Format**: Reels / Shorts / TikTok Video
-- **Odak**: Saglik mitleri ve etken madde bazli pratik uyarilar.
+- **Odak**: Sağlık mitleri ve etken madde bazlı pratik uyarılar.
 
-### 2. Icerik Serisi: Banko Arkasi Sik Sorulanlar
-- **Format**: Soru-Cevap & Carousel Gorsel
-- **Odak**: Eczane / klinik pratiginde en sik karsilasilan hasta sorulari.
+### 2. İçerik Serisi: Banko Arkası Sık Sorulanlar
+- **Format**: Soru-Cevap & Carousel Görsel
+- **Odak**: Eczane / klinik pratiğinde en sık karşılaşılan hasta soruları.
 
-### 3. Icerik Serisi: Gunluk Saglik Ipuclari
-- **Format**: Samimi Anlatim Video
-- **Odak**: Yasam tarzi ve koruyucu saglik onerileri.
+### 3. İçerik Serisi: Günlük Sağlık İpuçları
+- **Format**: Samimi Anlatım Video
+- **Odak**: Yaşam tarzı ve koruyucu sağlık önerileri.
 
-## 4. Riskler ve Gelisim Haritasi
-- **Operasyonel Riskler**: TITCK ve mevzuat kurallarina uyum, etken madde tavsiyelerinde sorumluluk reddi ekleme.
-- **Gelisim Adimlari**: Ilk cümlede guclü kanca (hook) kullanimi ve düzenli icerik takvimi.
+## 4. Riskler ve Gelişim Haritası
+- **Operasyonel Riskler**: TİTCK ve mevzuat kurallarına uyum, etken madde tavsiyelerinde sorumluluk reddi ekleme.
+- **Gelişim Adımları**: İlk cümlede güçlü kanca (hook) kullanımı ve düzenli içerik takvimi.
 
-## 5. Yol Haritasi ve Aksiyon Adimlari
-- **Asama 1**: Marka vizyon kelimelerinin kapak gorsellerine yansitilmasi.
-- **Asama 2**: Ilk 3 video serisinin cekimi ve kurgusu.
-- **Asama 3**: Etkilesim analizi ve mentor degerlendirmesi.`
+## 5. Yol Haritası ve Aksiyon Adımları
+- **Aşama 1**: Marka vizyon kelimelerinin kapak görsellerine yansıtılması.
+- **Aşama 2**: İlk 3 video serisinin çekimi ve kurgusu.
+- **Aşama 3**: Etkileşim analizi ve mentor değerlendirmesi.`
     }
 
     const now = new Date().toISOString()
@@ -181,12 +183,12 @@ ${JSON.stringify(cevaplar, null, 2)}`
 
     if (dbErr) {
       console.error('DB Write Error:', dbErr)
-      return jsonRes({ ok: false, error: 'DNA testi sonuclari veritabanina kaydedilemedi.' }, 500)
+      return jsonRes({ ok: false, error: 'DNA testi sonuçları veritabanına kaydedilemedi.' }, 500)
     }
 
     return jsonRes({ ok: true, data: dbData })
   } catch (err: any) {
     console.error('ai-content-dna error:', err)
-    return jsonRes({ ok: false, error: 'Sunucu hatasi olustu.' }, 500)
+    return jsonRes({ ok: false, error: 'Sunucu hatası oluştu.' }, 500)
   }
 })
