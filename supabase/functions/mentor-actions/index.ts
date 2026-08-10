@@ -1,26 +1,47 @@
 ﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  'https://gelecegin-saglik-liderleri.omerkarapinar.workers.dev',
+  'http://localhost:5173',
+  'http://localhost:3000',
+]
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || ''
+  const isAllowed = ALLOWED_ORIGINS.includes(origin)
+  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0]
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
-function jsonRes(data: unknown, status = 200) {
+function jsonRes(req: Request, data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
   })
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    const origin = req.headers.get('origin') || ''
+    if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+      return new Response(JSON.stringify({ ok: false, error: 'CORS yetkisi reddedildi.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   try {
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return jsonRes({ ok: false, error: 'Yetkilendirme başlığı eksik.' }, 401)
+    if (!authHeader) return jsonRes(req, { ok: false, error: 'Yetkilendirme başlığı eksik.' }, 401)
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -32,7 +53,7 @@ serve(async (req) => {
     })
 
     const { data: { user }, error: userError } = await userClient.auth.getUser()
-    if (userError || !user) return jsonRes({ ok: false, error: 'Oturum doğrulanamadı.' }, 401)
+    if (userError || !user) return jsonRes(req, { ok: false, error: 'Oturum doğrulanamadı.' }, 401)
 
     const { data: profile, error: profileError } = await userClient
       .from('profiles')
@@ -40,9 +61,9 @@ serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (profileError || !profile) return jsonRes({ ok: false, error: 'Profil bulunamadı.' }, 403)
+    if (profileError || !profile) return jsonRes(req, { ok: false, error: 'Profil bulunamadı.' }, 403)
     if (profile.role !== 'mentor' && profile.role !== 'admin') {
-      return jsonRes({ ok: false, error: 'Bu işlem için mentor veya admin yetkisi gereklidir.' }, 403)
+      return jsonRes(req, { ok: false, error: 'Bu işlem için mentor veya admin yetkisi gereklidir.' }, 403)
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey)
@@ -53,9 +74,9 @@ serve(async (req) => {
     // ─────────────────────────────────────────────────────────────────────────
     if (action === 'request_revision') {
       const { teslim_id, revizyon_notu } = payload
-      if (!teslim_id) return jsonRes({ ok: false, error: 'teslim_id zorunludur.' }, 400)
+      if (!teslim_id) return jsonRes(req, { ok: false, error: 'teslim_id zorunludur.' }, 400)
       if (!revizyon_notu || !revizyon_notu.trim()) {
-        return jsonRes({ ok: false, error: 'Revizyon notu eksiksiz yazılmalıdır.' }, 400)
+        return jsonRes(req, { ok: false, error: 'Revizyon notu eksiksiz yazılmalıdır.' }, 400)
       }
 
       // 1. Teslim kaydını oku
@@ -65,7 +86,7 @@ serve(async (req) => {
         .eq('id', teslim_id)
         .maybeSingle()
 
-      if (teslimErr || !teslim) return jsonRes({ ok: false, error: 'Teslim bulunamadı.' }, 404)
+      if (teslimErr || !teslim) return jsonRes(req, { ok: false, error: 'Teslim bulunamadı.' }, 404)
 
       // 2. Yetki Kontrolü
       if (profile.role !== 'admin') {
@@ -81,7 +102,7 @@ serve(async (req) => {
         }
 
         if (!callerMentorId) {
-          return jsonRes({ ok: false, error: 'Mentor kaydı eşleştirilemedi.' }, 403)
+          return jsonRes(req, { ok: false, error: 'Mentor kaydı eşleştirilemedi.' }, 403)
         }
 
         let isAuthorized = false
@@ -117,7 +138,7 @@ serve(async (req) => {
         }
 
         if (!isAuthorized) {
-          return jsonRes({ ok: false, error: 'Bu teslim üzerinde yetkiniz bulunmamaktadır.' }, 403)
+          return jsonRes(req, { ok: false, error: 'Bu teslim üzerinde yetkiniz bulunmamaktadır.' }, 403)
         }
       }
 
@@ -136,7 +157,7 @@ serve(async (req) => {
 
       if (updateErr) {
         console.error('core_teslim update error:', updateErr)
-        return jsonRes({ ok: false, error: 'Teslim durumu güncellenemedi.' }, 500)
+        return jsonRes(req, { ok: false, error: 'Teslim durumu güncellenemedi.' }, 500)
       }
 
       // 4. core_teslimhareketi kaydı oluştur
@@ -157,7 +178,7 @@ serve(async (req) => {
         console.error('core_teslimhareketi insert error:', hareketErr)
       }
 
-      return jsonRes({
+      return jsonRes(req, {
         ok: true,
         data: {
           teslim: updatedTeslim,
@@ -171,11 +192,11 @@ serve(async (req) => {
     // ─────────────────────────────────────────────────────────────────────────
     if (action === 'evaluate_delivery') {
       const { teslim_id, alinan_puan, mentor_yorumu } = payload
-      if (!teslim_id) return jsonRes({ ok: false, error: 'teslim_id zorunludur.' }, 400)
+      if (!teslim_id) return jsonRes(req, { ok: false, error: 'teslim_id zorunludur.' }, 400)
 
       const pVal = parseInt(String(alinan_puan))
       if (isNaN(pVal) || pVal < 0) {
-        return jsonRes({ ok: false, error: 'Geçerli bir puan giriniz.' }, 400)
+        return jsonRes(req, { ok: false, error: 'Geçerli bir puan giriniz.' }, 400)
       }
 
       // 1. Teslim kaydını oku
@@ -185,7 +206,7 @@ serve(async (req) => {
         .eq('id', teslim_id)
         .maybeSingle()
 
-      if (teslimErr || !teslim) return jsonRes({ ok: false, error: 'Teslim bulunamadı.' }, 404)
+      if (teslimErr || !teslim) return jsonRes(req, { ok: false, error: 'Teslim bulunamadı.' }, 404)
 
       // 2. Maksimum Puan Kontrolü (Görev bazlı)
       let maxPuan = 100
@@ -199,7 +220,7 @@ serve(async (req) => {
       }
 
       if (pVal > maxPuan) {
-        return jsonRes({ ok: false, error: `Puan maksimum (${maxPuan}) değerinden büyük olamaz.` }, 400)
+        return jsonRes(req, { ok: false, error: `Puan maksimum (${maxPuan}) değerinden büyük olamaz.` }, 400)
       }
 
       // 3. Yetki Kontrolü
@@ -216,7 +237,7 @@ serve(async (req) => {
         }
 
         if (!callerMentorId) {
-          return jsonRes({ ok: false, error: 'Mentor kaydı eşleştirilemedi.' }, 403)
+          return jsonRes(req, { ok: false, error: 'Mentor kaydı eşleştirilemedi.' }, 403)
         }
 
         let isAuthorized = false
@@ -252,7 +273,7 @@ serve(async (req) => {
         }
 
         if (!isAuthorized) {
-          return jsonRes({ ok: false, error: 'Bu teslim üzerinde yetkiniz bulunmamaktadır.' }, 403)
+          return jsonRes(req, { ok: false, error: 'Bu teslim üzerinde yetkiniz bulunmamaktadır.' }, 403)
         }
       }
 
@@ -275,7 +296,7 @@ serve(async (req) => {
 
       if (updateErr) {
         console.error('core_teslim evaluation update error:', updateErr)
-        return jsonRes({ ok: false, error: 'Teslim değerlendirmesi güncellenemedi.' }, 500)
+        return jsonRes(req, { ok: false, error: 'Teslim değerlendirmesi güncellenemedi.' }, 500)
       }
 
       // 5. Katılımcı Performans Güncelleme / Yeniden Hesaplama
@@ -347,7 +368,7 @@ serve(async (req) => {
         console.error('core_teslimhareketi insert error:', hareketErr)
       }
 
-      return jsonRes({
+      return jsonRes(req, {
         ok: true,
         data: {
           teslim: updatedTeslim,
@@ -357,9 +378,9 @@ serve(async (req) => {
       })
     }
 
-    return jsonRes({ ok: false, error: `Bilinmeyen action: ${action}` }, 400)
+    return jsonRes(req, { ok: false, error: `Bilinmeyen action: ${action}` }, 400)
   } catch (err: any) {
     console.error('mentor-actions error:', err)
-    return jsonRes({ ok: false, error: 'Sunucu hatası oluştu.' }, 500)
+    return jsonRes(req, { ok: false, error: 'Sunucu hatası oluştu.' }, 500)
   }
 })

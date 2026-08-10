@@ -1,26 +1,47 @@
 ﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  'https://gelecegin-saglik-liderleri.omerkarapinar.workers.dev',
+  'http://localhost:5173',
+  'http://localhost:3000',
+]
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || ''
+  const isAllowed = ALLOWED_ORIGINS.includes(origin)
+  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0]
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
-function jsonRes(data, status = 200) {
+function jsonRes(req: Request, data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
   })
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    const origin = req.headers.get('origin') || ''
+    if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+      return new Response(JSON.stringify({ ok: false, error: 'CORS yetkisi reddedildi.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   try {
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return jsonRes({ ok: false, error: 'Yetkilendirme basIIgI eksik.' }, 401)
+    if (!authHeader) return jsonRes(req, { ok: false, error: 'Yetkilendirme başlığı eksik.' }, 401)
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -31,7 +52,7 @@ serve(async (req) => {
     })
 
     const { data: { user }, error: userError } = await userClient.auth.getUser()
-    if (userError || !user) return jsonRes({ ok: false, error: 'Oturum dogrulanamadI.' }, 401)
+    if (userError || !user) return jsonRes(req, { ok: false, error: 'Oturum doğrulanamadı.' }, 401)
 
     const { data: profile, error: profileError } = await userClient
       .from('profiles')
@@ -39,23 +60,23 @@ serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (profileError || !profile) return jsonRes({ ok: false, error: 'Profil bulunamadI.' }, 403)
-    if (profile.role !== 'admin') return jsonRes({ ok: false, error: 'Bu islem icin admin yetkisi gereklidir.' }, 403)
+    if (profileError || !profile) return jsonRes(req, { ok: false, error: 'Profil bulunamadı.' }, 403)
+    if (profile.role !== 'admin') return jsonRes(req, { ok: false, error: 'Bu işlem için admin yetkisi gereklidir.' }, 403)
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey)
     const { action, payload } = await req.json()
 
     if (action === 'approve_candidate') {
       const { aday_id } = payload
-      if (!aday_id) return jsonRes({ ok: false, error: 'aday_id zorunludur.' }, 400)
+      if (!aday_id) return jsonRes(req, { ok: false, error: 'aday_id zorunludur.' }, 400)
 
       const { data: aday, error: adayErr } = await adminClient
         .from('core_aday').select('*').eq('id', aday_id).maybeSingle()
-      if (adayErr || !aday) return jsonRes({ ok: false, error: 'Aday bulunamadI.' }, 404)
+      if (adayErr || !aday) return jsonRes(req, { ok: false, error: 'Aday bulunamadı.' }, 404)
 
       const { error: updateErr } = await adminClient
         .from('core_aday').update({ basvuru_durumu: 'ONAYLANDI' }).eq('id', aday_id)
-      if (updateErr) return jsonRes({ ok: false, error: 'Aday durumu guncellenemedi.' }, 500)
+      if (updateErr) return jsonRes(req, { ok: false, error: 'Aday durumu güncellenemedi.' }, 500)
 
       const { data: existing } = await adminClient
         .from('core_katilimci').select('id').eq('aday_id', aday_id).maybeSingle()
@@ -71,7 +92,7 @@ serve(async (req) => {
             program_katilim_durumu: 'AKTIF',
           })
           .select().single()
-        if (kErr) return jsonRes({ ok: false, error: 'Katilimci kaydi olusturulamadI.' }, 500)
+        if (kErr) return jsonRes(req, { ok: false, error: 'Katılımcı kaydı oluşturulamadı.' }, 500)
         katilimci = kData
 
         await adminClient.from('core_katilimciperformans').insert({
@@ -81,23 +102,23 @@ serve(async (req) => {
         })
       }
 
-      return jsonRes({ ok: true, data: { aday_id, katilimci, action: 'approve_candidate' } })
+      return jsonRes(req, { ok: true, data: { aday_id, katilimci, action: 'approve_candidate' } })
     }
 
     if (action === 'reject_candidate') {
       const { aday_id } = payload
-      if (!aday_id) return jsonRes({ ok: false, error: 'aday_id zorunludur.' }, 400)
+      if (!aday_id) return jsonRes(req, { ok: false, error: 'aday_id zorunludur.' }, 400)
 
       const { error: updateErr } = await adminClient
         .from('core_aday').update({ basvuru_durumu: 'REDDEDILDI' }).eq('id', aday_id)
-      if (updateErr) return jsonRes({ ok: false, error: 'Aday durumu guncellenemedi.' }, 500)
+      if (updateErr) return jsonRes(req, { ok: false, error: 'Aday durumu güncellenemedi.' }, 500)
 
-      return jsonRes({ ok: true, data: { aday_id, action: 'reject_candidate' } })
+      return jsonRes(req, { ok: true, data: { aday_id, action: 'reject_candidate' } })
     }
 
     if (action === 'create_mentor') {
       const { ad_soyad, eposta, uzmanlik, gecici_sifre } = payload
-      if (!ad_soyad || !eposta) return jsonRes({ ok: false, error: 'ad_soyad ve eposta zorunludur.' }, 400)
+      if (!ad_soyad || !eposta) return jsonRes(req, { ok: false, error: 'ad_soyad ve eposta zorunludur.' }, 400)
 
       const password = gecici_sifre || Math.random().toString(36).slice(-10) + 'A1!'
       const { data: authUser, error: authErr } = await adminClient.auth.admin.createUser({
@@ -108,45 +129,45 @@ serve(async (req) => {
       if (authErr) {
         const msg = authErr.message || ''
         if (msg.includes('already registered') || msg.includes('already exists')) {
-          return jsonRes({ ok: false, error: 'Bu e-posta adresi zaten kayItlIdIr.' }, 409)
+          return jsonRes(req, { ok: false, error: 'Bu e-posta adresi zaten kayıtlıdır.' }, 409)
         }
-        return jsonRes({ ok: false, error: 'Auth kullanicisi olusturulamadI.' }, 500)
+        return jsonRes(req, { ok: false, error: 'Auth kullanıcısı oluşturulamadı.' }, 500)
       }
 
       const newUserId = authUser.user?.id
-      if (!newUserId) return jsonRes({ ok: false, error: 'Auth ID alinamadI.' }, 500)
+      if (!newUserId) return jsonRes(req, { ok: false, error: 'Auth ID alınamadı.' }, 500)
 
       const { data: mentorData, error: mentorErr } = await adminClient
         .from('core_mentor')
         .insert({ ad_soyad, eposta, uzmanlik: uzmanlik || '' })
         .select().single()
-      if (mentorErr) return jsonRes({ ok: false, error: 'Mentor kaydi olusturulamadI.' }, 500)
+      if (mentorErr) return jsonRes(req, { ok: false, error: 'Mentor kaydı oluşturulamadı.' }, 500)
 
       await adminClient.from('profiles').upsert({
         id: newUserId, email: eposta, role: 'mentor', ad_soyad, core_mentor_id: mentorData.id,
       }, { onConflict: 'id' })
 
-      return jsonRes({ ok: true, data: { mentor: mentorData, action: 'create_mentor' } })
+      return jsonRes(req, { ok: true, data: { mentor: mentorData, action: 'create_mentor' } })
     }
 
     if (action === 'delete_mentor') {
       const { mentor_id } = payload
-      if (!mentor_id) return jsonRes({ ok: false, error: 'mentor_id zorunludur.' }, 400)
+      if (!mentor_id) return jsonRes(req, { ok: false, error: 'mentor_id zorunludur.' }, 400)
 
       await adminClient.from('core_takim').update({ mentor_id: null }).eq('mentor_id', mentor_id)
 
       const { error: delErr } = await adminClient.from('core_mentor').delete().eq('id', mentor_id)
-      if (delErr) return jsonRes({ ok: false, error: 'Mentor silinemedi.' }, 500)
+      if (delErr) return jsonRes(req, { ok: false, error: 'Mentor silinemedi.' }, 500)
 
       await adminClient.from('profiles').update({ core_mentor_id: null }).eq('core_mentor_id', mentor_id)
 
-      return jsonRes({ ok: true, data: { mentor_id, action: 'delete_mentor' } })
+      return jsonRes(req, { ok: true, data: { mentor_id, action: 'delete_mentor' } })
     }
 
-    return jsonRes({ ok: false, error: 'Bilinmeyen action: ' + action }, 400)
+    return jsonRes(req, { ok: false, error: 'Bilinmeyen action: ' + action }, 400)
 
   } catch (err) {
     console.error('admin-actions error:', err)
-    return jsonRes({ ok: false, error: 'Sunucu hatasI olustu.' }, 500)
+    return jsonRes(req, { ok: false, error: 'Sunucu hatası oluştu.' }, 500)
   }
 })

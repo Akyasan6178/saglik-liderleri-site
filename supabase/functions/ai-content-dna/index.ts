@@ -1,26 +1,47 @@
 ﻿import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const ALLOWED_ORIGINS = [
+  'https://gelecegin-saglik-liderleri.omerkarapinar.workers.dev',
+  'http://localhost:5173',
+  'http://localhost:3000',
+]
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || ''
+  const isAllowed = ALLOWED_ORIGINS.includes(origin)
+  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0]
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
-function jsonRes(data: unknown, status = 200) {
+function jsonRes(req: Request, data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
   })
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    const origin = req.headers.get('origin') || ''
+    if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+      return new Response(JSON.stringify({ ok: false, error: 'CORS yetkisi reddedildi.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   try {
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) return jsonRes({ ok: false, error: 'Yetkilendirme başlığı eksik.' }, 401)
+    if (!authHeader) return jsonRes(req, { ok: false, error: 'Yetkilendirme başlığı eksik.' }, 401)
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -31,7 +52,7 @@ serve(async (req) => {
     })
 
     const { data: { user }, error: userError } = await userClient.auth.getUser()
-    if (userError || !user) return jsonRes({ ok: false, error: 'Oturum doğrulanamadı.' }, 401)
+    if (userError || !user) return jsonRes(req, { ok: false, error: 'Oturum doğrulanamadı.' }, 401)
 
     const { data: profile, error: profileError } = await userClient
       .from('profiles')
@@ -39,9 +60,9 @@ serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (profileError || !profile) return jsonRes({ ok: false, error: 'Profil bulunamadı.' }, 403)
+    if (profileError || !profile) return jsonRes(req, { ok: false, error: 'Profil bulunamadı.' }, 403)
     if (profile.role !== 'katilimci' && profile.role !== 'admin') {
-      return jsonRes({ ok: false, error: 'Bu işlem için katılımcı yetkisi gereklidir.' }, 403)
+      return jsonRes(req, { ok: false, error: 'Bu işlem için katılımcı yetkisi gereklidir.' }, 403)
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey)
@@ -54,7 +75,6 @@ serve(async (req) => {
 
     // Katılımcı kaydı yoksa otomatik oluştur ve profile bağla
     if (!katilimciId) {
-      // 1. core_aday oluştur veya bul
       const { data: newAday } = await adminClient
         .from('core_aday')
         .insert({
@@ -110,7 +130,7 @@ serve(async (req) => {
       }
     }
 
-    if (!katilimciId) return jsonRes({ ok: false, error: 'Katılımcı kaydı eşleştirilemedi.' }, 400)
+    if (!katilimciId) return jsonRes(req, { ok: false, error: 'Katılımcı kaydı eşleştirilemedi.' }, 400)
 
     const geminiKey = Deno.env.get('GEMINI_API_KEY')
     let raporMetni = ""
@@ -235,12 +255,12 @@ ${JSON.stringify(cevaplar, null, 2)}`
 
     if (dbErr) {
       console.error('DB Write Error:', dbErr)
-      return jsonRes({ ok: false, error: 'DNA testi sonuçları veritabanına kaydedilemedi.' }, 500)
+      return jsonRes(req, { ok: false, error: 'DNA testi sonuçları veritabanına kaydedilemedi.' }, 500)
     }
 
-    return jsonRes({ ok: true, data: dbData })
+    return jsonRes(req, { ok: true, data: dbData })
   } catch (err: any) {
     console.error('ai-content-dna error:', err)
-    return jsonRes({ ok: false, error: 'Sunucu hatası oluştu.' }, 500)
+    return jsonRes(req, { ok: false, error: 'Sunucu hatası oluştu.' }, 500)
   }
 })
