@@ -739,10 +739,12 @@ export async function addAdminPerformansNotu(katilimci_id, form) {
   return data
 }
 
-export async function uploadFileToGoogleDrive({ filename, file_base64, content_type }) {
+export async function uploadFileToGoogleDrive({ filename, file_base64, content_type, katilimci_adi, katilimci_id }) {
   const { data: sessionData } = await supabase.auth.getSession()
   const token = sessionData?.session?.access_token
   if (!token) throw new Error('Oturum açmanız gerekmektedir.')
+
+  const user = sessionData?.session?.user
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://wczupupflxvfnjbjkfrj.supabase.co'
   const res = await fetch(`${supabaseUrl}/functions/v1/google-drive-action`, {
@@ -753,7 +755,14 @@ export async function uploadFileToGoogleDrive({ filename, file_base64, content_t
     },
     body: JSON.stringify({
       action: 'upload_file',
-      payload: { filename, file_base64, content_type }
+      payload: {
+        filename,
+        file_base64,
+        content_type,
+        katilimci_adi,
+        katilimci_id,
+        user_email: user?.email || ''
+      }
     })
   })
 
@@ -768,12 +777,19 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
   const user = (await supabase.auth.getUser()).data.user
   if (!user) throw new Error('Oturum açmanız gerekmektedir.')
 
-  const { data: profile } = await supabase.from('profiles').select('core_katilimci_id').eq('id', user.id).single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('core_katilimci_id, ad_soyad')
+    .eq('id', user.id)
+    .single()
+
   if (!profile || !profile.core_katilimci_id) {
     throw new Error('Katılımcı profil kaydınız bulunamadı.')
   }
 
   const katilimciId = profile.core_katilimci_id
+  const katilimciAdi = profile.ad_soyad || ''
+
   const { data: katilimciRow } = await supabase.from('core_katilimci').select('takim_id').eq('id', katilimciId).single()
   const takimId = katilimciRow?.takim_id || null
 
@@ -791,7 +807,9 @@ export async function submitKatilimciTeslim({ gorev_id, teslim_linki, aciklama, 
     const driveRes = await uploadFileToGoogleDrive({
       filename: file.name,
       file_base64: fileBase64,
-      content_type: file.type
+      content_type: file.type,
+      katilimci_adi: katilimciAdi,
+      katilimci_id: katilimciId
     })
 
     finalFileDosya = driveRes.webViewLink || driveRes.download_url

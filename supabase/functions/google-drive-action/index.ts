@@ -27,7 +27,6 @@ function jsonRes(req: Request, data: unknown, status = 200) {
   })
 }
 
-// Convert string to Uint8Array
 function str2ab(str: string): Uint8Array {
   const buf = new Uint8Array(str.length)
   for (let i = 0; i < str.length; i++) {
@@ -36,7 +35,6 @@ function str2ab(str: string): Uint8Array {
   return buf
 }
 
-// Base64URL encode
 function base64url(arr: Uint8Array): string {
   let binary = ''
   for (let i = 0; i < arr.byteLength; i++) {
@@ -52,7 +50,6 @@ function strToBase64url(str: string): string {
   return base64url(new TextEncoder().encode(str))
 }
 
-// Import PEM Private Key for WebCrypto
 async function importPrivateKey(pem: string): Promise<CryptoKey> {
   const pemHeader = '-----BEGIN PRIVATE KEY-----'
   const pemFooter = '-----END PRIVATE KEY-----'
@@ -76,7 +73,6 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
   )
 }
 
-// Mint Google OAuth2 Access Token using Service Account JWT Assertion
 async function getGoogleAccessToken(saJson: any): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   const header = { alg: 'RS256', typ: 'JWT' }
@@ -119,6 +115,46 @@ async function getGoogleAccessToken(saJson: any): Promise<string> {
   return tokenData.access_token
 }
 
+// Get or Create subfolder for a participant
+async function getOrCreateParticipantFolder(googleToken: string, rootFolderId: string, folderName: string): Promise<string> {
+  const safeName = folderName.replace(/'/g, "\\'")
+  const query = `'${rootFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false and name='${safeName}'`
+  const searchUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&supportsAllDrives=true&includeItemsFromAllDrives=true`
+
+  const searchRes = await fetch(searchUrl, {
+    headers: { Authorization: `Bearer ${googleToken}` }
+  })
+
+  if (searchRes.ok) {
+    const searchData = await searchRes.json()
+    if (searchData.files && searchData.files.length > 0) {
+      return searchData.files[0].id
+    }
+  }
+
+  // Create folder if not found
+  const createUrl = 'https://www.googleapis.com/drive/v3/files?supportsAllDrives=true'
+  const createRes = await fetch(createUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${googleToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: folderName,
+      mimeType: 'application/vnd.google-apps.folder',
+      parents: [rootFolderId]
+    })
+  })
+
+  const createData = await createRes.json()
+  if (!createRes.ok || !createData.id) {
+    throw new Error(`Katılımcı klasörü oluşturulamadı: ${createData.error?.message || 'Bilinmeyen hata'}`)
+  }
+
+  return createData.id
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     const origin = req.headers.get('origin') || ''
@@ -158,9 +194,6 @@ serve(async (req) => {
 
     const { action, payload } = await req.json()
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // ACTION: test_connection (Drive Bağlantı & Yetki Testi - GD-02)
-    // ─────────────────────────────────────────────────────────────────────────
     if (action === 'test_connection') {
       const driveUrl = `https://www.googleapis.com/drive/v3/files/${rootFolderId}?fields=id,name,mimeType,driveId&supportsAllDrives=true`
       const res = await fetch(driveUrl, {
@@ -173,22 +206,21 @@ serve(async (req) => {
       return jsonRes(req, { ok: true, data: { status: 'CONNECTED', root_folder: data, shared_drive_id: sharedDriveId || null } })
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // ACTION: upload_file (Dosya Yükleme & Paylaşılabilir Link Üretme - DATA-06B)
-    // ─────────────────────────────────────────────────────────────────────────
     if (action === 'upload_file') {
-      const { filename, file_base64, content_type, folder_id } = payload
+      const { filename, file_base64, content_type, katilimci_adi, katilimci_id, user_email } = payload
       if (!filename || !file_base64) {
         return jsonRes(req, { ok: false, error: 'filename ve file_base64 zorunludur.' }, 400)
       }
 
-      const targetParentId = folder_id || rootFolderId
-      const mime = content_type || 'application/octet-stream'
+      // Determine parent folder: create or get participant subfolder
+      let targetParentId = rootFolderId
+      if (katilimci_adi || katilimci_id) {
+        const folderName = katilimci_adi ? `${katilimci_adi} (ID ${katilimci_id || ''})`.trim() : `Katılımcı #${katilimci_id}`
+        targetParentId = await getOrCreateParticipantFolder(googleToken, rootFolderId, folderName)
+      }
 
-      // Clean base64 prefix if present
+      const mime = content_type || 'application/octet-stream'
       const cleanBase64 = file_base64.replace(/^data:[^;]+;base64,/, '')
-      const binaryString = atob(cleanBase64)
-      const bytes = str2ab(binaryString)
 
       // Multipart upload payload
       const metadata = {
@@ -228,7 +260,7 @@ serve(async (req) => {
 
       const fileId = uploadData.id
 
-      // Set public reader permission on uploaded file
+      // Set reader permission on uploaded file
       try {
         await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`, {
           method: 'POST',
@@ -253,6 +285,7 @@ serve(async (req) => {
         data: {
           file_id: fileId,
           filename: uploadData.name,
+          parent_folder_id: targetParentId,
           webViewLink,
           webContentLink,
           download_url: webContentLink
