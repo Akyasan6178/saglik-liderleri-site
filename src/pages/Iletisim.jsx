@@ -143,10 +143,10 @@ export default function Iletisim() {
         {/* ─── Main 2-col grid ─── */}
         <section className="py-12 md:py-16">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
 
-              {/* ─── Left: Program contact ─── */}
-              <div className="space-y-5">
+              {/* ─── Left: Program contact & Marka Mutfağı ─── */}
+              <div className="space-y-6">
                 {/* Program card */}
                 <div className="bg-white border border-orange-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center mb-5 shadow-md shadow-orange-200/50">
@@ -185,7 +185,7 @@ export default function Iletisim() {
                     href="https://markamutfagi.co"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-700 font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl hover:bg-violet-100 transition-colors duration-200"
+                    className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-700 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl hover:bg-violet-100 transition-colors duration-200"
                   >
                     markamutfagi.co sitesini ziyaret et ↗
                   </a>
@@ -193,8 +193,7 @@ export default function Iletisim() {
               </div>
 
               {/* ─── Right: Social media ─── */}
-              <div className="space-y-5">
-                {/* Social section card */}
+              <div className="space-y-6">
                 <div className="bg-white border border-slate-100 rounded-2xl p-8 shadow-sm">
                   <div className="flex items-center gap-4 mb-5">
                     <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center flex-shrink-0 text-white">
@@ -220,7 +219,7 @@ export default function Iletisim() {
                         title={`${s.label} — ${s.description}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all duration-200 group"
+                        className="flex items-center gap-4 p-3.5 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all duration-200 group"
                       >
                         {/* Icon badge */}
                         <div
@@ -235,42 +234,6 @@ export default function Iletisim() {
                         </div>
                         <span className="text-slate-300 group-hover:text-slate-500 transition-colors duration-200 text-sm">→</span>
                       </a>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Quick links card */}
-                <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-sm">
-                  <h3 className="font-bold text-xs opacity-60 uppercase tracking-wider mb-4">Hızlı Bağlantılar</h3>
-                  <div className="space-y-2.5">
-                    {[
-                      { label: 'Hakkında', to: '/hakkinda', icon: 'ℹ️' },
-                      { label: 'Gizlilik Politikası', to: '/gizlilik', icon: '🔒' },
-                      { label: 'Başvuru Sayfası', href: 'https://markamutfagi.co/saglikliderleri/', icon: '🚀', external: true },
-                    ].map(link => (
-                      link.external ? (
-                        <a
-                          key={link.label}
-                          href={link.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-3 text-xs sm:text-sm text-slate-300 hover:text-white transition-colors duration-200 group"
-                        >
-                          <span className="text-sm">{link.icon}</span>
-                          <span className="flex-1">{link.label}</span>
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">↗</span>
-                        </a>
-                      ) : (
-                        <Link
-                          key={link.label}
-                          to={link.to}
-                          className="flex items-center gap-3 text-xs sm:text-sm text-slate-300 hover:text-white transition-colors duration-200 group"
-                        >
-                          <span className="text-sm">{link.icon}</span>
-                          <span className="flex-1">{link.label}</span>
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">→</span>
-                        </Link>
-                      )
                     ))}
                   </div>
                 </div>

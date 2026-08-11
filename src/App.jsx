@@ -19,11 +19,13 @@ function ScrollToTop() {
   return null
 }
 
-function App() {
+/* ─── Animated Routes Wrapper ─── */
+function AnimatedRoutes() {
+  const location = useLocation()
+
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
+    <div key={location.pathname} className="animate-page-enter">
+      <Routes location={location}>
         <Route path="/" element={<AnaSayfa />} />
         <Route path="/login" element={<Login />} />
         <Route path="/hakkinda" element={<Hakkinda />} />
@@ -47,6 +49,15 @@ function App() {
           </AuthGuard>
         } />
       </Routes>
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <AnimatedRoutes />
     </BrowserRouter>
   )
 }

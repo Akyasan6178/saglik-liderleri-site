@@ -4,50 +4,49 @@ import Footer from '../components/Footer'
 const SECTIONS = [
   {
     icon: '📋',
-    title: 'Hangi bilgiler alınır?',
+    title: '1. Hangi bilgiler alınabilir?',
     items: [
-      'Ad, soyad',
+      'Ad soyad',
       'E-posta ve telefon',
-      'Üniversite / sınıf bilgisi',
-      'Başvuru yanıtları',
-      'Görev teslimleri',
+      'Üniversite ve sınıf bilgisi',
+      'Başvuru formu yanıtları',
+      'Program sürecindeki görev teslimleri',
       'İçerik DNA cevapları',
-      'Program performans kayıtları',
+      'Program içi katılım ve performans notları',
     ],
     accent: 'border-orange-100 bg-orange-50/40',
     iconBg: 'bg-orange-50',
   },
   {
     icon: '🎯',
-    title: 'Neden kullanılır?',
+    title: '2. Bu bilgiler neden kullanılır?',
     items: [
       'Başvuruları değerlendirmek',
       'Katılımcı ve takım süreçlerini yürütmek',
-      'Mentor geri bildirimlerini yönetmek',
       'Görev teslimlerini takip etmek',
-      'Program deneyimini ölçmek',
+      'Mentor geri bildirimlerini yönetmek',
+      'Program deneyimini ve ilerlemeyi izlemek',
     ],
     accent: 'border-violet-100 bg-violet-50/40',
     iconBg: 'bg-violet-50',
   },
   {
-    icon: '☁️',
-    title: 'Nerede tutulur?',
+    icon: '📂',
+    title: '3. Dosya ve içerik teslimleri',
     items: [
-      'Uygulama verileri Supabase altyapısında tutulur',
-      'Görev teslim dosyaları Google Drive klasör yapısında saklanır',
-      'Site Cloudflare üzerinden yayınlanır',
+      'Katılımcıların yüklediği dosyalar ve bağlantılar program sürecini yürütmek için saklanabilir.',
+      'Bu dosyalar yalnızca program yönetimi, mentor değerlendirmesi ve katılımcı takibi amacıyla kullanılır.',
     ],
     accent: 'border-sky-100 bg-sky-50/40',
     iconBg: 'bg-sky-50',
   },
   {
-    icon: '🔑',
-    title: 'Kim erişebilir?',
+    icon: '👥',
+    title: '4. Verilere kimler erişir?',
     items: [
-      'Adminler: program yönetimi için gerekli verilere erişir',
-      'Mentorlar: yalnızca kendi takımlarıyla ilgili verilere erişir',
-      'Katılımcılar: kendi panellerindeki verilere erişir',
+      'Program yönetim ekibi gerekli yönetim işlemleri için verilere erişebilir.',
+      'Mentorlar yalnızca kendi sorumluluk alanlarıyla ilgili katılımcı ve teslim bilgilerini görür.',
+      'Katılımcılar kendi panelindeki bilgilere erişir.',
     ],
     accent: 'border-emerald-100 bg-emerald-50/40',
     iconBg: 'bg-emerald-50',
@@ -71,7 +70,7 @@ export default function Gizlilik() {
               <div className="text-slate-800 font-bold text-sm leading-tight">Geleceğin Dijital</div>
               <div
                 className="font-semibold text-xs"
-                style={{ background:'linear-gradient(135deg,#f97316,#ec4899,#7c3aed)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}
+                style={{ background: 'linear-gradient(135deg,#f97316,#ec4899,#7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
               >
                 Sağlık Liderleri
               </div>
@@ -88,33 +87,23 @@ export default function Gizlilik() {
 
       <main className="flex-1">
 
-        {/* ─── Compact hero ─── */}
+        {/* ─── Compact Header ─── */}
         <section className="bg-white border-b border-slate-100 py-12 md:py-16">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <span className="inline-flex items-center gap-2 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider mb-5">
-              🔒 Hukuki Bilgilendirme
+            <span className="inline-flex items-center gap-2 bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider mb-4">
+              Gizlilik Politikası
             </span>
-            <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 leading-tight">
+            <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-3 leading-tight">
               Gizlilik Politikası
             </h1>
-            <p className="text-slate-500 text-base leading-relaxed">
-              Geleceğin Dijital Sağlık Liderleri programında yalnızca başvuru, katılım ve program takibi için gerekli bilgiler işlenir.
+            <p className="text-slate-600 text-base leading-relaxed">
+              Bu sayfa, Geleceğin Dijital Sağlık Liderleri programı kapsamında hangi bilgilerin neden alındığını sade bir şekilde açıklamak için hazırlanmıştır.
             </p>
           </div>
         </section>
 
-        {/* ─── Info note ─── */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 flex items-center gap-3">
-            <span className="text-amber-400 text-lg flex-shrink-0">ℹ️</span>
-            <p className="text-amber-800 text-sm">
-              Bu sayfa bilgilendirme amacıyla hazırlanmıştır. Nihai hukuki metin gerektiğinde güncellenecektir.
-            </p>
-          </div>
-        </div>
-
-        {/* ─── 4 sade kart ─── */}
-        <section className="py-10 pb-16">
+        {/* ─── 4 Sade Kart ─── */}
+        <section className="py-12 pb-16">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
             {SECTIONS.map(s => (
               <div key={s.title} className={`rounded-2xl border p-6 ${s.accent}`}>
@@ -125,24 +114,24 @@ export default function Gizlilik() {
                   <h2 className="font-bold text-slate-900 text-base">{s.title}</h2>
                 </div>
                 <ul className="space-y-2">
-                  {s.items.map(item => (
-                    <li key={item} className="flex items-start gap-2.5 text-sm text-slate-600">
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0" />
-                      {item}
+                  {s.items.map((item, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-600">
+                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-400 flex-shrink-0" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
 
-            {/* Contact section */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            {/* ─── 5. İletişim Kartı ─── */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-lg">✉️</div>
-                <h2 className="font-bold text-slate-900 text-base">İletişim</h2>
+                <h2 className="font-bold text-slate-900 text-base">5. İletişim</h2>
               </div>
               <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                Gizlilik veya veri kullanımıyla ilgili sorularınız için iletişim sayfamıza ulaşabilirsiniz.
+                Veri kullanımı veya gizlilikle ilgili sorularınız için İletişim sayfamıza ulaşabilirsiniz.
               </p>
               <Link
                 to="/iletisim"
