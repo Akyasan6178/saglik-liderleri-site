@@ -203,28 +203,24 @@ Sistemde büyük güncellemeler yapıldıktan sonra aşağıdaki testler taranma
 
 ## 16. Kapanış Notu
 
-Google Drive API entegrasyonu dahil projedeki tüm aktif kullanıcı akışları Django REST API'den tamamen çıkarılmış ve Supabase Serverless + Cloudflare Workers + Edge Functions mimarisine taşınmıştır. Django backend (`backend/`) şu anda pasif/legacy durumdadır.
+Google Drive API entegrasyonu dahil projedeki tüm aktif kullanıcı akışları Django REST API'den tamamen çıkarılmış ve Supabase Serverless + Cloudflare Workers + Edge Functions mimarisine taşınmıştır. Eski Django backend `legacy_backend/` klasörü altında pasif olarak arşivlenmiştir.
 
 ---
 
-## 17. Django Legacy Backend Pasifleştirme ve Cutover Planı (CUT-01A)
+## 17. Django Legacy Backend Pasifleştirme ve Cutover Planı (CUT-01B)
 
 Geleceğin Dijital Sağlık Liderleri platformunun tüm aktif production akışları (Kimlik Doğrulama, Admin Yönetimi, Katılımcı Paneli, İçerik DNA Formu, Google Drive Dosya Teslimi, Mentor Paneli, Değerlendirmeler) **Cloudflare Pages / Workers + Supabase Auth + Supabase DB + Edge Functions + Google Drive API** mimarisine eksiksiz aktarılmıştır.
 
-Django REST API (`backend/`) katmanına canlı frontend, Cloudflare Worker ve Edge Function süreçlerinden hiçbir aktif HTTP çağrısı yapılmamaktadır.
+Django REST API katmanına canlı frontend, Cloudflare Worker ve Edge Function süreçlerinden hiçbir aktif HTTP çağrısı yapılmamaktadır.
 
-### Kaldırma Stratejileri
+### Tamamlanan Cutover Adımları
 
-| Seçenek | Tanım | Artıları | Riskleri | Önerilen Uygulama Zamanı | Geri Dönüş Planı |
-|---|---|---|---|---|---|
-| **Seçenek A** | Backend'i olduğu gibi bırakmak, docs'ta legacy olarak işaretlemek | En yüksek güvenlik, sıfır risk, anında geri dönüş | Repo boyutu kalabalık kalır | Kullanıcı final manuel testleri sırasında (Mevcut Durum) | Herhangi bir işlem gerektirmez |
-| **Seçenek B (Önerilen)** | `backend/` klasörünü `legacy_backend/` olarak yeniden adlandırmak | Aktif kod tabanından ayrıldığı netleşir, kod geçmişi korunur | Otomatik build scriptlerinde bağımlılık kalıp kalmadığı kontrol edilmeli | Final manuel test sonrası (CUT-01B) | Klasör adı `backend/` olarak geri değiştirilir |
-| **Seçenek C** | `backend/` klasörünü reposundan tamamen kaldırmak | En temiz ve hafif repo mimarisi | Geri dönüş git history gerektirir | Canlı smoke testleri tam onay aldıktan sonra (CUT-01C) | `git revert` veya git history commit çekimi |
+- **CUT-01A (Analiz)**: Mimari analiz ve bağımsızlık doğrulaması tamamlandı.
+- **CUT-01B (Arşivleme - Tamamlandı)**: `backend/` klasörü `legacy_backend/` olarak arşiv alanına taşındı. Canlı production bundle'da (Vite build) sıfır Django/API bağımlılığı doğrulandı.
 
-### Önerilen Cutover Sırası
-1. **CUT-01A**: Mimari analiz, bağımsızlık doğrulaması ve dokümantasyon (Tamamlandı).
-2. **Kullanıcı Final Manuel Testi**: Canlı panellerde kullanıcı tarafından elle tam akış kontrolü.
-3. **CUT-01B**: Backend klasörünün `legacy_backend/` alanına taşınması ve pasifleştirilmesi.
-4. **QA-05 Final Smoke Test**: Canlı regression doğrulaması.
-5. **CUT-01C**: Kullanıcı onayıyla backend klasörünün depodan tamamen kaldırılması.
+### Gelecek Adımlar (CUT-01C)
+
+1. **Kullanıcı Final Manuel Testi (QA-05)**: Canlı panellerde kullanıcı tarafından elle tam akış kontrolü.
+2. **CUT-01C (Tam Silme)**: Kullanıcı final onayı sonrasında `legacy_backend/` klasörünün depodan tamamen kaldırılması.
+
 

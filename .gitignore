@@ -29,6 +29,8 @@ dist-ssr
 .env.*.local
 backend/.env
 backend/.env.local
+legacy_backend/.env
+legacy_backend/.env.local
 
 # Google Service Account Credentials — ASLA commit etme
 *.service-account.json
