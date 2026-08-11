@@ -41,40 +41,40 @@ const SOCIAL_LINKS = [
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-slate-100 text-slate-600">
+    <footer className="bg-white border-t border-slate-100 text-slate-600 overflow-x-hidden">
       {/* Top soft gradient strip */}
       <div className="h-1 w-full bg-gradient-to-r from-orange-400 via-pink-400 to-violet-500 opacity-60" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-8 sm:pb-10">
 
         {/* ─── Main grid ─── */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-10 border-b border-slate-100">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10 pb-8 sm:pb-10 border-b border-slate-100">
 
           {/* Col: Brand — 5 cols */}
-          <div className="md:col-span-5 space-y-5">
+          <div className="md:col-span-5 space-y-4 sm:space-y-5">
             {/* Logo row */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md shadow-orange-200/50 flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md shadow-orange-200/50 flex-shrink-0">
                 <span className="text-white font-black text-xs tracking-tight">GD</span>
               </div>
               <div>
-                <div className="text-slate-900 font-bold text-base leading-tight">Geleceğin Dijital Sağlık Liderleri</div>
+                <div className="text-slate-900 font-bold text-sm sm:text-base leading-tight">Geleceğin Dijital Sağlık Liderleri</div>
                 <div className="text-slate-400 text-xs mt-0.5">Marka Mutfağı programı</div>
               </div>
             </div>
 
-            <p className="text-slate-500 text-sm leading-relaxed max-w-sm">
+            <p className="text-slate-500 text-xs sm:text-sm leading-relaxed max-w-sm">
               Sağlık profesyonellerinin dijital dünyadaki sesini güçlendiren, içerik üretimi ve görünürlük odaklı kapsamlı gelişim programı.
             </p>
 
             {/* Marka Mutfağı badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-600">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-orange-200 bg-orange-50 text-xs font-semibold text-orange-600">
               <span className="text-sm leading-none">👨‍🍳</span>
               <span>Bir Marka Mutfağı programıdır</span>
             </div>
 
             {/* Social icons */}
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex flex-wrap items-center gap-2 pt-1">
               {SOCIAL_LINKS.map(s => (
                 <a
                   key={s.id}
@@ -84,7 +84,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`
-                    w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
+                    w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0
                     text-slate-400 border border-slate-200 bg-slate-50
                     transition-all duration-200
                     ${s.hoverBg} ${s.hoverText} ${s.hoverBorder}
@@ -98,9 +98,9 @@ export default function Footer() {
           </div>
 
           {/* Col: Nav links — 3 cols */}
-          <div className="md:col-span-3 space-y-4">
+          <div className="md:col-span-3 space-y-3 sm:space-y-4">
             <h4 className="text-slate-400 font-bold text-xs tracking-widest uppercase">Sayfalar</h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2 text-xs sm:text-sm">
               {[
                 { to: '/hakkinda', label: 'Hakkında' },
                 { to: '/gizlilik', label: 'Gizlilik Politikası' },
@@ -120,9 +120,9 @@ export default function Footer() {
           </div>
 
           {/* Col: Program highlights — 4 cols */}
-          <div className="md:col-span-4 space-y-4">
+          <div className="md:col-span-4 space-y-3 sm:space-y-4">
             <h4 className="text-slate-400 font-bold text-xs tracking-widest uppercase">Program</h4>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-xs sm:text-sm">
               {[
                 'İçerik DNA Analizi',
                 'Mentor Geri Bildirimi',
@@ -140,7 +140,7 @@ export default function Footer() {
               href="https://markamutfagi.co/saglikliderleri/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors duration-200 group mt-2"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors duration-200 group mt-1"
             >
               Başvuru sayfasına git
               <span className="group-hover:translate-x-1 transition-transform duration-200">↗</span>
@@ -149,9 +149,9 @@ export default function Footer() {
         </div>
 
         {/* ─── Bottom bar ─── */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+        <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-xs text-slate-400">
           <p>© 2026 Marka Mutfağı. Tüm hakları saklıdır.</p>
-          <p className="text-slate-300 text-xs">
+          <p className="text-slate-400 text-xs">
             Geleceğin Dijital Sağlık Liderleri — Bir Marka Mutfağı programı
           </p>
         </div>

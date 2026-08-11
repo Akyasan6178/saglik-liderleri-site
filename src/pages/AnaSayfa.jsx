@@ -96,12 +96,12 @@ function StatCard({ value, suffix, label, accent = 'coral' }) {
   }
   const a = accents[accent]
   return (
-    <div className={`text-center p-8 bg-white rounded-2xl card-hover shadow-md ring-1 ${a.ring}`}>
-      <div className="text-3xl mb-3">{a.icon}</div>
-      <div className="text-5xl font-black gradient-text mb-3">
+    <div className={`text-center p-4 sm:p-6 md:p-8 bg-white rounded-2xl card-hover shadow-md ring-1 ${a.ring}`}>
+      <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{a.icon}</div>
+      <div className="text-3xl sm:text-4xl md:text-5xl font-black gradient-text mb-2 sm:mb-3">
         <AnimatedCounter value={value} suffix={suffix} />
       </div>
-      <div className="text-slate-500 text-sm font-medium tracking-wide">{label}</div>
+      <div className="text-slate-500 text-xs sm:text-sm font-medium tracking-wide leading-snug">{label}</div>
     </div>
   )
 }
@@ -110,14 +110,14 @@ function StatCard({ value, suffix, label, accent = 'coral' }) {
 function FeatureCard({ icon, title, desc, iconBg, iconColor, delay = 0 }) {
   return (
     <div
-      className="bg-white rounded-2xl p-8 card-hover shadow-md ring-1 ring-slate-100 group cursor-default"
+      className="bg-white rounded-2xl p-6 sm:p-8 card-hover shadow-md ring-1 ring-slate-100 group cursor-default"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className={`w-14 h-14 rounded-2xl ${iconBg} flex items-center justify-center ${iconColor} mb-6 group-hover:scale-110 transition-transform duration-300`}>
+      <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${iconBg} flex items-center justify-center ${iconColor} mb-5 sm:mb-6 group-hover:scale-110 transition-transform duration-300`}>
         {icon}
       </div>
-      <h3 className="text-slate-900 font-bold text-xl mb-3">{title}</h3>
-      <p className="text-slate-500 text-sm leading-loose">{desc}</p>
+      <h3 className="text-slate-900 font-bold text-lg sm:text-xl mb-2 sm:mb-3">{title}</h3>
+      <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
     </div>
   )
 }
@@ -133,28 +133,28 @@ function TimelineStep({ number, icon, title, desc, tags, isLast = false, color =
   const c = colors[color]
 
   return (
-    <div className="flex gap-8 md:gap-10 group">
+    <div className="flex gap-4 sm:gap-8 md:gap-10 group">
       {/* Left: icon + connector */}
       <div className="flex flex-col items-center flex-shrink-0">
-        <div className={`w-16 h-16 rounded-2xl ${c.dot} flex items-center justify-center text-white shadow-lg ring-4 ${c.ring} group-hover:scale-110 transition-transform duration-300 z-10`}>
+        <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl ${c.dot} flex items-center justify-center text-white shadow-lg ring-4 ${c.ring} group-hover:scale-110 transition-transform duration-300 z-10`}>
           {icon}
         </div>
         {!isLast && (
-          <div className="w-0.5 flex-1 mt-4 bg-gradient-to-b from-slate-200 to-transparent min-h-[80px]" />
+          <div className="w-0.5 flex-1 mt-3 sm:mt-4 bg-gradient-to-b from-slate-200 to-transparent min-h-[60px]" />
         )}
       </div>
 
       {/* Right: content */}
-      <div className="pb-14 flex-1 min-w-0">
-        <div className="bg-white rounded-2xl p-8 card-hover shadow-md ring-1 ring-slate-100">
-          <div className="mb-5">
-            <span className={`text-xs font-bold uppercase tracking-widest ${c.text} mb-2 block`}>Aşama {number}</span>
-            <h3 className="text-slate-900 font-bold text-2xl">{title}</h3>
+      <div className="pb-10 sm:pb-14 flex-1 min-w-0">
+        <div className="bg-white rounded-2xl p-5 sm:p-8 card-hover shadow-md ring-1 ring-slate-100">
+          <div className="mb-4 sm:mb-5">
+            <span className={`text-xs font-bold uppercase tracking-widest ${c.text} mb-1 block`}>Aşama {number}</span>
+            <h3 className="text-slate-900 font-bold text-xl sm:text-2xl">{title}</h3>
           </div>
-          <p className="text-slate-500 text-base leading-loose mb-6">{desc}</p>
+          <p className="text-slate-500 text-sm sm:text-base leading-relaxed mb-5 sm:mb-6">{desc}</p>
           <div className="flex flex-wrap gap-2">
             {tags.map(tag => (
-              <span key={tag} className={`px-4 py-1.5 rounded-full text-xs font-semibold border ${c.badge}`}>{tag}</span>
+              <span key={tag} className={`px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-xs font-semibold border ${c.badge}`}>{tag}</span>
             ))}
           </div>
         </div>
@@ -171,7 +171,7 @@ function SectionBadge({ children, variant = 'coral' }) {
     violet: 'bg-violet-50 text-violet-600 border border-violet-200',
   }
   return (
-    <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 mb-8 ${variants[variant]}`}>
+    <div className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 sm:px-4 sm:py-2 mb-6 sm:mb-8 ${variants[variant]}`}>
       {children}
     </div>
   )
@@ -196,17 +196,17 @@ function Navbar({ onLoginClick }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md">
-              <span className="text-white font-black text-sm">GD</span>
+          <Link to="/" className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md flex-shrink-0">
+              <span className="text-white font-black text-xs sm:text-sm">GD</span>
             </div>
-            <div className="hidden sm:block">
-              <div className="text-slate-800 font-bold text-sm leading-tight">Geleceğin Dijital</div>
-              <div className="gradient-text font-semibold text-xs">Sağlık Liderleri</div>
+            <div>
+              <div className="text-slate-800 font-bold text-xs sm:text-sm leading-tight">Geleceğin Dijital</div>
+              <div className="gradient-text font-semibold text-[10px] sm:text-xs">Sağlık Liderleri</div>
             </div>
-          </div>
+          </Link>
 
-          {/* Nav links */}
+          {/* Desktop Nav links */}
           <div className="hidden md:flex items-center gap-8">
             <a
               href="#program"
@@ -234,12 +234,12 @@ function Navbar({ onLoginClick }) {
             </Link>
           </div>
 
-          {/* CTA */}
-          <div className="flex items-center gap-3">
+          {/* CTA & Mobile Login */}
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               id="sisteme-giris-btn"
               onClick={onLoginClick}
-              className="hidden md:flex text-slate-600 hover:text-slate-900 font-semibold px-4 py-2.5 rounded-xl text-sm items-center gap-2 cursor-pointer transition-colors"
+              className="text-slate-600 hover:text-slate-900 font-semibold px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer transition-colors"
             >
               <span>Giriş</span>
             </button>
@@ -247,9 +247,9 @@ function Navbar({ onLoginClick }) {
               href="https://markamutfagi.co/saglikliderleri/"
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary text-white font-semibold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 cursor-pointer shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+              className="btn-primary text-white font-semibold px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 cursor-pointer shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
             >
-              <span>Başvuru Yap</span>
+              <span>Başvuru</span>
               <IconArrow />
             </a>
           </div>
@@ -262,70 +262,62 @@ function Navbar({ onLoginClick }) {
 /* ─── Hero Section ─── */
 function HeroSection({ onLoginClick }) {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-slate-50 via-orange-50/30 to-sky-50/40 grid-bg">
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-slate-50 via-orange-50/30 to-sky-50/40 grid-bg">
 
       {/* Soft light blobs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-orange-100/60 blur-[90px]" />
-        <div className="absolute -bottom-32 -left-32 w-[450px] h-[450px] rounded-full bg-sky-100/60 blur-[90px]" />
-        <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-pink-100/50 blur-[70px]" />
+        <div className="absolute -top-32 -right-32 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-orange-100/60 blur-[90px]" />
+        <div className="absolute -bottom-32 -left-32 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-sky-100/60 blur-[90px]" />
       </div>
 
-      {/* Floating geometric shapes */}
-      <div className="absolute top-28 left-[12%] w-10 h-10 rounded-2xl bg-orange-200/60 rotate-12 animate-float pointer-events-none" style={{ animationDelay: '0s' }} />
-      <div className="absolute top-[42%] right-[8%] w-7 h-7 rounded-xl bg-sky-200/70 -rotate-12 animate-float pointer-events-none" style={{ animationDelay: '1.2s' }} />
-      <div className="absolute bottom-32 left-[28%] w-6 h-6 rounded-lg bg-emerald-200/70 rotate-45 animate-float pointer-events-none" style={{ animationDelay: '2s' }} />
-      <div className="absolute top-[65%] left-[6%] w-5 h-5 rounded-full bg-pink-200/80 animate-float pointer-events-none" style={{ animationDelay: '0.7s' }} />
-      <div className="absolute top-[20%] right-[22%] w-4 h-4 rounded-full bg-violet-200/70 animate-float pointer-events-none" style={{ animationDelay: '1.8s' }} />
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24">
-        <div className="grid lg:grid-cols-2 gap-20 items-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-16 sm:pb-24">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
           {/* Left content */}
           <div className="animate-slide-up">
             <SectionBadge variant="mint">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-sm font-medium">Ağustos 2026 — Başvurular Açık</span>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-medium">Ağustos 2026 — Başvurular Açık</span>
             </SectionBadge>
 
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 leading-[1.08] mb-8">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-[1.12] mb-6 sm:mb-8">
               Sağlığın<br />
               <span className="gradient-text">Dijital Sesi</span><br />
               <span className="text-slate-400">Sen misin?</span>
             </h1>
 
-            <p className="text-slate-500 text-lg leading-loose mb-10 max-w-xl">
+            <p className="text-slate-500 text-base sm:text-lg leading-relaxed sm:leading-loose mb-8 sm:mb-10 max-w-xl">
               Sosyal medya her gün milyonlarca yanlış sağlık bilgisiyle dolup taşıyor. Peki bilimin sesi nerede? İşte tam burada: geleceğin sağlık profesyonellerini dijital dünyanın güvenilir sesi olmaya davet ediyoruz.
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <a
                 href="https://markamutfagi.co/saglikliderleri/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-primary text-white font-bold px-10 py-4 rounded-2xl text-base flex items-center gap-3 cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
+                className="btn-primary text-white font-bold px-6 sm:px-10 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base flex items-center justify-center gap-2.5 cursor-pointer shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all w-full sm:w-auto"
               >
                 <span>Hemen Başvur</span>
                 <IconArrow />
               </a>
               <a
                 href="#program"
-                className="btn-outline font-semibold px-10 py-4 rounded-2xl text-base flex items-center gap-2 cursor-pointer"
+                className="btn-outline font-semibold px-6 sm:px-10 py-3.5 sm:py-4 rounded-2xl text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
               >
                 Daha Fazla Bilgi
               </a>
             </div>
 
             {/* Quick stats */}
-            <div className="flex flex-wrap gap-8 mt-14 pt-10 border-t border-slate-200">
+            <div className="flex flex-wrap gap-4 sm:gap-8 mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-slate-200">
               {[
                 { label: 'Program Aşaması', val: '5' },
                 { label: 'Kamp Şehri', val: 'İstanbul' },
                 { label: 'Burs Desteği', val: '%100' },
               ].map(s => (
-                <div key={s.label} className="flex flex-col gap-1">
-                  <span className="text-slate-900 font-black text-2xl">{s.val}</span>
-                  <span className="text-slate-400 text-xs uppercase tracking-wider">{s.label}</span>
+                <div key={s.label} className="flex flex-col gap-0.5">
+                  <span className="text-slate-900 font-black text-xl sm:text-2xl">{s.val}</span>
+                  <span className="text-slate-400 text-[10px] sm:text-xs uppercase tracking-wider">{s.label}</span>
                 </div>
               ))}
             </div>
@@ -410,12 +402,6 @@ function HeroSection({ onLoginClick }) {
           </div>
         </div>
       </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-        <span className="text-slate-300 text-xs uppercase tracking-widest">Keşfet</span>
-        <div className="w-0.5 h-8 bg-gradient-to-b from-orange-400 to-transparent animate-pulse" />
-      </div>
     </section>
   )
 }
@@ -423,9 +409,9 @@ function HeroSection({ onLoginClick }) {
 /* ─── Stats Row ─── */
 function StatsRow() {
   return (
-    <section className="py-24 bg-white border-y border-slate-100">
+    <section className="py-12 sm:py-20 bg-white border-y border-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
           <StatCard value="5"   suffix=" Adım"  label="Yapılandırılmış Yolculuk"    accent="coral"  />
           <StatCard value="10"  suffix="+"      label="Kişilik Elit Kadro"          accent="violet" />
           <StatCard value="3"   suffix=" Hafta" label="Çevrimiçi Temel Eğitim"      accent="mint"   />
@@ -439,43 +425,40 @@ function StatsRow() {
 /* ─── About Section ─── */
 function AboutSection() {
   return (
-    <section id="program" className="py-32 relative overflow-hidden bg-slate-50">
+    <section id="program" className="py-16 sm:py-24 md:py-32 relative overflow-hidden bg-slate-50">
       <div className="absolute inset-0 dot-pattern opacity-40 pointer-events-none" />
-      {/* Decorative shapes */}
-      <div className="absolute top-20 right-10 w-48 h-48 rounded-full bg-orange-100/40 blur-[60px] pointer-events-none" />
-      <div className="absolute bottom-20 left-10 w-56 h-56 rounded-full bg-sky-100/40 blur-[60px] pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-20 items-start">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* Left */}
           <div>
             <SectionBadge variant="coral">
               <IconGlobe />
-              <span className="text-sm font-medium">Neden Bu Program?</span>
+              <span className="text-xs sm:text-sm font-medium">Neden Bu Program?</span>
             </SectionBadge>
 
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-10 leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-6 sm:mb-10 leading-tight">
               Bilim Susuyorsa,<br />
               <span className="gradient-text">Sen Konuş</span>
             </h2>
 
-            <p className="text-slate-500 text-lg leading-loose mb-8">
+            <p className="text-slate-500 text-base sm:text-lg leading-relaxed sm:leading-loose mb-6 sm:mb-8">
               Her gün milyonlarca insan sağlık kararını sosyal medyadan aldığı bilgilerle veriyor. "Mucizevi kür" videoları, şüphe tohumları, tablo dışı öneriler… Bilimsel bilginin sesi ise çoğunlukla susturuluyor ya da o kadar sıkıcı kalıyor ki kimse izlemiyor.
             </p>
 
-            <p className="text-slate-500 leading-loose mb-12">
+            <p className="text-slate-500 text-sm sm:text-base leading-relaxed sm:leading-loose mb-8 sm:mb-12">
               Bu program, sağlık eğitimi alan seni bir üretici olarak görüyor. Sahip olduğun bilgiyi etkili, ilgi çekici ve bilime sadık dijital içeriğe dönüştürmeyi ─ hem tekniğini hem de kamusal sorumluluk bilincini ─ geliştirmeni hedefliyor.
             </p>
 
-            <ul className="space-y-5">
+            <ul className="space-y-4 sm:space-y-5">
               {[
                 'Eczacılık, Tıp, Hemşirelik ve tüm sağlık bölümleri için tasarlandı',
                 'Sertifikalı çık: "Dijital Sağlık İçerik Üreticisi" belgen hazır',
                 'İstanbul kampında tüm giderler program tarafından karşılanır',
                 'Sıfır deneyimle başlayabilirsin; merak ve sorumluluk yeter',
               ].map(item => (
-                <li key={item} className="flex items-center gap-4 text-slate-600">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white flex-shrink-0 shadow-sm">
+                <li key={item} className="flex items-start sm:items-center gap-3 sm:gap-4 text-slate-600 text-xs sm:text-sm">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white flex-shrink-0 shadow-sm mt-0.5 sm:mt-0">
                     <IconCheck />
                   </div>
                   <span className="leading-relaxed">{item}</span>
@@ -485,7 +468,7 @@ function AboutSection() {
           </div>
 
           {/* Right: feature cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <FeatureCard
               icon={<IconHeart />}
               title="Bilgi Kirliliğine Son"
@@ -571,21 +554,18 @@ function ProcessSection() {
   ]
 
   return (
-    <section id="süreç" className="py-32 relative bg-white">
-      {/* Decorative side accent */}
-      <div className="absolute right-0 top-0 bottom-0 w-1/4 bg-gradient-to-l from-orange-50/60 to-transparent pointer-events-none" />
-
+    <section id="süreç" className="py-16 sm:py-24 md:py-32 relative bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-20">
+        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-20">
           <SectionBadge variant="violet">
-            <span className="text-sm font-medium">Program Takvimi</span>
+            <span className="text-xs sm:text-sm font-medium">Program Takvimi</span>
           </SectionBadge>
-          <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-4 sm:mb-6 leading-tight">
             Ağustos'tan Ekim'e<br />
             <span className="gradient-text">5 Adım, Bir Dönüşüm</span>
           </h2>
-          <p className="text-slate-500 text-lg leading-loose">
+          <p className="text-slate-500 text-base sm:text-lg leading-relaxed">
             2.5 ay boyunca online eğitimden İstanbul bootcampına, oradan sertifika törenine uzanan net bir yol haritası — her adımı biliyorsun, her aşamada destek alıyorsun.
           </p>
         </div>
@@ -604,42 +584,36 @@ function ProcessSection() {
 /* ─── CTA Banner ─── */
 function CTABanner({ onLoginClick }) {
   return (
-    <section className="py-32 bg-slate-50">
+    <section className="py-16 sm:py-24 md:py-32 bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-3xl overflow-hidden">
+        <div className="relative rounded-3xl overflow-hidden shadow-sm">
           {/* Energetic sunset gradient */}
           <div className="absolute inset-0 bg-gradient-to-r from-orange-500 via-pink-500 to-violet-600" />
           <div className="absolute inset-0 grid-bg opacity-10" />
-          {/* Glowing orbs */}
-          <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-[50px]" />
-          <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-white/10 blur-[50px]" />
-          {/* Floating shapes */}
-          <div className="absolute top-8 left-[20%] w-8 h-8 rounded-xl bg-white/10 rotate-12 animate-float" style={{ animationDelay: '0.3s' }} />
-          <div className="absolute bottom-8 right-[20%] w-6 h-6 rounded-lg bg-white/10 -rotate-12 animate-float" style={{ animationDelay: '1s' }} />
 
-          <div className="relative text-center px-8 py-24 md:py-28">
-            <div className="w-20 h-20 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-8 text-white backdrop-blur-sm">
+          <div className="relative text-center px-5 sm:px-8 py-16 sm:py-24 md:py-28">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-6 sm:mb-8 text-white backdrop-blur-sm">
               <IconRocket />
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white mb-4 sm:mb-6">
               Sağlığın Sesi<br />Olmaya Hazır Mısın?
             </h2>
-            <p className="text-white/80 text-xl leading-loose mb-12 max-w-xl mx-auto">
+            <p className="text-white/85 text-base sm:text-xl leading-relaxed mb-8 sm:mb-12 max-w-xl mx-auto">
               Her gün binlerce yanlış bilgi yayılıyor. Sen bunu izleyerek mi geçireceksin, yoksa değiştirerek mi? Kontenjan dolmadan başvurunu yap.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
               <a
                 href="https://markamutfagi.co/saglikliderleri/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white text-orange-500 font-bold px-12 py-5 rounded-2xl text-lg inline-flex items-center gap-3 cursor-pointer shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+                className="bg-white text-orange-500 font-bold px-8 sm:px-12 py-3.5 sm:py-5 rounded-2xl text-base sm:text-lg inline-flex items-center justify-center gap-2.5 cursor-pointer shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto"
               >
                 <span>Hemen Başvur</span>
                 <IconArrow />
               </a>
               <button
                 onClick={onLoginClick}
-                className="bg-white/10 border border-white/20 text-white font-bold px-12 py-5 rounded-2xl text-lg inline-flex items-center gap-3 cursor-pointer shadow-xl hover:bg-white/20 transition-all duration-300"
+                className="bg-white/10 border border-white/20 text-white font-bold px-8 sm:px-12 py-3.5 sm:py-5 rounded-2xl text-base sm:text-lg inline-flex items-center justify-center gap-2.5 cursor-pointer shadow-xl hover:bg-white/20 transition-all duration-300 w-full sm:w-auto"
               >
                 <span>Giriş</span>
               </button>
@@ -651,15 +625,13 @@ function CTABanner({ onLoginClick }) {
   )
 }
 
-
-
 /* ─── Main Page ─── */
 export default function AnaSayfa() {
   const navigate = useNavigate()
   const handleLogin = () => navigate('/login')
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 overflow-x-hidden">
       <Navbar onLoginClick={handleLogin} />
       <HeroSection onLoginClick={handleLogin} />
       <StatsRow />

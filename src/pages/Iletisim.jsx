@@ -85,19 +85,19 @@ export default function Iletisim() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 overflow-x-hidden">
 
       {/* ─── Navbar ─── */}
       <header className="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md group-hover:shadow-orange-300/50 transition-shadow duration-300">
-              <span className="text-white font-black text-sm">GD</span>
+          <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md flex-shrink-0">
+              <span className="text-white font-black text-xs sm:text-sm">GD</span>
             </div>
             <div>
-              <div className="text-slate-800 font-bold text-sm leading-tight">Geleceğin Dijital</div>
+              <div className="text-slate-800 font-bold text-xs sm:text-sm leading-tight">Geleceğin Dijital</div>
               <div
-                className="font-semibold text-xs"
+                className="font-semibold text-[10px] sm:text-xs"
                 style={{
                   background: 'linear-gradient(135deg,#f97316,#ec4899,#7c3aed)',
                   WebkitBackgroundClip: 'text',
@@ -109,13 +109,13 @@ export default function Iletisim() {
               </div>
             </div>
           </Link>
-          <div className="flex items-center gap-4">
-            <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors duration-200">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors duration-200">
               Ana Sayfa
             </Link>
             <button
               onClick={() => navigate('/login')}
-              className="btn-primary text-white font-semibold px-5 py-2 rounded-xl text-sm shadow-sm"
+              className="btn-primary text-white font-semibold px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm shadow-sm"
             >
               Giriş Yap
             </button>
@@ -126,40 +126,40 @@ export default function Iletisim() {
       <main className="flex-1">
 
         {/* ─── Compact Hero Banner ─── */}
-        <section className="bg-white border-b border-slate-100 py-12 md:py-16">
+        <section className="bg-white border-b border-slate-100 py-10 sm:py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <span className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider mb-5">
+            <span className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider mb-3.5 sm:mb-5">
               Bize Ulaşın
             </span>
-            <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-3 sm:mb-4 leading-tight">
               İletişim
             </h1>
-            <p className="text-slate-600 text-base md:text-lg leading-relaxed max-w-2xl">
+            <p className="text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed max-w-2xl">
               Program, başvuru ve iş birliği konuları için Marka Mutfağı ekibiyle iletişime geçebilirsiniz.
             </p>
           </div>
         </section>
 
         {/* ─── Main 2-col grid ─── */}
-        <section className="py-12 md:py-16">
+        <section className="py-8 sm:py-12 md:py-16">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
 
               {/* ─── Left: Program contact & Marka Mutfağı ─── */}
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Program card */}
-                <div className="bg-white border border-orange-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center mb-5 shadow-md shadow-orange-200/50">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white" aria-hidden="true">
+                <div className="bg-white border border-orange-100 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center mb-4 sm:mb-5 shadow-md shadow-orange-200/50">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-white" aria-hidden="true">
                       <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
                       <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-black text-slate-900 mb-2">Program İletişimi</h2>
-                  <p className="text-slate-600 text-sm leading-relaxed mb-5">
+                  <h2 className="text-lg sm:text-xl font-black text-slate-900 mb-2">Program İletişimi</h2>
+                  <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-5">
                     Başvuru koşulları, değerlendirme süreçleri ve program takvimi ile ilgili sorularınız için destek ekibimizle iletişime geçebilirsiniz.
                   </p>
-                  <div className="bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 flex items-center gap-3">
+                  <div className="bg-orange-50 border border-orange-100 rounded-xl px-3.5 py-2.5 sm:px-4 sm:py-3 flex items-center gap-3">
                     <span className="text-orange-400 text-base">📬</span>
                     <p className="text-orange-800 text-xs sm:text-sm font-medium">
                       İletişim kanalları yakında güncellenecektir.
@@ -168,24 +168,24 @@ export default function Iletisim() {
                 </div>
 
                 {/* Marka Mutfağı card */}
-                <div className="bg-white border border-violet-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center text-xl flex-shrink-0">
+                <div className="bg-white border border-violet-100 rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-violet-50 flex items-center justify-center text-lg sm:text-xl flex-shrink-0">
                       👨‍🍳
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-slate-900">Marka Mutfağı</h2>
+                      <h2 className="text-lg sm:text-xl font-black text-slate-900">Marka Mutfağı</h2>
                       <p className="text-slate-500 text-xs mt-0.5">Program kurucusu</p>
                     </div>
                   </div>
-                  <p className="text-slate-600 text-sm leading-relaxed mb-5">
+                  <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-5">
                     Geleceğin Dijital Sağlık Liderleri programı Marka Mutfağı tarafından geliştirilmiştir. Kurumsal iş birliği, sponsorluk ve içerik stratejisi konularında doğrudan ulaşabilirsiniz.
                   </p>
                   <a
                     href="https://markamutfagi.co"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-700 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl hover:bg-violet-100 transition-colors duration-200"
+                    className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-700 font-semibold text-xs sm:text-sm px-4 py-2 sm:py-2.5 rounded-xl hover:bg-violet-100 transition-colors duration-200"
                   >
                     markamutfagi.co sitesini ziyaret et ↗
                   </a>
@@ -194,23 +194,23 @@ export default function Iletisim() {
 
               {/* ─── Right: Social media ─── */}
               <div className="space-y-6">
-                <div className="bg-white border border-slate-100 rounded-2xl p-8 shadow-sm">
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center flex-shrink-0 text-white">
+                <div className="bg-white border border-slate-100 rounded-2xl p-6 sm:p-8 shadow-sm">
+                  <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-slate-900 flex items-center justify-center flex-shrink-0 text-white text-lg sm:text-xl">
                       🌐
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-slate-900">Sosyal Medya</h2>
+                      <h2 className="text-lg sm:text-xl font-black text-slate-900">Sosyal Medya</h2>
                       <p className="text-slate-500 text-xs mt-0.5">Duyurular ve içerikler için takip edin</p>
                     </div>
                   </div>
 
-                  <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                  <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-5 sm:mb-6">
                     Duyurular, güncel program haberleri ve içerik liderlerimizin paylaşımları için bizi sosyal medyada takip edin.
                   </p>
 
                   {/* Social icon grid */}
-                  <div className="space-y-3">
+                  <div className="space-y-2.5 sm:space-y-3">
                     {SOCIAL_LINKS.map(s => (
                       <a
                         key={s.id}
@@ -219,20 +219,20 @@ export default function Iletisim() {
                         title={`${s.label} — ${s.description}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-4 p-3.5 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all duration-200 group"
+                        className="flex items-center gap-3 sm:gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all duration-200 group"
                       >
                         {/* Icon badge */}
                         <div
-                          className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center text-white flex-shrink-0 shadow-sm ${s.shadow} group-hover:scale-105 transition-transform duration-200`}
+                          className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${s.bg} flex items-center justify-center text-white flex-shrink-0 shadow-sm ${s.shadow} group-hover:scale-105 transition-transform duration-200`}
                         >
                           {s.icon}
                         </div>
                         {/* Text */}
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-slate-900 text-sm">{s.label}</div>
-                          <div className="text-slate-500 text-xs">{s.description}</div>
+                          <div className="font-semibold text-slate-900 text-xs sm:text-sm">{s.label}</div>
+                          <div className="text-slate-500 text-[11px] sm:text-xs truncate">{s.description}</div>
                         </div>
-                        <span className="text-slate-300 group-hover:text-slate-500 transition-colors duration-200 text-sm">→</span>
+                        <span className="text-slate-300 group-hover:text-slate-500 transition-colors duration-200 text-xs sm:text-sm">→</span>
                       </a>
                     ))}
                   </div>

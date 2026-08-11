@@ -134,19 +134,19 @@ export default function Hakkinda() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 overflow-x-hidden">
 
       {/* ─── Navbar ─── */}
       <header className="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md group-hover:shadow-orange-300/50 transition-shadow duration-300">
-              <span className="text-white font-black text-sm">GD</span>
+          <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md group-hover:shadow-orange-300/50 transition-shadow duration-300 flex-shrink-0">
+              <span className="text-white font-black text-xs sm:text-sm">GD</span>
             </div>
             <div>
-              <div className="text-slate-800 font-bold text-sm leading-tight">Geleceğin Dijital</div>
+              <div className="text-slate-800 font-bold text-xs sm:text-sm leading-tight">Geleceğin Dijital</div>
               <div
-                className="font-semibold text-xs"
+                className="font-semibold text-[10px] sm:text-xs"
                 style={{
                   background: 'linear-gradient(135deg,#f97316,#ec4899,#7c3aed)',
                   WebkitBackgroundClip: 'text',
@@ -159,13 +159,13 @@ export default function Hakkinda() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-4">
-            <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors duration-200">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors duration-200">
               Ana Sayfa
             </Link>
             <button
               onClick={() => navigate('/login')}
-              className="btn-primary text-white font-semibold px-5 py-2 rounded-xl text-sm shadow-sm"
+              className="btn-primary text-white font-semibold px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm shadow-sm"
             >
               Giriş Yap
             </button>
@@ -176,55 +176,55 @@ export default function Hakkinda() {
       <main className="flex-1">
 
         {/* ─── Compact Hero Banner ─── */}
-        <section className="bg-white border-b border-slate-100 py-12 md:py-16">
+        <section className="bg-white border-b border-slate-100 py-10 sm:py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <span className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider mb-5">
+            <span className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider mb-4 sm:mb-5">
               Kurumsal
             </span>
-            <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-3 sm:mb-4 leading-tight">
               Geleceğin Dijital <span className="gradient-text">Sağlık Liderleri</span>
             </h1>
-            <p className="text-slate-600 text-base md:text-lg leading-relaxed max-w-2xl">
+            <p className="text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed max-w-2xl">
               Sağlık profesyonellerinin dijital dünyada daha bilinçli, etkili ve sorumlu içerik üreticilerine dönüşmesi için tasarlanmış gelişim programı.
             </p>
           </div>
         </section>
 
         {/* ─── What is the program? ─── */}
-        <section className="py-16 bg-slate-50">
+        <section className="py-12 sm:py-16 bg-slate-50">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div className="space-y-5">
-                <span className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-center">
+              <div className="space-y-4 sm:space-y-5">
+                <span className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider">
                   Program Nedir?
                 </span>
-                <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 leading-tight">
                   Sağlık bilgisini{' '}
                   <span style={{background:'linear-gradient(135deg,#f97316,#ec4899)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>
                     doğru aktarmanın
                   </span>{' '}
                   programı.
                 </h2>
-                <p className="text-slate-600 text-base leading-relaxed">
+                <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
                   Geleceğin Dijital Sağlık Liderleri; tıp, eczacılık, hemşirelik ve tüm sağlık disiplinlerinden gelen profesyonelleri dijital içerik üretimi, görünürlük ve sağlık iletişimi alanında güçlendirmek için tasarlanmış gelişim programıdır.
                 </p>
-                <p className="text-slate-600 text-base leading-relaxed">
+                <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
                   Program, sadece kamera karşısında daha iyi görünmeyi değil; bilgiyi doğru, etik ve anlaşılır şekilde aktarma becerisini geliştirmeyi hedefler.
                 </p>
               </div>
 
               {/* Stat cards */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {[
                   { num: '10', label: 'kişilik seçkin kadro', icon: '🎯', bg: 'bg-orange-50', border: 'border-orange-100', text: 'text-orange-600' },
                   { num: '2.5', label: 'ay yoğun program', icon: '📅', bg: 'bg-violet-50', border: 'border-violet-100', text: 'text-violet-600' },
                   { num: '5', label: 'program aşaması', icon: '🏆', bg: 'bg-pink-50', border: 'border-pink-100', text: 'text-pink-600' },
                   { num: '1', label: 'İstanbul bootcamp', icon: '🗺️', bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-600' },
                 ].map(s => (
-                  <div key={s.label} className={`${s.bg} border ${s.border} rounded-2xl p-5 text-center space-y-1 shadow-sm`}>
-                    <div className="text-2xl">{s.icon}</div>
-                    <div className={`text-3xl font-black ${s.text}`}>{s.num}</div>
-                    <div className="text-slate-500 text-xs leading-snug">{s.label}</div>
+                  <div key={s.label} className={`${s.bg} border ${s.border} rounded-2xl p-4 sm:p-5 text-center space-y-1 shadow-sm`}>
+                    <div className="text-xl sm:text-2xl">{s.icon}</div>
+                    <div className={`text-2xl sm:text-3xl font-black ${s.text}`}>{s.num}</div>
+                    <div className="text-slate-500 text-[11px] sm:text-xs leading-snug">{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -233,32 +233,32 @@ export default function Hakkinda() {
         </section>
 
         {/* ─── Why does it exist? ─── */}
-        <section className="py-16 bg-white">
+        <section className="py-12 sm:py-16 bg-white">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <span className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-600 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider mb-6">
+            <span className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-600 text-xs font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider mb-4 sm:mb-6">
               Neden Var?
             </span>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-6 leading-tight">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 mb-4 sm:mb-6 leading-tight">
               Doğru bilgi hayat kurtarır —{' '}
               <span style={{background:'linear-gradient(135deg,#7c3aed,#ec4899)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>
                 ama önce erişilmeli.
               </span>
             </h2>
-            <p className="text-slate-600 text-base md:text-lg leading-relaxed max-w-2xl mx-auto mb-12">
+            <p className="text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed max-w-2xl mx-auto mb-8 sm:mb-12">
               Dijital platformlarda sağlık yanlış bilgisi hızla yayılıyor. Görünür olmak kadar <strong>güvenilir, anlaşılır ve sorumlu</strong> olmak da önemli. Bu program, sağlık profesyonellerinin sesini güçlendirmeyi amaçlar.
             </p>
 
             {/* 3-column highlight cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               {[
                 { icon: '🔬', title: 'Bilimsel Doğruluk', desc: 'İçerik üretiminde etik, doğruluk ve bilimsel sorumluluk ön planda.' },
                 { icon: '📡', title: 'Dijital Erişim', desc: 'Doğru bilgiyi doğru formatta, doğru platformda doğru kitleye ulaştırma.' },
                 { icon: '🤝', title: 'Toplumsal Sorumluluk', desc: 'Toplumun doğru bilgiye ulaşması için sesini yükseltmek.' },
               ].map(c => (
-                <div key={c.title} className="bg-slate-50 border border-slate-100 rounded-2xl p-7 text-left shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <div className="text-3xl mb-4">{c.icon}</div>
-                  <h3 className="font-bold text-slate-900 text-lg mb-2">{c.title}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">{c.desc}</p>
+                <div key={c.title} className="bg-slate-50 border border-slate-100 rounded-2xl p-5 sm:p-7 text-left shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <div className="text-2xl sm:text-3xl mb-3 sm:mb-4">{c.icon}</div>
+                  <h3 className="font-bold text-slate-900 text-base sm:text-lg mb-2">{c.title}</h3>
+                  <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{c.desc}</p>
                 </div>
               ))}
             </div>
@@ -266,13 +266,13 @@ export default function Hakkinda() {
         </section>
 
         {/* ─── Who is it for? ─── */}
-        <section className="py-16 bg-slate-50">
+        <section className="py-12 sm:py-16 bg-slate-50">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <span className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider mb-6">
+            <div className="text-center mb-8 sm:mb-12">
+              <span className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider mb-4 sm:mb-6">
                 Kimler İçin?
               </span>
-              <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 leading-tight">
                 Sağlık alanında ses olmak{' '}
                 <span style={{background:'linear-gradient(135deg,#10b981,#0ea5e9)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>
                   isteyen herkes.
@@ -280,7 +280,7 @@ export default function Hakkinda() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {[
                 {
                   icon: '🎓',
@@ -311,11 +311,11 @@ export default function Hakkinda() {
                   border: 'border-slate-100',
                 },
               ].map(c => (
-                <div key={c.title} className={`${c.bg} border ${c.border} rounded-2xl p-7 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex gap-5`}>
-                  <div className="text-3xl flex-shrink-0">{c.icon}</div>
+                <div key={c.title} className={`${c.bg} border ${c.border} rounded-2xl p-5 sm:p-7 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex gap-4 sm:gap-5`}>
+                  <div className="text-2xl sm:text-3xl flex-shrink-0">{c.icon}</div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-lg mb-1.5">{c.title}</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">{c.desc}</p>
+                    <h3 className="font-bold text-slate-900 text-base sm:text-lg mb-1">{c.title}</h3>
+                    <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{c.desc}</p>
                   </div>
                 </div>
               ))}
@@ -324,27 +324,27 @@ export default function Hakkinda() {
         </section>
 
         {/* ─── Program Focus (4 cards) ─── */}
-        <section className="py-16 bg-white">
+        <section className="py-12 sm:py-16 bg-white">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-14">
-              <span className="inline-flex items-center gap-2 bg-pink-50 border border-pink-200 text-pink-600 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider mb-6">
+            <div className="text-center mb-10 sm:mb-14">
+              <span className="inline-flex items-center gap-2 bg-pink-50 border border-pink-200 text-pink-600 text-xs font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider mb-4 sm:mb-6">
                 Programın Odağı
               </span>
-              <h2 className="text-2xl md:text-3xl font-black text-slate-900">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900">
                 Dört temel alan, bir dönüşüm.
               </h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {FOCUS_CARDS.map(c => (
                 <div
                   key={c.title}
-                  className={`bg-white border ${c.border} rounded-2xl p-8 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group`}
+                  className={`bg-white border ${c.border} rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group`}
                 >
-                  <div className={`w-14 h-14 rounded-2xl ${c.iconBg} ${c.iconColor} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl ${c.iconBg} ${c.iconColor} flex items-center justify-center mb-4 sm:mb-5 group-hover:scale-110 transition-transform duration-300`}>
                     {c.icon}
                   </div>
-                  <h3 className="font-bold text-slate-900 text-xl mb-3">{c.title}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">{c.desc}</p>
+                  <h3 className="font-bold text-slate-900 text-lg sm:text-xl mb-2 sm:mb-3">{c.title}</h3>
+                  <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">{c.desc}</p>
                 </div>
               ))}
             </div>
@@ -352,33 +352,33 @@ export default function Hakkinda() {
         </section>
 
         {/* ─── Program Approach (checklist) ─── */}
-        <section className="py-16 bg-slate-50">
+        <section className="py-12 sm:py-16 bg-slate-50">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-              <div className="space-y-5">
-                <span className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-start">
+              <div className="space-y-4 sm:space-y-5">
+                <span className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider">
                   Yaklaşım
                 </span>
-                <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 leading-tight">
                   Teori değil,{' '}
                   <span style={{background:'linear-gradient(135deg,#f97316,#ec4899)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>
                     üretim.
                   </span>
                 </h2>
-                <p className="text-slate-600 text-base leading-relaxed">
+                <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
                   Program boyunca katılımcılar gerçek üretim pratikleriyle teorilerini hayata geçirir. Görev, teslim, revizyon ve değerlendirme döngüsü ile sürekli gelişim sağlanır.
                 </p>
-                <p className="text-slate-600 text-sm leading-relaxed">
+                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
                   Kısa sürede mucizevi sonuç vaat etmez. Disiplinli üretim, doğru anlatım, geri bildirim alma ve dijital dünyada daha bilinçli konumlanma pratiği kazandırır.
                 </p>
               </div>
 
-              <div className="bg-white border border-slate-100 rounded-2xl p-8 shadow-sm">
-                <h3 className="font-bold text-slate-900 text-lg mb-6">Program kapsamı</h3>
-                <ul className="space-y-3.5">
+              <div className="bg-white border border-slate-100 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <h3 className="font-bold text-slate-900 text-base sm:text-lg mb-4 sm:mb-6">Program kapsamı</h3>
+                <ul className="space-y-3">
                   {APPROACH_ITEMS.map(item => (
-                    <li key={item} className="flex items-start gap-3 text-sm text-slate-600">
-                      <span className="mt-0.5 text-emerald-500"><IconCheck /></span>
+                    <li key={item} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-600">
+                      <span className="mt-0.5 text-emerald-500 flex-shrink-0"><IconCheck /></span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -389,13 +389,13 @@ export default function Hakkinda() {
         </section>
 
         {/* ─── Timeline ─── */}
-        <section className="py-16 bg-white">
+        <section className="py-12 sm:py-16 bg-white">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-14">
-              <span className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-600 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider mb-6">
+            <div className="text-center mb-10 sm:mb-14">
+              <span className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-600 text-xs font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider mb-4 sm:mb-6">
                 Program Süreci
               </span>
-              <h2 className="text-2xl md:text-3xl font-black text-slate-900">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900">
                 Ağustos'tan Ekim'e — <span style={{background:'linear-gradient(135deg,#7c3aed,#ec4899)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>5 Adım</span>
               </h2>
             </div>
@@ -405,10 +405,10 @@ export default function Hakkinda() {
                 const c = TIMELINE_COLORS[step.color]
                 const isLast = idx === TIMELINE_STEPS.length - 1
                 return (
-                  <div key={step.num} className="flex gap-6">
+                  <div key={step.num} className="flex gap-4 sm:gap-6">
                     {/* Line + dot */}
                     <div className="flex flex-col items-center flex-shrink-0">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${c.dot} flex items-center justify-center text-white font-black text-sm shadow-md flex-shrink-0 z-10`}>
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${c.dot} flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-md flex-shrink-0 z-10`}>
                         {step.num}
                       </div>
                       {!isLast && (
@@ -416,10 +416,10 @@ export default function Hakkinda() {
                       )}
                     </div>
                     {/* Content */}
-                    <div className={`pb-8 flex-1 min-w-0`}>
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 hover:shadow-md transition-shadow duration-300">
-                        <span className={`text-xs font-bold uppercase tracking-wider ${c.text} mb-1.5 block`}>{step.phase}</span>
-                        <p className="text-slate-600 text-sm leading-relaxed">{step.desc}</p>
+                    <div className={`pb-6 sm:pb-8 flex-1 min-w-0`}>
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 sm:p-6 hover:shadow-md transition-shadow duration-300">
+                        <span className={`text-[11px] sm:text-xs font-bold uppercase tracking-wider ${c.text} mb-1 block`}>{step.phase}</span>
+                        <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">{step.desc}</p>
                       </div>
                     </div>
                   </div>
@@ -430,27 +430,27 @@ export default function Hakkinda() {
         </section>
 
         {/* ─── Marka Mutfağı vurgusu ─── */}
-        <section className="py-16 bg-slate-50">
+        <section className="py-12 sm:py-16 bg-slate-50">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-white border border-slate-100 rounded-3xl p-8 md:p-12 shadow-sm text-center space-y-5">
-              <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-orange-50 border border-orange-200">
-                <span className="text-xl">👨‍🍳</span>
+            <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-10 md:p-12 shadow-sm text-center space-y-4 sm:space-y-5">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200">
+                <span className="text-lg sm:text-xl">👨‍🍳</span>
                 <span className="text-orange-600 font-bold text-xs tracking-wide">Marka Mutfağı</span>
               </div>
-              <h2 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 leading-tight">
                 Programın Arkasındaki Deneyim
               </h2>
-              <p className="text-slate-600 text-base leading-relaxed max-w-2xl mx-auto">
+              <p className="text-slate-600 text-xs sm:text-base leading-relaxed max-w-2xl mx-auto">
                 Programın tasarım, operasyon ve dijital içerik yaklaşımı <strong>Marka Mutfağı</strong> tarafından geliştirilmiştir. Marka Mutfağı, içerik stratejisi, marka iletişimi ve dijital görünürlük alanındaki deneyimini bu programın yapısına taşır.
               </p>
-              <p className="text-slate-500 text-sm leading-relaxed max-w-xl mx-auto">
+              <p className="text-slate-500 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto">
                 Müfredat, mentorluk desteği ve bootcamp organizasyonu Marka Mutfağı ekibi koordinasyonunda yürütülmektedir.
               </p>
               <a
                 href="https://markamutfagi.co"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors duration-200"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors duration-200"
               >
                 markamutfagi.co sitesini ziyaret et ↗
               </a>
@@ -459,30 +459,30 @@ export default function Hakkinda() {
         </section>
 
         {/* ─── CTA ─── */}
-        <section className="py-16 bg-white">
+        <section className="py-12 sm:py-16 bg-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="relative rounded-3xl overflow-hidden text-center shadow-sm">
               <div className="absolute inset-0 bg-gradient-to-r from-orange-500 via-pink-500 to-violet-600" />
-              <div className="relative px-8 py-14 space-y-5">
-                <h2 className="text-2xl md:text-3xl font-black text-white">
+              <div className="relative px-6 sm:px-8 py-12 sm:py-16 space-y-4 sm:space-y-5">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white">
                   Kontenjan dolmadan başvurunu yap.
                 </h2>
-                <p className="text-white/85 text-base leading-relaxed max-w-xl mx-auto">
+                <p className="text-white/85 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
                   10 kişilik seçkin kadronun bir parçası olarak sağlığın dijital sesini güçlendir.
                 </p>
-                <div className="flex flex-wrap justify-center gap-4 pt-2">
+                <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 pt-2">
                   <a
                     href="https://markamutfagi.co/saglikliderleri/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-white text-orange-500 font-bold px-8 py-3.5 rounded-2xl text-base inline-flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+                    className="bg-white text-orange-500 font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base inline-flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto"
                   >
-                    Hemen Başvur
+                    <span>Hemen Başvur</span>
                     <IconArrow />
                   </a>
                   <Link
                     to="/"
-                    className="bg-white/10 border border-white/20 text-white font-bold px-8 py-3.5 rounded-2xl text-base inline-flex items-center gap-2 hover:bg-white/20 transition-all duration-300"
+                    className="bg-white/10 border border-white/20 text-white font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base inline-flex items-center justify-center gap-2 hover:bg-white/20 transition-all duration-300 w-full sm:w-auto"
                   >
                     Ana Sayfaya Dön
                   </Link>

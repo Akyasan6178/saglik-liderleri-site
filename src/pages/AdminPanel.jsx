@@ -661,11 +661,11 @@ export default function AdminPanel() {
      RENDER
   ════════════════════════════════════════ */
   return (
-    <div className="min-h-screen bg-gray-50 flex font-sans">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans max-w-full overflow-x-hidden">
 
       {/* ══════════ SIDEBAR ══════════ */}
-      <aside className="w-64 flex-shrink-0 bg-white border-r border-gray-100 shadow-soft flex flex-col sticky top-0 h-screen z-20">
-        <div className="px-6 py-6 border-b border-gray-100">
+      <aside className="w-full md:w-64 flex-shrink-0 bg-white border-b md:border-b-0 md:border-r border-gray-100 shadow-soft flex flex-col md:sticky top-0 md:h-screen z-20">
+        <div className="px-4 sm:px-6 py-4 sm:py-6 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-coral to-orange-400 flex items-center justify-center shadow-md shadow-orange-200">
               <Ic.Dashboard c="w-5 h-5 text-white" />
@@ -676,8 +676,8 @@ export default function AdminPanel() {
             </div>
           </div>
         </div>
-        <nav className="flex-1 px-4 py-6 space-y-1">
-          <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest px-4 mb-3">Menü</p>
+        <nav className="flex-1 px-4 py-3 md:py-6 overflow-x-auto md:overflow-x-visible flex md:flex-col gap-1">
+          <p className="hidden md:block text-[10px] text-gray-400 font-semibold uppercase tracking-widest px-4 mb-3">Menü</p>
           {[
             { key: 'adaylar',  label: 'Adaylar',  icon: <Ic.Users /> },
             { key: 'takimlar', label: 'Takımlar', icon: <Ic.Team /> },
@@ -689,7 +689,7 @@ export default function AdminPanel() {
             <NavItem key={key} {...rest} active={menu === key} onClick={() => setMenu(key)} />
           ))}
         </nav>
-        <div className="px-4 py-5 border-t border-gray-100 space-y-2">
+        <div className="hidden md:block px-4 py-5 border-t border-gray-100 space-y-2">
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-coral/20 to-orange-100 flex items-center justify-center">
               <span className="text-xs font-bold text-coral">A</span>
@@ -706,10 +706,10 @@ export default function AdminPanel() {
       </aside>
 
       {/* ══════════ MAIN ══════════ */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-x-auto min-w-0">
 
         {/* Topbar */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 sticky top-0 z-10">
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 sm:px-8 py-3 sm:py-4 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-gray-800">

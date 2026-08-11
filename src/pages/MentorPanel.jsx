@@ -258,7 +258,7 @@ export default function MentorPanel() {
   const tamamlananTeslimler = teslimler.filter(t => t.durum === 'TAMAMLANDI' || (!t.durum && t.degerlendirildi))
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800 max-w-full overflow-x-hidden">
       
       {/* ══════════ SIDEBAR ══════════ */}
       <aside className="w-full md:w-64 flex-shrink-0 bg-white border-b md:border-b-0 md:border-r border-slate-100 shadow-sm flex flex-col md:sticky top-0 md:h-screen z-20">
