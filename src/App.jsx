@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import AnaSayfa from './pages/AnaSayfa'
 import Login from './pages/Login'
 import AdminPanel from './pages/AdminPanel'
@@ -9,16 +10,26 @@ import Gizlilik from './pages/Gizlilik'
 import Iletisim from './pages/Iletisim'
 import AuthGuard from './components/AuthGuard'
 
+/* ─── Scroll to top on route change ─── */
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
+  return null
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<AnaSayfa />} />
         <Route path="/login" element={<Login />} />
         <Route path="/hakkinda" element={<Hakkinda />} />
         <Route path="/gizlilik" element={<Gizlilik />} />
         <Route path="/iletisim" element={<Iletisim />} />
-        
+
         {/* Protected Routes */}
         <Route path="/admin" element={
           <AuthGuard allowedRoles={['Admin']}>

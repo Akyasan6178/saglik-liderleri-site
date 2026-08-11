@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../components/Footer'
 
-/* ─── Inline SVG Social Icons (same as Footer) ─── */
+/* ─── Inline SVG Social Icons ─── */
 const IconInstagram = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -89,7 +89,7 @@ export default function Iletisim() {
 
       {/* ─── Navbar ─── */}
       <header className="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md group-hover:shadow-orange-300/50 transition-shadow duration-300">
               <span className="text-white font-black text-sm">GD</span>
@@ -110,12 +110,12 @@ export default function Iletisim() {
             </div>
           </Link>
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors duration-200">
+            <Link to="/" className="text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors duration-200">
               Ana Sayfa
             </Link>
             <button
               onClick={() => navigate('/login')}
-              className="btn-primary text-white font-semibold px-5 py-2 rounded-xl text-xs sm:text-sm shadow-sm"
+              className="btn-primary text-white font-semibold px-5 py-2 rounded-xl text-sm shadow-sm"
             >
               Giriş Yap
             </button>
@@ -125,34 +125,23 @@ export default function Iletisim() {
 
       <main className="flex-1">
 
-        {/* ─── Hero Banner ─── */}
-        <section className="relative overflow-hidden py-20 md:py-28">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-pink-500 to-violet-700" />
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)',
-              backgroundSize: '28px 28px',
-            }}
-          />
-          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 blur-[70px]" />
-          <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-white/10 blur-[60px]" />
-
-          <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-            <span className="inline-flex items-center gap-2 bg-white/15 border border-white/25 backdrop-blur-sm text-white text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest mb-8">
+        {/* ─── Compact Hero Banner ─── */}
+        <section className="bg-white border-b border-slate-100 py-12 md:py-16">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <span className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider mb-5">
               Bize Ulaşın
             </span>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
+            <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">
               İletişim
             </h1>
-            <p className="text-white/85 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto">
+            <p className="text-slate-600 text-base md:text-lg leading-relaxed max-w-2xl">
               Program, başvuru ve iş birliği konuları için Marka Mutfağı ekibiyle iletişime geçebilirsiniz.
             </p>
           </div>
         </section>
 
         {/* ─── Main 2-col grid ─── */}
-        <section className="py-16">
+        <section className="py-12 md:py-16">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
@@ -160,20 +149,19 @@ export default function Iletisim() {
               <div className="space-y-5">
                 {/* Program card */}
                 <div className="bg-white border border-orange-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center mb-6 shadow-md shadow-orange-200/50">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-white" aria-hidden="true">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center mb-5 shadow-md shadow-orange-200/50">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white" aria-hidden="true">
                       <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
                       <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-black text-slate-900 mb-3">Program İletişimi</h2>
-                  <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                  <h2 className="text-xl font-black text-slate-900 mb-2">Program İletişimi</h2>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-5">
                     Başvuru koşulları, değerlendirme süreçleri ve program takvimi ile ilgili sorularınız için destek ekibimizle iletişime geçebilirsiniz.
                   </p>
-                  {/* Empty state instead of TODO box */}
-                  <div className="bg-orange-50 border border-orange-100 rounded-xl px-5 py-4 flex items-center gap-3">
-                    <span className="text-orange-400 text-lg">📬</span>
-                    <p className="text-orange-700 text-sm font-medium">
+                  <div className="bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 flex items-center gap-3">
+                    <span className="text-orange-400 text-base">📬</span>
+                    <p className="text-orange-800 text-xs sm:text-sm font-medium">
                       İletişim kanalları yakında güncellenecektir.
                     </p>
                   </div>
@@ -181,8 +169,8 @@ export default function Iletisim() {
 
                 {/* Marka Mutfağı card */}
                 <div className="bg-white border border-violet-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center text-2xl flex-shrink-0">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center text-xl flex-shrink-0">
                       👨‍🍳
                     </div>
                     <div>
@@ -197,11 +185,8 @@ export default function Iletisim() {
                     href="https://markamutfagi.co"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-700 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-violet-100 transition-colors duration-200"
+                    className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-700 font-semibold text-xs sm:text-sm px-4 py-2 rounded-xl hover:bg-violet-100 transition-colors duration-200"
                   >
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4" aria-hidden="true">
-                      <path d="M21.721 12.752a9.711 9.711 0 00-.945-5.003 12.754 12.754 0 01-4.339 2.708 18.991 18.991 0 01-.214 4.772 17.165 17.165 0 005.498-2.477zM14.634 15.55a17.324 17.324 0 00.332-4.647c-.952.227-1.945.347-2.966.347-1.021 0-2.014-.12-2.966-.347a17.515 17.515 0 00.332 4.647 17.385 17.385 0 005.268 0zM9.772 17.119a18.963 18.963 0 004.456 0A17.182 17.182 0 0112 21.724a17.18 17.18 0 01-2.228-4.605zM7.777 15.23a18.87 18.87 0 01-.214-4.774 12.753 12.753 0 01-4.34-2.708 9.711 9.711 0 00-.944 5.004 17.165 17.165 0 005.498 2.477zM21.356 14.752a9.765 9.765 0 01-7.478 6.817 18.64 18.64 0 001.988-4.718 18.627 18.627 0 005.49-2.098zM2.644 14.752c1.682.971 3.53 1.688 5.49 2.099a18.64 18.64 0 001.988 4.718 9.765 9.765 0 01-7.478-6.816zM13.878 2.43a9.755 9.755 0 016.116 3.986 11.267 11.267 0 01-3.746 2.504 18.63 18.63 0 00-2.37-6.49zM12 2.276a17.152 17.152 0 012.805 7.121c-.897.23-1.837.353-2.805.353-.968 0-1.908-.122-2.805-.353A17.151 17.151 0 0112 2.276zM10.122 2.43a18.629 18.629 0 00-2.37 6.49 11.266 11.266 0 01-3.746-2.504 9.754 9.754 0 016.116-3.985z" />
-                    </svg>
                     markamutfagi.co sitesini ziyaret et ↗
                   </a>
                 </div>
@@ -211,11 +196,9 @@ export default function Iletisim() {
               <div className="space-y-5">
                 {/* Social section card */}
                 <div className="bg-white border border-slate-100 rounded-2xl p-8 shadow-sm">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center flex-shrink-0">
-                      <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7" aria-hidden="true">
-                        <path d="M21.721 12.752a9.711 9.711 0 00-.945-5.003 12.754 12.754 0 01-4.339 2.708 18.991 18.991 0 01-.214 4.772 17.165 17.165 0 005.498-2.477zM14.634 15.55a17.324 17.324 0 00.332-4.647c-.952.227-1.945.347-2.966.347-1.021 0-2.014-.12-2.966-.347a17.515 17.515 0 00.332 4.647 17.385 17.385 0 005.268 0zM9.772 17.119a18.963 18.963 0 004.456 0A17.182 17.182 0 0112 21.724a17.18 17.18 0 01-2.228-4.605zM7.777 15.23a18.87 18.87 0 01-.214-4.774 12.753 12.753 0 01-4.34-2.708 9.711 9.711 0 00-.944 5.004 17.165 17.165 0 005.498 2.477zM21.356 14.752a9.765 9.765 0 01-7.478 6.817 18.64 18.64 0 001.988-4.718 18.627 18.627 0 005.49-2.098zM2.644 14.752c1.682.971 3.53 1.688 5.49 2.099a18.64 18.64 0 001.988 4.718 9.765 9.765 0 01-7.478-6.816zM13.878 2.43a9.755 9.755 0 016.116 3.986 11.267 11.267 0 01-3.746 2.504 18.63 18.63 0 00-2.37-6.49zM12 2.276a17.152 17.152 0 012.805 7.121c-.897.23-1.837.353-2.805.353-.968 0-1.908-.122-2.805-.353A17.151 17.151 0 0112 2.276zM10.122 2.43a18.629 18.629 0 00-2.37 6.49 11.266 11.266 0 01-3.746-2.504 9.754 9.754 0 016.116-3.985z" />
-                      </svg>
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center flex-shrink-0 text-white">
+                      🌐
                     </div>
                     <div>
                       <h2 className="text-xl font-black text-slate-900">Sosyal Medya</h2>
@@ -223,7 +206,7 @@ export default function Iletisim() {
                     </div>
                   </div>
 
-                  <p className="text-slate-600 text-sm leading-relaxed mb-8">
+                  <p className="text-slate-600 text-sm leading-relaxed mb-6">
                     Duyurular, güncel program haberleri ve içerik liderlerimizin paylaşımları için bizi sosyal medyada takip edin.
                   </p>
 
@@ -237,11 +220,11 @@ export default function Iletisim() {
                         title={`${s.label} — ${s.description}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-4 p-3.5 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-md transition-all duration-250 group"
+                        className="flex items-center gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all duration-200 group"
                       >
                         {/* Icon badge */}
                         <div
-                          className={`w-11 h-11 rounded-xl ${s.bg} flex items-center justify-center text-white flex-shrink-0 shadow-md ${s.shadow} group-hover:scale-105 group-hover:-translate-y-0.5 transition-transform duration-200`}
+                          className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center text-white flex-shrink-0 shadow-sm ${s.shadow} group-hover:scale-105 transition-transform duration-200`}
                         >
                           {s.icon}
                         </div>
@@ -250,17 +233,16 @@ export default function Iletisim() {
                           <div className="font-semibold text-slate-900 text-sm">{s.label}</div>
                           <div className="text-slate-500 text-xs">{s.description}</div>
                         </div>
-                        {/* Arrow */}
-                        <span className="text-slate-300 group-hover:text-slate-500 transition-colors duration-200 text-lg leading-none">→</span>
+                        <span className="text-slate-300 group-hover:text-slate-500 transition-colors duration-200 text-sm">→</span>
                       </a>
                     ))}
                   </div>
                 </div>
 
                 {/* Quick links card */}
-                <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-7 text-white shadow-sm">
-                  <h3 className="font-bold text-sm opacity-60 uppercase tracking-wider mb-5">Hızlı Bağlantılar</h3>
-                  <div className="space-y-3">
+                <div className="bg-slate-900 rounded-2xl p-6 text-white shadow-sm">
+                  <h3 className="font-bold text-xs opacity-60 uppercase tracking-wider mb-4">Hızlı Bağlantılar</h3>
+                  <div className="space-y-2.5">
                     {[
                       { label: 'Hakkında', to: '/hakkinda', icon: 'ℹ️' },
                       { label: 'Gizlilik Politikası', to: '/gizlilik', icon: '🔒' },
@@ -272,9 +254,9 @@ export default function Iletisim() {
                           href={link.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors duration-200 group"
+                          className="flex items-center gap-3 text-xs sm:text-sm text-slate-300 hover:text-white transition-colors duration-200 group"
                         >
-                          <span className="text-base">{link.icon}</span>
+                          <span className="text-sm">{link.icon}</span>
                           <span className="flex-1">{link.label}</span>
                           <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">↗</span>
                         </a>
@@ -282,9 +264,9 @@ export default function Iletisim() {
                         <Link
                           key={link.label}
                           to={link.to}
-                          className="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors duration-200 group"
+                          className="flex items-center gap-3 text-xs sm:text-sm text-slate-300 hover:text-white transition-colors duration-200 group"
                         >
-                          <span className="text-base">{link.icon}</span>
+                          <span className="text-sm">{link.icon}</span>
                           <span className="flex-1">{link.label}</span>
                           <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">→</span>
                         </Link>
