@@ -2400,23 +2400,82 @@ function DnaDurumBadge({ durum }) {
   )
 }
 
+// Gerçek 20 soruluk DNA form soruları (KatilimciPanel.jsx QUESTIONS array ile eşleşir)
 const DNA_QUESTION_MAP = {
-  soru_1: '1. Branş / Uzmanlık Alanınız',
-  soru_2: '2. Şehir / Çalıştığınız Kurum',
-  soru_3: '3. Hedef Kitle (Hasta, Danışan, Genel Kamuoyu)',
-  soru_4: '4. Sosyal Medya Kullanım Amacınız',
-  soru_5: '5. Aktif Kullandığınız Platformlar',
-  soru_6: '6. En Çok İlgi Çeken İçerik Türleriniz',
-  soru_7: '7. İçerik Üretiminde Karşılaştığınız En Büyük Zorluk',
-  soru_8: '8. Haftalık İçerik Üretimine Ayırabileceğiniz Süre',
-  soru_9: '9. Kamera Karşısında Rahatlık Dereceniz (1-10)',
-  soru_10: '10. Teknik / Ekipman Durumu (Işık, Mikrofon vb.)',
-  soru_11: '11. Görsel / Video Düzenleme Beceriniz',
-  soru_12: '12. İlham Aldığınız Hesaplar veya Rol Modeller',
-  soru_13: '13. İçerik Üretiminde Dijital Sağlık Vizyonunuz',
-  soru_14: '14. Haftalık İdeal İçerik Hedefiniz',
-  soru_15: '15. Mevcut Deneyim Seviyeniz',
-  soru_16: '16. İletişim Tarzınız ve Tonunuz'
+  soru_1:  'İçerik üretme amacın nedir?',
+  soru_2:  'En çok hangi konularda içerik üretmek istiyorsun?',
+  soru_3:  'İçeriklerini en çok hangi formatta üretmeyi düşünüyorsun?',
+  soru_4:  'İçeriklerinde seni en iyi anlatan iletişim dili hangisi?',
+  soru_5:  'Bir konuyu anlatırken en rahat hissettiğin video süresi hangisi?',
+  soru_6:  'Kamera karşısındaki konuşma temponu nasıl tanımlarsın?',
+  soru_7:  'Videolarına başlamayı en çok hangi şekilde seversin?',
+  soru_8:  'Videonun sonunda izleyiciden beklediğin davranış nedir?',
+  soru_9:  'Kamera karşısında kendini nasıl hissediyorsun? (1=Çok zorlanıyorum, 5=Çok rahatım)',
+  soru_10: 'Bir video hazırlarken en çok zorlandığın konu nedir?',
+  soru_11: 'Videolarında seni en çok hangi anlatım tarzı temsil eder?',
+  soru_12: 'Video hazırlarken seni en çok motive eden şey nedir?',
+  soru_13: 'Bir kriz anında (haksız eleştiri vb.) ilk tepkin ne olur?',
+  soru_14: 'Haftada kaç içerik üretmeyi gerçekçi buluyorsun?',
+  soru_15: 'Kendini içerik üretimi konusunda hangi seviyede görüyorsun?',
+  soru_16: 'Hangi içerik üretici tarzına daha yakın olmak istersin?',
+  soru_17: 'İçerik tarzını beğendiğin sağlık içerik üreticisi / hesap var mı?',
+  soru_18: 'Kendi markanı yansıtacak en fazla 3 kelime nedir?',
+  soru_19: 'İnsanların seni düşündüğünde akıllarına gelmesini istediğin en fazla 3 kelime nedir?',
+  soru_20: 'Program sonunda insanların seni ve sayfanı tek cümleyle nasıl tanımlamasını istersin?',
+}
+
+// Kategori bilgisi (wizard adımlarıyla uyumlu)
+const DNA_QUESTION_CATEGORIES = {
+  soru_1:  { label: 'Amaç & Konular',        color: 'purple',  bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-200'  },
+  soru_2:  { label: 'Amaç & Konular',        color: 'purple',  bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-200'  },
+  soru_3:  { label: 'Amaç & Konular',        color: 'purple',  bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-200'  },
+  soru_4:  { label: 'Amaç & Konular',        color: 'purple',  bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-200'  },
+  soru_5:  { label: "İçerik DNA'sı",         color: 'indigo',  bg: 'bg-indigo-100',  text: 'text-indigo-800',  border: 'border-indigo-200'  },
+  soru_6:  { label: "İçerik DNA'sı",         color: 'indigo',  bg: 'bg-indigo-100',  text: 'text-indigo-800',  border: 'border-indigo-200'  },
+  soru_7:  { label: "İçerik DNA'sı",         color: 'indigo',  bg: 'bg-indigo-100',  text: 'text-indigo-800',  border: 'border-indigo-200'  },
+  soru_8:  { label: "İçerik DNA'sı",         color: 'indigo',  bg: 'bg-indigo-100',  text: 'text-indigo-800',  border: 'border-indigo-200'  },
+  soru_9:  { label: 'Yetkinlik & Gelişim',   color: 'blue',    bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_10: { label: 'Yetkinlik & Gelişim',   color: 'blue',    bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_11: { label: 'Yetkinlik & Gelişim',   color: 'blue',    bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_12: { label: 'Yetkinlik & Gelişim',   color: 'blue',    bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_13: { label: 'Yetkinlik & Gelişim',   color: 'blue',    bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_14: { label: 'Yetkinlik & Gelişim',   color: 'blue',    bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_15: { label: 'Yetkinlik & Gelişim',   color: 'blue',    bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_16: { label: 'Arketip & Benchmark',   color: 'amber',   bg: 'bg-amber-100',   text: 'text-amber-800',   border: 'border-amber-200'   },
+  soru_17: { label: 'Arketip & Benchmark',   color: 'amber',   bg: 'bg-amber-100',   text: 'text-amber-800',   border: 'border-amber-200'   },
+  soru_18: { label: 'Marka Vizyonu',         color: 'emerald', bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
+  soru_19: { label: 'Marka Vizyonu',         color: 'emerald', bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
+  soru_20: { label: 'Marka Vizyonu',         color: 'emerald', bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
+}
+
+// Cevapları display için parse eder — [{key, index, questionTitle, category, answerText}]
+const parseDnaAnswersForDisplay = (cevaplar) => {
+  if (!cevaplar) return []
+  let raw = cevaplar
+  if (typeof raw === 'string') {
+    try { raw = JSON.parse(raw) } catch { raw = { cevap: raw } }
+  }
+  let entries = []
+  if (Array.isArray(raw)) {
+    entries = raw.map((v, idx) => [`soru_${idx + 1}`, v])
+  } else if (typeof raw === 'object' && raw !== null) {
+    // Önce soru_1..soru_20 sıralamasıyla, sonra diğer keyler
+    const soruKeys = Object.keys(raw)
+      .filter(k => /^soru_\d+$/.test(k))
+      .sort((a, b) => parseInt(a.replace('soru_', '')) - parseInt(b.replace('soru_', '')))
+    const otherKeys = Object.keys(raw).filter(k => !/^soru_\d+$/.test(k))
+    entries = [...soruKeys, ...otherKeys].map(k => [k, raw[k]])
+  }
+  return entries.map(([k, v], idx) => {
+    const questionTitle = DNA_QUESTION_MAP[k] || (String(k).startsWith('soru_') ? `Soru ${String(k).replace('soru_', '')}` : String(k).replace(/_/g, ' '))
+    const soruNo = String(k).startsWith('soru_') ? parseInt(String(k).replace('soru_', '')) : null
+    const cat = DNA_QUESTION_CATEGORIES[k] || { label: 'Diğer', bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200' }
+    let answerText = ''
+    if (Array.isArray(v)) { answerText = v.join(', ') }
+    else if (typeof v === 'object' && v !== null) { answerText = JSON.stringify(v, null, 2) }
+    else { answerText = String(v || '').trim() }
+    return { key: k, index: idx, soruNo, questionTitle, category: cat, answerText }
+  })
 }
 
 function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dnaError, setDnaError, dnaDetail, setDnaDetail, dnaRegen, setDnaRegen, setToast }) {
@@ -2604,18 +2663,7 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
 
           {/* Özet Kartları Barı */}
           {(() => {
-            let safeCevaplarList = []
-            if (dnaDetail && dnaDetail.cevaplar) {
-              let raw = dnaDetail.cevaplar
-              if (typeof raw === 'string') {
-                try { raw = JSON.parse(raw) } catch (e) { raw = { cevap: raw } }
-              }
-              if (Array.isArray(raw)) {
-                safeCevaplarList = raw.map((v, idx) => [`soru_${idx + 1}`, v])
-              } else if (typeof raw === 'object' && raw !== null) {
-                safeCevaplarList = Object.entries(raw)
-              }
-            }
+            const parsedAnswers = parseDnaAnswersForDisplay(dnaDetail?.cevaplar)
 
             return (
               <div className="space-y-6">
@@ -2636,48 +2684,66 @@ function DnaSection({ token, dnaList, setDnaList, dnaLoading, setDnaLoading, dna
                     <span className="text-[10px] text-blue-600 block">Prompt {dnaDetail.prompt_versiyonu || 'v1'}</span>
                   </div>
                   <div className="bg-slate-100 border border-slate-200 rounded-xl p-3 text-center">
-                    <span className="text-[10px] font-bold text-slate-700 uppercase">Cevaplanan Soru Sayısı</span>
-                    <p className="text-xl font-black text-slate-800 mt-0.5">{safeCevaplarList.length}</p>
-                    <span className="text-[10px] text-slate-500 block">Toplam Cevap</span>
+                    <span className="text-[10px] font-bold text-slate-700 uppercase">Cevaplanan Soru</span>
+                    <p className="text-xl font-black text-slate-800 mt-0.5">{parsedAnswers.length}</p>
+                    <span className="text-[10px] text-slate-500 block">/ 20 Soru</span>
                   </div>
                 </div>
 
-                {/* Katılımcı Cevapları (Full-Width Responsive 2-Column Grid) */}
-                {safeCevaplarList.length > 0 ? (
-                  <div className="bg-gray-50/70 border border-gray-200/80 rounded-2xl p-5 space-y-4">
-                    <div className="flex items-center justify-between pb-2 border-b border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">💬</span>
-                        <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Katılımcı Cevapları</h4>
+
+                {/* Katılımcı Cevapları — Kategorili Kartlar */}
+                {(() => {
+                  const parsedAnswers = parseDnaAnswersForDisplay(dnaDetail.cevaplar)
+                  if (parsedAnswers.length === 0) {
+                    return (
+                      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-xs text-gray-500 italic flex items-center gap-2">
+                        <span>💬</span> Bu kayıt için cevap verisi bulunamadı veya okunamadı.
                       </div>
-                      <span className="text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200 px-3 py-1 rounded-full">
-                        Toplam {safeCevaplarList.length} Cevap {safeCevaplarList.length < 16 ? '(DB Kaydı)' : ''}
-                      </span>
-                    </div>
+                    )
+                  }
+                  return (
+                    <div className="bg-gray-50/50 border border-gray-200/80 rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">💬</span>
+                          <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Katılımcı Cevapları</h4>
+                        </div>
+                        <span className="text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200 px-3 py-1 rounded-full">
+                          {parsedAnswers.length} / 20 Soru Cevaplandı
+                        </span>
+                      </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-1">
-                      {safeCevaplarList.map(([k, v]) => {
-                        const qTitle = DNA_QUESTION_MAP[k] || (String(k).startsWith('soru_') ? `Soru ${String(k).replace('soru_', '')}` : String(k).replace(/_/g, ' '))
-                        const textVal = typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v || '').trim()
-
-                        return (
-                          <div key={k} className="bg-white rounded-2xl p-4 border border-purple-100 shadow-2xs space-y-2 transition-all hover:border-purple-300">
-                            <span className="inline-block text-[11px] font-extrabold text-purple-900 bg-purple-50 border border-purple-200 px-3 py-1 rounded-xl uppercase tracking-wider">
-                              {qTitle}
-                            </span>
-                            <p className="text-xs text-gray-800 leading-relaxed break-words font-medium whitespace-pre-wrap pt-1">
-                              {textVal || 'Cevap verilmedi.'}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {parsedAnswers.map((item) => (
+                          <div
+                            key={item.key}
+                            className="bg-white rounded-2xl p-4 border border-gray-100 shadow-2xs space-y-2.5 transition-all hover:border-purple-200 hover:shadow-soft"
+                          >
+                            {/* Soru numarası + kategori rozeti */}
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              {item.soruNo && (
+                                <span className="text-[10px] font-black text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md tabular-nums">
+                                  #{item.soruNo}
+                                </span>
+                              )}
+                              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${item.category.bg} ${item.category.text} ${item.category.border}`}>
+                                {item.category.label}
+                              </span>
+                            </div>
+                            {/* Soru başlığı */}
+                            <p className="text-[11px] font-extrabold text-gray-700 leading-snug">
+                              {item.questionTitle}
+                            </p>
+                            {/* Cevap */}
+                            <p className="text-xs text-gray-800 leading-relaxed break-words font-medium whitespace-pre-wrap border-t border-gray-100 pt-2">
+                              {item.answerText || <span className="italic text-gray-400">Cevap verilmedi.</span>}
                             </p>
                           </div>
-                        )
-                      })}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-xs text-gray-500 italic flex items-center gap-2">
-                    <span>💬</span> Bu kayıt için cevap verisi bulunamadı veya okunamadı.
-                  </div>
-                )}
+                  )
+                })()}
 
                 {/* AI Raporu & Dashboard */}
                 {dnaDetail.rapor_metni ? (

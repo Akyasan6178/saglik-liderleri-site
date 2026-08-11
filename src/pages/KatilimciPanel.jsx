@@ -879,6 +879,65 @@ const normalizeDnaAnswers = (cevaplar) => {
   return res
 }
 
+// Kategori renk haritası (wizard adımlarıyla uyumlu)
+const KAT_PANEL_DNA_CATEGORIES = {
+  soru_1:  { label: 'Amaç & Konular',      bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-200'  },
+  soru_2:  { label: 'Amaç & Konular',      bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-200'  },
+  soru_3:  { label: 'Amaç & Konular',      bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-200'  },
+  soru_4:  { label: 'Amaç & Konular',      bg: 'bg-purple-100',  text: 'text-purple-800',  border: 'border-purple-200'  },
+  soru_5:  { label: "İçerik DNA'sı",       bg: 'bg-indigo-100',  text: 'text-indigo-800',  border: 'border-indigo-200'  },
+  soru_6:  { label: "İçerik DNA'sı",       bg: 'bg-indigo-100',  text: 'text-indigo-800',  border: 'border-indigo-200'  },
+  soru_7:  { label: "İçerik DNA'sı",       bg: 'bg-indigo-100',  text: 'text-indigo-800',  border: 'border-indigo-200'  },
+  soru_8:  { label: "İçerik DNA'sı",       bg: 'bg-indigo-100',  text: 'text-indigo-800',  border: 'border-indigo-200'  },
+  soru_9:  { label: 'Yetkinlik & Gelişim', bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_10: { label: 'Yetkinlik & Gelişim', bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_11: { label: 'Yetkinlik & Gelişim', bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_12: { label: 'Yetkinlik & Gelişim', bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_13: { label: 'Yetkinlik & Gelişim', bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_14: { label: 'Yetkinlik & Gelişim', bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_15: { label: 'Yetkinlik & Gelişim', bg: 'bg-blue-100',    text: 'text-blue-800',    border: 'border-blue-200'    },
+  soru_16: { label: 'Arketip & Benchmark', bg: 'bg-amber-100',   text: 'text-amber-800',   border: 'border-amber-200'   },
+  soru_17: { label: 'Arketip & Benchmark', bg: 'bg-amber-100',   text: 'text-amber-800',   border: 'border-amber-200'   },
+  soru_18: { label: 'Marka Vizyonu',       bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
+  soru_19: { label: 'Marka Vizyonu',       bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
+  soru_20: { label: 'Marka Vizyonu',       bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-200' },
+}
+
+// Helper: Cevapları display için QUESTIONS labelları ile parse eder
+const parseKatDnaAnswersForDisplay = (cevaplar) => {
+  if (!cevaplar) return []
+  let raw = cevaplar
+  if (typeof raw === 'string') {
+    try { raw = JSON.parse(raw) } catch { raw = { cevap: raw } }
+  }
+  // QUESTIONS array'ini key -> label haritası olarak kullan
+  const questionLabelMap = {}
+  QUESTIONS.forEach(q => { questionLabelMap[q.key] = q.label })
+
+  let entries = []
+  if (Array.isArray(raw)) {
+    entries = raw.map((v, idx) => [`soru_${idx + 1}`, v])
+  } else if (typeof raw === 'object' && raw !== null) {
+    const soruKeys = Object.keys(raw)
+      .filter(k => /^soru_\d+$/.test(k))
+      .sort((a, b) => parseInt(a.replace('soru_', '')) - parseInt(b.replace('soru_', '')))
+    const otherKeys = Object.keys(raw).filter(k => !/^soru_\d+$/.test(k))
+    entries = [...soruKeys, ...otherKeys].map(k => [k, raw[k]])
+  }
+
+  return entries.map(([k, v]) => {
+    const questionTitle = questionLabelMap[k] || (String(k).startsWith('soru_') ? `Soru ${String(k).replace('soru_', '')}` : String(k).replace(/_/g, ' '))
+    const soruNo = String(k).startsWith('soru_') ? parseInt(String(k).replace('soru_', '')) : null
+    const cat = KAT_PANEL_DNA_CATEGORIES[k] || { label: 'Diğer', bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-200' }
+    let answerText = ''
+    if (Array.isArray(v)) { answerText = v.join(', ') }
+    else if (typeof v === 'object' && v !== null) { answerText = JSON.stringify(v, null, 2) }
+    else { answerText = String(v || '').trim() }
+    return { key: k, soruNo, questionTitle, category: cat, answerText }
+  })
+}
+
+
 // SVG İkonlar
 const Ic = {
   Dashboard: ({ c = 'w-5 h-5' }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={c}><path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z" /><path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.432z" /></svg>,
@@ -973,6 +1032,7 @@ export default function KatilimciPanel() {
   const [dnaAnswers, setDnaAnswers] = useState({})
   const [dnaSubmitting, setDnaSubmitting] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
+  const [dnaResultTab, setDnaResultTab] = useState('rapor') // 'cevaplar' | 'rapor'
 
   // Modal states
   const [selectedGorev, setSelectedGorev] = useState(null)
@@ -1840,12 +1900,122 @@ export default function KatilimciPanel() {
                         </button>
                       </div>
                     ) : dnaData?.durum === 'TAMAMLANDI' ? (
-                      <ContentDNADashboardViewer
-                        reportText={dnaData.rapor_metni}
-                        aiModel={dnaData.ai_model}
-                        promptVersion={dnaData.prompt_versiyonu}
-                        answers={dnaData.cevaplar}
-                      />
+                      <div className="space-y-6">
+
+                        {/* Özet Stat Bar */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="bg-purple-50/80 border border-purple-100 rounded-xl p-3 text-center">
+                            <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wide block">Durum</span>
+                            <p className="text-xs font-extrabold text-purple-900 mt-0.5">✅ Rapor Hazır</p>
+                          </div>
+                          <div className="bg-slate-100 border border-slate-200 rounded-xl p-3 text-center">
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wide block">Cevaplanan</span>
+                            <p className="text-xl font-black text-slate-800 mt-0.5">
+                              {parseKatDnaAnswersForDisplay(dnaData.cevaplar).length}
+                            </p>
+                            <span className="text-[10px] text-slate-500">/ 20 Soru</span>
+                          </div>
+                          <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3 text-center">
+                            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wide block">AI Model</span>
+                            <p className="text-[11px] font-bold text-blue-900 font-mono mt-0.5 truncate">{dnaData.ai_model || '—'}</p>
+                          </div>
+                          <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3 text-center">
+                            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide block">Gönderim</span>
+                            <p className="text-[10px] font-semibold text-emerald-900 mt-0.5">
+                              {dnaData.gonderim_tarihi ? new Date(dnaData.gonderim_tarihi).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Sekme Başlıkları */}
+                        <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
+                          <button
+                            type="button"
+                            id="btn-dna-tab-rapor"
+                            onClick={() => setDnaResultTab('rapor')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-bold transition-all ${
+                              dnaResultTab === 'rapor'
+                                ? 'bg-white text-purple-700 shadow-soft border border-purple-100'
+                                : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                          >
+                            <span>🤖</span> AI Raporunuz
+                          </button>
+                          <button
+                            type="button"
+                            id="btn-dna-tab-cevaplar"
+                            onClick={() => setDnaResultTab('cevaplar')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-bold transition-all ${
+                              dnaResultTab === 'cevaplar'
+                                ? 'bg-white text-indigo-700 shadow-soft border border-indigo-100'
+                                : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                          >
+                            <span>💬</span> Cevaplarım
+                          </button>
+                        </div>
+
+                        {/* AI Rapor Sekmesi */}
+                        {dnaResultTab === 'rapor' && (
+                          <ContentDNADashboardViewer
+                            reportText={dnaData.rapor_metni}
+                            aiModel={dnaData.ai_model}
+                            promptVersion={dnaData.prompt_versiyonu}
+                            answers={dnaData.cevaplar}
+                          />
+                        )}
+
+                        {/* Cevaplarım Sekmesi */}
+                        {dnaResultTab === 'cevaplar' && (() => {
+                          const parsedAnswers = parseKatDnaAnswersForDisplay(dnaData.cevaplar)
+                          if (parsedAnswers.length === 0) {
+                            return (
+                              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center text-xs text-slate-500">
+                                Cevap verisi bulunamadı.
+                              </div>
+                            )
+                          }
+                          return (
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-slate-800">DNA Test Cevaplarınız</h3>
+                                <span className="text-xs bg-indigo-100 text-indigo-800 border border-indigo-200 px-3 py-1 rounded-full font-bold">
+                                  {parsedAnswers.length} / 20 Soru
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {parsedAnswers.map((item) => (
+                                  <div
+                                    key={item.key}
+                                    className="bg-white rounded-2xl p-4 border border-slate-100 shadow-2xs space-y-2.5 hover:border-purple-200 hover:shadow-soft transition-all"
+                                  >
+                                    {/* Soru numarası + kategori */}
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                      {item.soruNo && (
+                                        <span className="text-[10px] font-black text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md tabular-nums">
+                                          #{item.soruNo}
+                                        </span>
+                                      )}
+                                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${item.category.bg} ${item.category.text} ${item.category.border}`}>
+                                        {item.category.label}
+                                      </span>
+                                    </div>
+                                    {/* Soru başlığı */}
+                                    <p className="text-[11px] font-extrabold text-slate-700 leading-snug">
+                                      {item.questionTitle}
+                                    </p>
+                                    {/* Cevap */}
+                                    <p className="text-xs text-slate-800 leading-relaxed break-words font-medium whitespace-pre-wrap border-t border-slate-100 pt-2">
+                                      {item.answerText || <span className="italic text-slate-400">Cevap verilmedi.</span>}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })()}
+
+                      </div>
                     ) : (
                       /* Form State — 5 Adımlı Wizard Yapısı */
                       <form onSubmit={handleDnaSubmit} className="space-y-6">
