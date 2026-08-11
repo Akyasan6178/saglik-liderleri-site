@@ -1,226 +1,237 @@
-# Geleceğin Dijital Sağlık Liderleri — Operasyon Rehberi
+# Geleceğin Dijital Sağlık Liderleri — Operasyon ve El Kitabı (Final)
 
-Bu doküman, **Geleceğin Dijital Sağlık Liderleri** projesinin mimarisini, canlı ortam bilgilerini, Supabase serverless ve Edge Function altyapısını, güvenlik kurallarını, canlıya alma (deploy) ve operasyonel bakım süreçlerini teknik ekipler, proje sahipleri ve AI ajansları için detaylandırır.
+Bu doküman, Geleceğin Dijital Sağlık Liderleri platformunun üretim mimarisini, güvenlik kurallarını, veri akışlarını, panel fonksiyonlarını, operasyonel süreçlerini ve depolama mimarisini eksiksiz olarak tanımlar.
 
 ---
 
 ## 1. Proje Durumu Özeti
 
-Proje mimarisi, legacy Django REST API yapısından **Supabase Serverless / Cloudflare Pages / Workers Edge Functions** mimarisine kademeli ve güvenli bir şekilde aktarılmıştır:
-
-- ✅ **Auth Bloğu**: Supabase Auth entegrasyonu tamamlandı.
-- ✅ **RLS (Row Level Security)**: `SEC-02` RLS politikaları ve `QA-02` detaylı RLS test matrisi **%100 PASS** ile doğrulandı.
-- ✅ **Admin Paneli**: Temel veri okuma Supabase Client'a, kritik işlemler (`approve_candidate`, `reject_candidate`, `create_mentor`, `delete_mentor`) `admin-actions` Edge Function'a aktarıldı. Performans ve DNA Analizleri sekmeleri Supabase Client'a taşındı (`DATA-05E`).
-- ✅ **Katılımcı Paneli**: Temel veri okuma Supabase Client'a, İçerik DNA form submit ve Gemini AI rapor üretimi `ai-content-dna` Edge Function'a aktarıldı.
-- ✅ **Mentor Paneli**: Temel veri okuma Supabase Client'a, revizyon isteme (`request_revision`) ve nihai değerlendirme/puanlama (`evaluate_delivery`) `mentor-actions` Edge Function'a aktarıldı (`DATA-07A`, `DATA-07B`).
-- ✅ **CORS Sertleştirme**: Edge Function CORS wildcard (`*`) kullanımı kaldırıldı; canlı domain ve yerel portları içeren allowlist ile sınırlandırıldı (`SEC-03`).
-- ✅ **QA & Test**: Rol bazlı canlı smoke test (`QA-01`) ve RLS güvenlik regresyon testi (`QA-02`) **PASS** verdi.
-- ⏳ **Google Drive Bağımlılığı**: Dosya yükleme (görev teslim) ve `/media` link temizliği Google Drive API credential bilgileri (`GD-02`, `DATA-06B`, `DATA-WARN-01`) geldikten sonra tamamlanacaktır.
+Geleceğin Dijital Sağlık Liderleri platformu, sunucusuz (serverless) mimariye tamamen aktarılmıştır. Eski Django REST API katmanına olan tüm canlı runtime bağımlılıkları kesilmiş, backend kodları `legacy_backend/` klasöründe pasif arşiv durumuna getirilmiştir. Proje canlı üretim ortamında kesintisiz çalışmaktadır.
 
 ---
 
-## 2. Canlı Ortam Bilgileri
+## 2. Aktif Mimari
 
-- **Canlı Uygulama Domaini**: [https://gelecegin-saglik-liderleri.omerkarapinar.workers.dev](https://gelecegin-saglik-liderleri.omerkarapinar.workers.dev)
-- **Supabase Project Reference**: `wczupupflxvfnjbjkfrj`
-- **Cloudflare Pages / Workers Deploy Kaynağı**: GitHub `main` dalı.
+Platform aşağıdaki sunucusuz teknolojiler üzerinde çalışır:
 
-> [!IMPORTANT]
-> GitHub `main` dalına `git push` yapılmadan Cloudflare tarafında canlıya hiçbir kod değişikliği yansımaz.
-
----
-
-## 3. Zorunlu Geliştirme Süreci
-
-Tüm geliştirme, hata düzeltme ve refactor adımlarında aşağıdaki sıra eksiksiz uygulanmalıdır:
-
-```mermaid
-flowchart LR
-    A[Kod Değişikliği Yap] --> B[npm run build]
-    B --> C[git status Kontrolü]
-    C --> D[git commit]
-    D --> E[git push origin main]
-    E --> F[Deploy & Smoke Test]
 ```
-
-1. Kod değişikliğini yerel ortamda gerçekleştir.
-2. Production derleme testi için `npm run build` çalıştır.
-3. `git status` ile değişen dosyaları doğrula.
-4. Anlamlı ve standartlara uygun commit mesajı oluştur (ör. `fix(...)`, `feat(...)`, `chore(...)`).
-5. GitHub `main` dalına push et: `git push origin main`.
-6. Cloudflare Pages ve Supabase Edge Function deploy durumunu doğrula.
-7. Canlı ortamda smoke test gerçekleştir.
-
----
-
-## 4. GitHub / Cloudflare Deploy Süreci
-
-- Frontend kod değişiklikleri GitHub `main` dalına push edildiğinde Cloudflare Pages / Workers otomatik tetiklenir ve yeni statik bundle'ı derleyerek canlıya alır.
-- Deploy tamamlandıktan sonra canlı login ve panel akışları taranır.
-- Tarayıcı önbelleği (cache) veya eski asset sorunu yaşanırsa network sekmesinden yüklenen JavaScript bundle hash'i (`index-XXXXX.js`) kontrol edilir.
-
----
-
-## 5. Supabase Yapısı & Mimari
-
-- **Supabase Auth**: Kullanıcı kimlik doğrulama, JWT session yönetimi.
-- **`profiles` Tablosu**: `auth.users` ile 1-1 eşleşen rol (`role`), ad-soyad, e-posta, `core_katilimci_id` ve `core_mentor_id` bağlantı tablosu.
-- **Row Level Security (RLS)**:
-  - **Katılımcı**: Sadece kendi profilini, kendi görev/teslim kayıtlarını, kendi DNA raporunu ve kendi performans verilerini görebilir.
-  - **Mentor**: Sadece kendi takımını (`core_takim.mentor_id`), kendi takımındaki katılımcıları ve teslimleri görebilir.
-  - **Admin**: Tüm yönetim tablolarını okuyabilir/yönetebilir.
-- **Service Role Key Kullanımı**: `SUPABASE_SERVICE_ROLE_KEY` yalnızca sunucu/Edge Function ortamında kullanılır. Frontend istemci koduna **asla koyulmaz**.
-- **Anon Key Kullanımı**: Frontend istemcide yalnızca `SUPABASE_ANON_KEY` kullanılır.
-
----
-
-## 6. Kullanıcı Yönetimi & Güvenlik Kuralları
-
-### Kullanıcı Oluşturma & Şifre Sıfırlama
-- **Doğru Yöntem**: Supabase Dashboard UI veya sunucu tarafında Supabase Auth Admin API (`admin.createUser`, `admin.updateUserById`).
-- ⛔ **YASAK YÖNTEM**: `auth.users.encrypted_password` alanına doğrudan SQL `UPDATE` yapmak kesinlikle yasaktır! Bu işlem şifre hash yapısını bozar ve kullanıcının canlıya giriş yapmasını engeller.
-
-### Profil Bağlantı Kuralları
-- `profiles.id` ile `auth.users.id` eşleşmelidir.
-- Rol alanları (`role`): `'admin'`, `'mentor'`, `'katilimci'`.
-- Mentor kullanıcılarında `profiles.core_mentor_id` alanı ilgili `core_mentor.id` kaydı ile bağlı olmalıdır.
-- Katılımcı kullanıcılarında `profiles.core_katilimci_id` alanı ilgili `core_katilimci.id` kaydı ile bağlı olmalıdır.
-
----
-
-## 7. Edge Functions Listesi
-
-| Edge Function | Amaç | Yetkili Roller | Yazdığı Tablolar | Gerekli Secret'lar | Deploy Komutu |
-|---|---|---|---|---|---|
-| **`admin-actions`** | Aday kabul/red, mentor kullanıcısı ve profil oluşturma/silme | Admin | `core_aday`, `core_katilimci`, `core_mentor`, `profiles`, `core_katilimciperformans` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | `npx supabase functions deploy admin-actions --project-ref wczupupflxvfnjbjkfrj` |
-| **`ai-content-dna`** | Katılımcı İçerik DNA form yanıtlarını alma, Gemini AI ile analiz üretme | Katılımcı, Admin | `core_icerikdnatesti`, `core_katilimci`, `profiles`, `core_katilimciperformans` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` | `npx supabase functions deploy ai-content-dna --project-ref wczupupflxvfnjbjkfrj` |
-| **`mentor-actions`** | Mentor revizyon isteme ve nihai değerlendirme/puanlama | Mentor, Admin | `core_teslim`, `core_teslimhareketi`, `core_katilimciperformans` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | `npx supabase functions deploy mentor-actions --project-ref wczupupflxvfnjbjkfrj` |
-
----
-
-## 8. Edge Function Deploy Komutları
-
-Supabase Edge Function değişiklikleri yapıldığında aşağıdaki komutlarla canlıya deploy edilmelidir:
-
-```bash
-npx supabase functions deploy admin-actions --project-ref wczupupflxvfnjbjkfrj
-npx supabase functions deploy ai-content-dna --project-ref wczupupflxvfnjbjkfrj
-npx supabase functions deploy mentor-actions --project-ref wczupupflxvfnjbjkfrj
+[İstemci / Tarayıcı]
+       │
+       ├──► Cloudflare Workers / Pages (React 19 + Vite SPA)
+       │
+       ├──► Supabase Auth (JWT Session & Rol Yönetimi)
+       │
+       ├──► Supabase Postgres Database (Row Level Security - RLS)
+       │
+       ├──► Supabase Edge Functions (Deno / TypeScript - Güvenli Admin/Mentor İşlemleri)
+       │
+       └──► Google Drive API (Service Account - Dosya Depolama)
 ```
 
 ---
 
-## 9. Supabase Secrets Yönetimi
+## 3. Canlı Ortam Bilgileri
 
-Supabase Dashboard / Secrets üzerinde tanımlı ve beklenen ortam değişkenleri:
-
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SUPABASE_ANON_KEY`
-- `GEMINI_API_KEY`
-- `GOOGLE_SERVICE_ACCOUNT_JSON` *(Bekliyor)*
-- `GOOGLE_DRIVE_ROOT_FOLDER_ID` *(Bekliyor)*
-- `GOOGLE_DRIVE_SHARED_DRIVE_ID` *(Bekliyor - Opsiyonel)*
-
-> [!CAUTION]
-> - Secret değerleri ve `.env` dosyaları GitHub reposuna **asla commit edilmez**.
-> - Google Service Account JSON içeriği veya private key ifadeleri frontend koduna **asla eklenmez**.
+* **Canlı Web Platformu URL**: `https://gelecegin-saglik-liderleri.omerkarapinar.workers.dev/login`
+* **Supabase Proje Referansı**: `wczupupflxvfnjbjkfrj`
+* **Supabase API URL**: `https://wczupupflxvfnjbjkfrj.supabase.co`
 
 ---
 
-## 10. Google Drive Bekleyen Adımlar
+## 4. Roller ve Yetki Mantığı
 
-- `GD-01` kapsamında Google Drive mimari tasarımı, secret isimleri ve `.gitignore` kuralları tamamlanmıştır.
-- `GD-02` görevinin başlayabilmesi için yönetici tarafından `GOOGLE_SERVICE_ACCOUNT_JSON` ve `GOOGLE_DRIVE_ROOT_FOLDER_ID` bilgilerinin verilmesi gerekmektedir.
-- Service Account e-posta adresi hedef Google Drive klasörüne **Editor** (Düzenleyen) yetkisiyle eklenmeli ve Google Cloud Console üzerinden Google Drive API aktif edilmelidir.
+Sistemde 3 temel kullanıcı rolü tanımlıdır:
+
+| Rol | Kod | Tanım | Giriş Yönlendirmesi |
+|---|---|---|---|
+| **Admin** | `admin` | Tam yetkili sistem yöneticisi | `/admin` |
+| **Mentor** | `mentor` | Takım rehberi / değerlendirici | `/mentor` |
+| **Katılımcı** | `katilimci` | Programa kabul edilen aday | `/katilimci` |
+
+Giriş yapıldığında kullanıcının rolü `profiles` tablosundan okunur ve yetkisiz sayfa erişimleri (örneğin Katılımcının `/admin` yoluna gitmesi) otomatik olarak kendi paneline yönlendirilir veya engellenir.
 
 ---
 
-## 11. Test Kullanıcıları
+## 5. Supabase Auth ve Profiles
 
-| Rol | E-posta Adresi | Şifre Bilgisi |
+* Kullanıcı kimlik doğrulaması Supabase Auth (`auth.users`) üzerinden yürütülür.
+* Her `auth.users` kaydı için `public.profiles` tablosunda birebir eşleşen bir profil nesnesi bulunur:
+  * `id`: `auth.users.id` ile aynı (UUID)
+  * `email`: Kullanıcı e-posta adresi
+  * `role`: `admin` | `mentor` | `katilimci`
+  * `core_katilimci_id`: Katılımcı ise `core_katilimci` tablosundaki ID ilişki değeri
+  * `core_mentor_id`: Mentor ise `core_mentor` tablosundaki ID ilişki değeri
+
+---
+
+## 6. RLS Güvenlik Özeti
+
+Supabase Postgres veritabanındaki tüm tablolarda **Row Level Security (RLS)** etkindir:
+
+* **Katılımcılar**: Yalnızca kendi teslimlerini (`core_teslim`), kendi DNA testlerini (`core_icerikdnatesti`) ve kendi profil bilgilerini okuyabilir.
+* **Mentorlar**: Yalnızca kendi takımlarına atanmış katılımcıların verilerini ve teslimlerini okuyabilir.
+* **Adminler**: Tüm tablolarda tam okuma/yazma yetkisine sahiptir.
+* **Anonim (Giriş Yapmamış)**: Tablolara doğrudan erişimi engellenmiştir; başvuru formu gibi alanlar güvenli fonksiyonlar üzerinden çalışır.
+
+---
+
+## 7. Edge Functions
+
+Hassas ve yetki gerektiren işlemler Supabase Edge Functions (Deno runtime) üzerinde `SUPABASE_SERVICE_ROLE_KEY` ile çalışır:
+
+1. **`admin-actions`**: Aday kabul/red işlemleri, mentor kullanıcısı ve profil oluşturma/silme yetkilerini güvenle yürütür.
+2. **`mentor-actions`**: Mentorların katılımcı detaylarını okuması, revizyon istemesi ve nihai değerlendirme/puanlama yapmasını sağlar.
+3. **`ai-content-dna`**: Katılımcının 20 soruluk DNA yanıtlarını alır, Google Gemini AI API çağrısı yaparak kişiselleştirilmiş strateji raporu üretir.
+4. **`google-drive-action`**: Google Service Account kullanarak dosya yükleme, klasör oluşturma ve dosya erişim linklerini yönetir.
+
+---
+
+## 8. Google Drive Entegrasyonu
+
+* **Service Account**: Yüklemeler dedicated bir Google Service Account üzerinden gerçekleşir.
+* **Root Klasör**: Ana proje klasöründe (`GOOGLE_DRIVE_ROOT_FOLDER_ID`) her katılımcı için özel klasör açılır.
+* **Klasör Yapısı**: `[Katılımcı Adı]_[Katılımcı ID]` formatında düzenlenir.
+* **Dosya Linkleri**: Yüklenen dosyaların indirme/görüntüleme linkleri `core_teslim.teslim_linki` alanına yazılır.
+* **Secret Yönetimi**: `GOOGLE_SERVICE_ACCOUNT_JSON` ve `GOOGLE_DRIVE_ROOT_FOLDER_ID` yalnızca Edge Function secret alanında saklanır.
+
+---
+
+## 9. Admin Panel Özeti
+
+Admin Paneli (`/admin`) aşağıdaki sekmelerden oluşur:
+
+* **Adaylar**: Başvuruları listeleme, detay inceleme, kabul/red kararı verme.
+* **CSV Import**: Aday verilerini toplu olarak CSV dosyasından içe aktarma.
+* **Takımlar**: Takım oluşturma, düzenleme, takım mentoru atama.
+* **Görevler**: Haftalık görev tanımlama, brief ekleme ve son teslim tarihi belirleme.
+* **Performans**: Katılımcıların görev, toplantı, sosyal medya ve manuel puanlarını izleme ve güncelleme.
+* **DNA Analizleri**: Katılımcıların 20 soruluk İçerik DNA form yanıtlarını kategorili kartlar halinde inceleme ve AI raporunu görüntüleme.
+* **Mentor Yönetimi**: Sisteme yeni mentor ekleme ve mevcut mentorları yönetme.
+
+---
+
+## 10. Katılımcı Panel Özeti
+
+Katılımcı Paneli (`/katilimci`) aşağıdaki fonksiyonları sunar:
+
+* **Genel Bakış**: Takım bilgisi, genel ilerleme ve özet skorlar.
+* **Görevlerim & Teslimler**: Haftalık görev brieflerini inceleme, dosya veya bağlantı (link) yükleme.
+* **Revizyon Teslimi**: Mentordan revizyon istendiğinde açıklamayı okuyup güncellenmiş teslimi yükleme.
+* **İçerik DNA Testi**: 20 soruluk wizard formunu doldurma, AI raporunu ve kendi cevaplarını sekmeli görünümde inceleme.
+
+---
+
+## 11. Mentor Panel Özeti
+
+Mentor Paneli (`/mentor`) mentorların aşağıdaki işlemleri yapmasını sağlar:
+
+* **Takımım ve Katılımcılarım**: Mentora atanan takımın katılımcı listesini ve detaylarını görme.
+* **Teslim İnceleme**: Katılımcıların yüklediği dosya ve bağlantıları inceleme.
+* **Revizyon İsteme**: Eksik veya hatalı teslimler için katılımcıya açıklayıcı not yazarak revizyon isteme (`REVIZYON_ISTENDI`).
+* **Nihai Değerlendirme**: Teslimi onaylama (`TAMAMLANDI`), puan verme ve geri bildirim yazma.
+
+---
+
+## 12. Veri Akışları
+
+1. **Aday → Katılımcı**: Aday başvurur (`core_aday`) ➔ Admin onaylar ➔ `core_katilimci`, `auth.users` ve `profiles` kayıtları otomatik oluşur.
+2. **Görev Teslimi**: Admin görev açar (`core_gorev`) ➔ Katılımcı dosya yükler ➔ Dosya Google Drive'a kaydedilir, `core_teslim` oluşturulur.
+3. **Revizyon Döngüsü**: Mentor teslimi inceler ➔ Revizyon ister ➔ Katılımcı güncellenmiş dosyayı yükler ➔ Mentor tekrar inceler.
+4. **Nihai Değerlendirme & Puanlama**: Mentor puan ve yorum girer ➔ Teslim durumu `TAMAMLANDI` olur ➔ Görev puanı `core_katilimciperformans` tablosuna yansır.
+
+---
+
+## 13. Puan Mantığı
+
+Bir katılımcının **Bireysel Puanı** 4 bileşenden oluşur:
+
+$$\text{Bireysel Puan} = \text{Görev Puanı} + \text{Toplantı Puanı} + \text{Etkileşim Bonusu} + \text{Manuel Puan}$$
+
+* **Görev Puanı**: Mentorun onayladığı teslimlerden otomatik hesaplanır.
+* **Toplantı Puanı**: Katılınan program toplantı kayıtlarından gelir.
+* **Etkileşim Bonusu**: Sosyal medya paylaşım ve etkileşim kayıtlarından hesaplanır.
+* **Manuel Puan**: Yalnızca Admin tarafından doğrudan girilebilir/düzenlenebilir.
+
+---
+
+## 14. Legacy Backend Durumu
+
+* **Konum**: `legacy_backend/`
+* **Neden Tutuluyor?**: Eski Django ORM modelleri, SQL yapıları ve veri dönüşüm kodları için geriye dönük referans ve arşiv amacıyla tutulmaktadır.
+* **Ne Zaman Silinebilir?**: Tüm canlı kullanıcı ve kabul testleri (QA-05) tamamlandıktan sonra kullanıcı onayıyla `CUT-01C` görevi kapsamında tamamen silinebilir.
+
+---
+
+## 15. Deploy Süreci
+
+1. Geliştirme sonrasında üretim derlemesi kontrol edilir:
+   ```bash
+   npm run build
+   ```
+2. Değişiklikler GitHub ana dalına gönderilir:
+   ```bash
+   git add .
+   git commit -m "feat/fix: aciklama"
+   git push origin main
+   ```
+3. Cloudflare Pages / Workers entegrasyonu push ile birlikte canlı ortamı otomatik derler ve yayınlar.
+
+---
+
+## 16. Test Kullanıcıları
+
+Test ve operasyon doğrulamasında kullanılan hesaplar:
+
+| Rol | E-posta Adresi | Şifre Yönetimi |
 |---|---|---|
-| **Admin** | `omer@markamutfagi.co` | *Şifreler Supabase Auth üzerinden yönetilir. Gerekirse Dashboard veya Admin API ile resetlenir.* |
-| **Mentor** | `mentor-test@gdsl.com` | *Şifreler Supabase Auth üzerinden yönetilir. Gerekirse Dashboard veya Admin API ile resetlenir.* |
-| **Katılımcı** | `katilimci-test@gdsl.com` | *Şifreler Supabase Auth üzerinden yönetilir. Gerekirse Dashboard veya Admin API ile resetlenir.* |
+| **Admin** | `omer@markamutfagi.co` | Supabase Auth üzerinden yönetilir / resetlenir |
+| **Mentor** | `mentor-test@gdsl.com` | Supabase Auth üzerinden yönetilir / resetlenir |
+| **Katılımcı** | `katilimci-test@gdsl.com` | Supabase Auth üzerinden yönetilir / resetlenir |
+
+*Güvenlik kuralı gereği gerçek şifreler dokümanlara veya koda kesinlikle yazılmaz.*
 
 ---
 
-## 12. QA Checklist
+## 17. Final Manuel Test Checklist
 
-Sistemde büyük güncellemeler yapıldıktan sonra aşağıdaki testler taranmalıdır:
+Canlı yayın sonrasında aşağıdaki adımlar elle kontrol edilmelidir:
 
-- [x] Admin Login & Panel Okuma
-- [x] Katılımcı Login & Panel Okuma
-- [x] Mentor Login & Panel Okuma
-- [x] Admin Actions (Aday Kabul/Red, Mentor Ekleme/Silme)
-- [x] Katılımcı DNA Submit (Gemini AI Rapor Üretimi)
-- [x] Mentor Revizyon İsteme (`request_revision`)
-- [x] Mentor Nihai Değerlendirme (`evaluate_delivery`)
-- [x] Role Mismatch Engellemesi (Katılımcı → Admin/Mentor 403)
-- [x] CORS Allowlist Doğrulaması (Yetkisiz Origin 403)
-- [x] RLS Izolasyonu (Katılımcı / Mentor başkasının verisini okuyamaz)
-- [x] Network Legacy Endpoint Kontrolü (`/api/login`, `localhost:8000` çağrısı olmamalı)
+- [ ] Admin Login & Panel Okuma (`/admin`)
+- [ ] Admin Aday Kabul / Red & CSV Import
+- [ ] Katılımcı Login & Panel Okuma (`/katilimci`)
+- [ ] Katılımcı Görev Teslimi & Drive Dosya Yükleme
+- [ ] Katılımcı 20 Soruluk DNA Formu Submit & AI Rapor Görünümü
+- [ ] Mentor Login & Panel Okuma (`/mentor`)
+- [ ] Mentor Revizyon İsteme & Nihai Değerlendirme/Puanlama
+- [ ] Yetkisiz Yönlendirme Kontrolü (Katılımcı ➔ Admin engeli)
 
 ---
 
-## 13. Bilinen Bekleyen İşler
+## 18. Bilinen Riskler ve Dikkat Edilecekler
 
-| Görev Kodu | Görev Tanımı | Bağımlılık / Durum |
-|---|---|---|
-| **`GD-02`** | Google Drive Test Upload Edge Function Geliştirme | Google API Credential Bekleniyor |
-| **`DATA-06B`** | Katılımcı Görev Teslim Akışının Drive'a Bağlanması | `GD-02` Bekleniyor |
-| **`DATA-WARN-01`** | `/media` ve `teslim_dosyasi` Linklerinin Drive URL'ine Dönüştürülmesi | `GD-02` Bekleniyor |
-| **`DATA-CSV-01`** | Admin Toplu Aday CSV İçe Aktarma Akışı | Planlama Aşaması |
-| **`DATA-SHEETS-01`** | Google Sheets Canlı Senkronizasyon Akışı | Planlama Aşaması |
-| **`DATA-SOFTDEL-01`** | Mentor Soft Delete İyileştirmesi | Planlama Aşaması |
-| **`QA-03`** | Canlı Dosya Yükleme & İndirme QA Testi | `DATA-06B` Bekleniyor |
-| **`QA-04`** | Django Kapalı Uçtan Uca Tam Test | Tüm DATA Görevleri Sonrası |
-| **`CUT-01`** | Legacy Django Kodlarının Tamamen Temizlenmesi | Proje Kapanış Aşaması |
+1. **CORS Yapılandırması**: Supabase Dashboard → API Settings altında Cloudflare Workers domaininin izinli listede olduğundan emin olunmalıdır.
+2. **Google Drive Service Account Quota**: Yüksek boyutlu dosya yüklemelerinde Google Drive API kota sınırlarına dikkat edilmelidir.
+3. **Browser Cache**: Büyük güncellemeler sonrası tarayıcı önbelleği (cache) temizliği veya Hard Refresh tavsiye edilir.
 
 ---
 
-## 14. Hata Durumunda İlk Bakılacak Yerler
+## 19. GitHub Transfer ve Yeni Repo Aktarım Notları
 
-1. **Cloudflare Deploy**: GitHub `main` push işlemi başarıyla tamamlandı mı?
-2. **Asset Cache**: Tarayıcıda eski bundle (`index-XXXX.js`) mı servis ediliyor? (Hard Refresh / Incognito dene).
-3. **Supabase Edge Function Logs**: Dashboard → Functions → Logs sekmesinden hata stack trace'ini oku.
-4. **Supabase Auth / Profiles**: `profiles.role` doğru mu? `core_mentor_id` veya `core_katilimci_id` bağlı mı?
-5. **RLS Engeli**: Sorgu `0` kayıt dönüyorsa kullanıcı rolünün ilgili tabloyu read etme izni var mı?
-6. **CORS Reddi**: Console'da CORS hatası varsa Origin allowlist'te yer alıyor mu?
+Projeyi başka bir ortama veya depoya aktarırken dikkat edilecek adımlar:
 
----
-
-## 15. Kesin Yasaklar
-
-- ⛔ `auth.users.encrypted_password` alanına doğrudan SQL `UPDATE` yapmak yasaktır.
-- ⛔ `SUPABASE_SERVICE_ROLE_KEY` veya Google Service Account Credential bilgilerini frontend koduna koymak yasaktır.
-- ⛔ API key, secret veya şifreleri konsola/loglara yazdırmak yasaktır.
-- ⛔ GitHub reposuna `.env` veya credential JSON dosyası commit etmek yasaktır.
-- ⛔ Kod değişikliği yaptıktan sonra `npm run build` almadan ve GitHub `main` dalına push etmeden görevi tamamlandı saymak yasaktır.
+1. **Secret Kontrolü**: Depoda `.env` veya credential JSON dosyası bulunmadığından emin olun.
+2. **Cloudflare Bağlantısı**: Yeni GitHub reposunu Cloudflare Pages/Workers projesine bağlayın.
+3. **Supabase Edge Function Secrets**: Gerekli ortam değişkenlerini Supabase CLI ile tanımlayın:
+   ```bash
+   npx supabase secrets set GOOGLE_SERVICE_ACCOUNT_JSON="..." --project-ref wczupupflxvfnjbjkfrj
+   ```
+4. **Dağıtım Doğrulaması**: İlk push sonrası canlı URL üzerinden giriş testlerini yapın.
 
 ---
 
-## 16. Kapanış Notu
+## 20. Yasaklı İşlemler
 
-Google Drive API entegrasyonu dahil projedeki tüm aktif kullanıcı akışları Django REST API'den tamamen çıkarılmış ve Supabase Serverless + Cloudflare Workers + Edge Functions mimarisine taşınmıştır. Eski Django backend `legacy_backend/` klasörü altında pasif olarak arşivlenmiştir.
-
----
-
-## 17. Django Legacy Backend Pasifleştirme ve Cutover Planı (CUT-01B)
-
-Geleceğin Dijital Sağlık Liderleri platformunun tüm aktif production akışları (Kimlik Doğrulama, Admin Yönetimi, Katılımcı Paneli, İçerik DNA Formu, Google Drive Dosya Teslimi, Mentor Paneli, Değerlendirmeler) **Cloudflare Pages / Workers + Supabase Auth + Supabase DB + Edge Functions + Google Drive API** mimarisine eksiksiz aktarılmıştır.
-
-Django REST API katmanına canlı frontend, Cloudflare Worker ve Edge Function süreçlerinden hiçbir aktif HTTP çağrısı yapılmamaktadır.
-
-### Tamamlanan Cutover Adımları
-
-- **CUT-01A (Analiz)**: Mimari analiz ve bağımsızlık doğrulaması tamamlandı.
-- **CUT-01B (Arşivleme - Tamamlandı)**: `backend/` klasörü `legacy_backend/` olarak arşiv alanına taşındı. Canlı production bundle'da (Vite build) sıfır Django/API bağımlılığı doğrulandı.
-
-### Gelecek Adımlar (CUT-01C)
-
-1. **Kullanıcı Final Manuel Testi (QA-05)**: Canlı panellerde kullanıcı tarafından elle tam akış kontrolü.
-2. **CUT-01C (Tam Silme)**: Kullanıcı final onayı sonrasında `legacy_backend/` klasörünün depodan tamamen kaldırılması.
-
-
+* ⛔ `auth.users.encrypted_password` alanına doğrudan SQL `UPDATE` yapmak yasaktır.
+* ⛔ `SUPABASE_SERVICE_ROLE_KEY` veya Google Credentials bilgilerini istemci (frontend) koduna koymak yasaktır.
+* ⛔ API key, secret veya şifreleri git deposuna commit etmek yasaktır.
+* ⛔ `.env` veya `.env.local` dosyalarını git deposuna eklemek yasaktır.
