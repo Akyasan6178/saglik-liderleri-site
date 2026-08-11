@@ -1,32 +1,121 @@
 import { Link, useNavigate } from 'react-router-dom'
 import Footer from '../components/Footer'
 
+/* ─── Inline SVG Social Icons (same as Footer) ─── */
+const IconInstagram = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+)
+
+const IconLinkedIn = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+  </svg>
+)
+
+const IconYouTube = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+  </svg>
+)
+
+const IconTikTok = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
+    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+  </svg>
+)
+
+const IconFacebook = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+)
+
+/* ─── Social links ─── */
+const SOCIAL_LINKS = [
+  {
+    id: 'instagram',
+    label: 'Instagram',
+    description: 'Güncel içerik ve duyurular',
+    href: '#',
+    icon: <IconInstagram />,
+    bg: 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400',
+    shadow: 'shadow-pink-200/60',
+  },
+  {
+    id: 'linkedin',
+    label: 'LinkedIn',
+    description: 'Profesyonel ağ ve haberler',
+    href: '#',
+    icon: <IconLinkedIn />,
+    bg: 'bg-sky-600',
+    shadow: 'shadow-sky-200/60',
+  },
+  {
+    id: 'youtube',
+    label: 'YouTube',
+    description: 'Eğitim videoları ve içerikler',
+    href: '#',
+    icon: <IconYouTube />,
+    bg: 'bg-red-600',
+    shadow: 'shadow-red-200/60',
+  },
+  {
+    id: 'tiktok',
+    label: 'TikTok',
+    description: 'Kısa format içerikler',
+    href: '#',
+    icon: <IconTikTok />,
+    bg: 'bg-slate-900',
+    shadow: 'shadow-slate-300/60',
+  },
+  {
+    id: 'facebook',
+    label: 'Facebook',
+    description: 'Topluluk ve etkinlikler',
+    href: '#',
+    icon: <IconFacebook />,
+    bg: 'bg-blue-700',
+    shadow: 'shadow-blue-200/60',
+  },
+]
+
 export default function Iletisim() {
   const navigate = useNavigate()
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
-      
-      {/* Header Navbar */}
-      <header className="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
+
+      {/* ─── Navbar ─── */}
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md group-hover:shadow-orange-300/50 transition-shadow duration-300">
               <span className="text-white font-black text-sm">GD</span>
             </div>
             <div>
               <div className="text-slate-800 font-bold text-sm leading-tight">Geleceğin Dijital</div>
-              <div className="gradient-text font-semibold text-xs">Sağlık Liderleri</div>
+              <div
+                className="font-semibold text-xs"
+                style={{
+                  background: 'linear-gradient(135deg,#f97316,#ec4899,#7c3aed)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Sağlık Liderleri
+              </div>
             </div>
           </Link>
-
           <div className="flex items-center gap-4">
-            <Link to="/" className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors">
+            <Link to="/" className="text-xs sm:text-sm font-semibold text-slate-600 hover:text-orange-500 transition-colors duration-200">
               Ana Sayfa
             </Link>
             <button
               onClick={() => navigate('/login')}
-              className="btn-primary text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-sm"
+              className="btn-primary text-white font-semibold px-5 py-2 rounded-xl text-xs sm:text-sm shadow-sm"
             >
               Giriş Yap
             </button>
@@ -34,111 +123,181 @@ export default function Iletisim() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-10">
-        
-        {/* Banner */}
-        <div className="bg-gradient-to-r from-orange-500 via-pink-500 to-violet-600 text-white rounded-3xl p-8 sm:p-12 shadow-soft space-y-4">
-          <span className="inline-block bg-white/20 text-white text-xs font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider backdrop-blur-sm border border-white/20">
-            Bize Ulaşın
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight">İletişim</h1>
-          <p className="text-white/90 text-sm sm:text-base max-w-2xl leading-relaxed">
-            Program, başvurular veya iş birlikleri hakkında sorularınız için bizimle iletişime geçin.
-          </p>
-        </div>
+      <main className="flex-1">
 
-        {/* Content Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Card 1: Program Hakkında İletişim */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-soft space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center font-bold text-xl">
-              ✉️
-            </div>
-            <h2 className="text-lg font-bold text-slate-900">Program Hakkında İletişim</h2>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              Başvuru koşulları, değerlendirme süreçleri ve program takvimi ile ilgili sorularınız için destek ekibimizle iletişime geçebilirsiniz.
+        {/* ─── Hero Banner ─── */}
+        <section className="relative overflow-hidden py-20 md:py-28">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-pink-500 to-violet-700" />
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+            }}
+          />
+          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 blur-[70px]" />
+          <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-white/10 blur-[60px]" />
+
+          <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+            <span className="inline-flex items-center gap-2 bg-white/15 border border-white/25 backdrop-blur-sm text-white text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest mb-8">
+              Bize Ulaşın
+            </span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
+              İletişim
+            </h1>
+            <p className="text-white/85 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto">
+              Program, başvuru ve iş birliği konuları için Marka Mutfağı ekibiyle iletişime geçebilirsiniz.
             </p>
-            {/* TODO: Buraya e-posta adresi eklenecek. */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs text-slate-500 italic">
-              📌 <strong>Not:</strong> [Buraya e-posta adresi eklenecek.]
+          </div>
+        </section>
+
+        {/* ─── Main 2-col grid ─── */}
+        <section className="py-16">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+              {/* ─── Left: Program contact ─── */}
+              <div className="space-y-5">
+                {/* Program card */}
+                <div className="bg-white border border-orange-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center mb-6 shadow-md shadow-orange-200/50">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-white" aria-hidden="true">
+                      <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
+                      <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900 mb-3">Program İletişimi</h2>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                    Başvuru koşulları, değerlendirme süreçleri ve program takvimi ile ilgili sorularınız için destek ekibimizle iletişime geçebilirsiniz.
+                  </p>
+                  {/* Empty state instead of TODO box */}
+                  <div className="bg-orange-50 border border-orange-100 rounded-xl px-5 py-4 flex items-center gap-3">
+                    <span className="text-orange-400 text-lg">📬</span>
+                    <p className="text-orange-700 text-sm font-medium">
+                      İletişim kanalları yakında güncellenecektir.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Marka Mutfağı card */}
+                <div className="bg-white border border-violet-100 rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <div className="flex items-center gap-4 mb-5">
+                    <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center text-2xl flex-shrink-0">
+                      👨‍🍳
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-slate-900">Marka Mutfağı</h2>
+                      <p className="text-slate-500 text-xs mt-0.5">Program kurucusu</p>
+                    </div>
+                  </div>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-5">
+                    Geleceğin Dijital Sağlık Liderleri programı Marka Mutfağı tarafından geliştirilmiştir. Kurumsal iş birliği, sponsorluk ve içerik stratejisi konularında doğrudan ulaşabilirsiniz.
+                  </p>
+                  <a
+                    href="https://markamutfagi.co"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-violet-50 border border-violet-200 text-violet-700 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-violet-100 transition-colors duration-200"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4" aria-hidden="true">
+                      <path d="M21.721 12.752a9.711 9.711 0 00-.945-5.003 12.754 12.754 0 01-4.339 2.708 18.991 18.991 0 01-.214 4.772 17.165 17.165 0 005.498-2.477zM14.634 15.55a17.324 17.324 0 00.332-4.647c-.952.227-1.945.347-2.966.347-1.021 0-2.014-.12-2.966-.347a17.515 17.515 0 00.332 4.647 17.385 17.385 0 005.268 0zM9.772 17.119a18.963 18.963 0 004.456 0A17.182 17.182 0 0112 21.724a17.18 17.18 0 01-2.228-4.605zM7.777 15.23a18.87 18.87 0 01-.214-4.774 12.753 12.753 0 01-4.34-2.708 9.711 9.711 0 00-.944 5.004 17.165 17.165 0 005.498 2.477zM21.356 14.752a9.765 9.765 0 01-7.478 6.817 18.64 18.64 0 001.988-4.718 18.627 18.627 0 005.49-2.098zM2.644 14.752c1.682.971 3.53 1.688 5.49 2.099a18.64 18.64 0 001.988 4.718 9.765 9.765 0 01-7.478-6.816zM13.878 2.43a9.755 9.755 0 016.116 3.986 11.267 11.267 0 01-3.746 2.504 18.63 18.63 0 00-2.37-6.49zM12 2.276a17.152 17.152 0 012.805 7.121c-.897.23-1.837.353-2.805.353-.968 0-1.908-.122-2.805-.353A17.151 17.151 0 0112 2.276zM10.122 2.43a18.629 18.629 0 00-2.37 6.49 11.266 11.266 0 01-3.746-2.504 9.754 9.754 0 016.116-3.985z" />
+                    </svg>
+                    markamutfagi.co sitesini ziyaret et ↗
+                  </a>
+                </div>
+              </div>
+
+              {/* ─── Right: Social media ─── */}
+              <div className="space-y-5">
+                {/* Social section card */}
+                <div className="bg-white border border-slate-100 rounded-2xl p-8 shadow-sm">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center flex-shrink-0">
+                      <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7" aria-hidden="true">
+                        <path d="M21.721 12.752a9.711 9.711 0 00-.945-5.003 12.754 12.754 0 01-4.339 2.708 18.991 18.991 0 01-.214 4.772 17.165 17.165 0 005.498-2.477zM14.634 15.55a17.324 17.324 0 00.332-4.647c-.952.227-1.945.347-2.966.347-1.021 0-2.014-.12-2.966-.347a17.515 17.515 0 00.332 4.647 17.385 17.385 0 005.268 0zM9.772 17.119a18.963 18.963 0 004.456 0A17.182 17.182 0 0112 21.724a17.18 17.18 0 01-2.228-4.605zM7.777 15.23a18.87 18.87 0 01-.214-4.774 12.753 12.753 0 01-4.34-2.708 9.711 9.711 0 00-.944 5.004 17.165 17.165 0 005.498 2.477zM21.356 14.752a9.765 9.765 0 01-7.478 6.817 18.64 18.64 0 001.988-4.718 18.627 18.627 0 005.49-2.098zM2.644 14.752c1.682.971 3.53 1.688 5.49 2.099a18.64 18.64 0 001.988 4.718 9.765 9.765 0 01-7.478-6.816zM13.878 2.43a9.755 9.755 0 016.116 3.986 11.267 11.267 0 01-3.746 2.504 18.63 18.63 0 00-2.37-6.49zM12 2.276a17.152 17.152 0 012.805 7.121c-.897.23-1.837.353-2.805.353-.968 0-1.908-.122-2.805-.353A17.151 17.151 0 0112 2.276zM10.122 2.43a18.629 18.629 0 00-2.37 6.49 11.266 11.266 0 01-3.746-2.504 9.754 9.754 0 016.116-3.985z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-slate-900">Sosyal Medya</h2>
+                      <p className="text-slate-500 text-xs mt-0.5">Duyurular ve içerikler için takip edin</p>
+                    </div>
+                  </div>
+
+                  <p className="text-slate-600 text-sm leading-relaxed mb-8">
+                    Duyurular, güncel program haberleri ve içerik liderlerimizin paylaşımları için bizi sosyal medyada takip edin.
+                  </p>
+
+                  {/* Social icon grid */}
+                  <div className="space-y-3">
+                    {SOCIAL_LINKS.map(s => (
+                      <a
+                        key={s.id}
+                        href={s.href}
+                        aria-label={s.label}
+                        title={`${s.label} — ${s.description}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 p-3.5 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-md transition-all duration-250 group"
+                      >
+                        {/* Icon badge */}
+                        <div
+                          className={`w-11 h-11 rounded-xl ${s.bg} flex items-center justify-center text-white flex-shrink-0 shadow-md ${s.shadow} group-hover:scale-105 group-hover:-translate-y-0.5 transition-transform duration-200`}
+                        >
+                          {s.icon}
+                        </div>
+                        {/* Text */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-slate-900 text-sm">{s.label}</div>
+                          <div className="text-slate-500 text-xs">{s.description}</div>
+                        </div>
+                        {/* Arrow */}
+                        <span className="text-slate-300 group-hover:text-slate-500 transition-colors duration-200 text-lg leading-none">→</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quick links card */}
+                <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-7 text-white shadow-sm">
+                  <h3 className="font-bold text-sm opacity-60 uppercase tracking-wider mb-5">Hızlı Bağlantılar</h3>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Hakkında', to: '/hakkinda', icon: 'ℹ️' },
+                      { label: 'Gizlilik Politikası', to: '/gizlilik', icon: '🔒' },
+                      { label: 'Başvuru Sayfası', href: 'https://markamutfagi.co/saglikliderleri/', icon: '🚀', external: true },
+                    ].map(link => (
+                      link.external ? (
+                        <a
+                          key={link.label}
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors duration-200 group"
+                        >
+                          <span className="text-base">{link.icon}</span>
+                          <span className="flex-1">{link.label}</span>
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">↗</span>
+                        </a>
+                      ) : (
+                        <Link
+                          key={link.label}
+                          to={link.to}
+                          className="flex items-center gap-3 text-sm text-slate-300 hover:text-white transition-colors duration-200 group"
+                        >
+                          <span className="text-base">{link.icon}</span>
+                          <span className="flex-1">{link.label}</span>
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">→</span>
+                        </Link>
+                      )
+                    ))}
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
+        </section>
 
-          {/* Card 2: Marka Mutfağı İletişim Alanı */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-soft space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center font-bold text-xl">
-              👨‍🍳
-            </div>
-            <h2 className="text-lg font-bold text-slate-900">Marka Mutfağı İletişim Alanı</h2>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              Program kurucusu Marka Mutfağı kurumsal iletişim ve sponsorluk talepleri için doğrudan ulaşabilirsiniz.
-            </p>
-            <a
-              href="https://markamutfagi.co"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-600 hover:text-purple-700 hover:underline"
-            >
-              <span>markamutfagi.co web sitesini ziyaret et ↗</span>
-            </a>
-          </div>
-
-          {/* Card 3: Sosyal Medya Linkleri */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-soft space-y-4 md:col-span-2">
-            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-500 flex items-center justify-center font-bold text-xl">
-              🌐
-            </div>
-            <h2 className="text-lg font-bold text-slate-900">Sosyal Medya Kanallarımız</h2>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              Duyurular, güncel program haberleri ve içerik liderlerimizin paylaşımları için bizi sosyal medyada takip edin.
-            </p>
-            
-            {/* Placeholder Sosyal Medya Rozetleri */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              {/* TODO: Gerçek sosyal medya linki eklenecek. */}
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-orange-500 hover:text-white text-slate-700 text-xs font-bold transition-all duration-200"
-              >
-                Instagram
-              </a>
-              {/* TODO: Gerçek sosyal medya linki eklenecek. */}
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-sky-500 hover:text-white text-slate-700 text-xs font-bold transition-all duration-200"
-              >
-                LinkedIn
-              </a>
-              {/* TODO: Gerçek sosyal medya linki eklenecek. */}
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-red-500 hover:text-white text-slate-700 text-xs font-bold transition-all duration-200"
-              >
-                YouTube
-              </a>
-              {/* TODO: Gerçek sosyal medya linki eklenecek. */}
-              <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-pink-500 hover:text-white text-slate-700 text-xs font-bold transition-all duration-200"
-              >
-                TikTok
-              </a>
-            </div>
-
-            {/* TODO: Buraya sosyal medya linkleri eklenecek. */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs text-slate-500 italic mt-2">
-              📌 <strong>Not:</strong> [Buraya sosyal medya linkleri eklenecek.] <br />
-              📌 <strong>Not:</strong> [Buraya iletişim formu veya yönlendirme eklenecek.]
-            </div>
-          </div>
-
-        </div>
       </main>
 
       <Footer />
