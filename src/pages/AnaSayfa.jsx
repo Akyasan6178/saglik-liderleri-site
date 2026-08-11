@@ -1,5 +1,6 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
+import Footer from '../components/Footer'
 
 /* ─── SVG Icon Components ─── */
 const IconHeart = () => (
@@ -207,19 +208,30 @@ function Navbar({ onLoginClick }) {
 
           {/* Nav links */}
           <div className="hidden md:flex items-center gap-8">
-            {[
-              { label: 'Program', href: '#program' },
-              { label: 'Süreç', href: '#süreç' },
-              { label: 'İletişim', href: '#iletişim' },
-            ].map(link => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="text-slate-500 hover:text-orange-500 text-sm font-medium transition-colors duration-200"
-              >
-                {link.label}
-              </a>
-            ))}
+            <a
+              href="#program"
+              className="text-slate-500 hover:text-orange-500 text-sm font-medium transition-colors duration-200"
+            >
+              Program
+            </a>
+            <a
+              href="#süreç"
+              className="text-slate-500 hover:text-orange-500 text-sm font-medium transition-colors duration-200"
+            >
+              Süreç
+            </a>
+            <Link
+              to="/hakkinda"
+              className="text-slate-500 hover:text-orange-500 text-sm font-medium transition-colors duration-200"
+            >
+              Hakkında
+            </Link>
+            <Link
+              to="/iletisim"
+              className="text-slate-500 hover:text-orange-500 text-sm font-medium transition-colors duration-200"
+            >
+              İletişim
+            </Link>
           </div>
 
           {/* CTA */}
@@ -273,17 +285,17 @@ function HeroSection({ onLoginClick }) {
           <div className="animate-slide-up">
             <SectionBadge variant="mint">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-sm font-medium">Temmuz 2026 — Başvurular Açık</span>
+              <span className="text-sm font-medium">Ağustos 2026 — Başvurular Açık</span>
             </SectionBadge>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 leading-[1.08] mb-8">
-              Sağlıkın<br />
+              Sağlığın<br />
               <span className="gradient-text">Dijital Sesi</span><br />
               <span className="text-slate-400">Sen misin?</span>
             </h1>
 
             <p className="text-slate-500 text-lg leading-loose mb-10 max-w-xl">
-              Sosyal medya her gün milyonlarca yanlış sağlık bilgisiyle dolup taşıyor. Peki bilimin sesi nerede? İşte tam burada: gelecegin sağlık profesyonellerini dijital dünyanın güvenilir sesi olmaya davet ediyoruz.
+              Sosyal medya her gün milyonlarca yanlış sağlık bilgisiyle dolup taşıyor. Peki bilimin sesi nerede? İşte tam burada: geleceğin sağlık profesyonellerini dijital dünyanın güvenilir sesi olmaya davet ediyoruz.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -357,7 +369,7 @@ function HeroSection({ onLoginClick }) {
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-50 border border-orange-100">
                     <span className="text-lg">🏥</span>
                     <div>
-                      <p className="text-slate-800 text-xs font-bold">Sağlık Profes-yonelleri İçin</p>
+                      <p className="text-slate-800 text-xs font-bold">Sağlık Profesyonelleri İçin</p>
                       <p className="text-slate-400 text-xs mt-0.5">Tıp, Eczacılık, Hemşirelik ve tüm sağlık bölümleri</p>
                     </div>
                   </div>
@@ -415,7 +427,7 @@ function StatsRow() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <StatCard value="5"   suffix=" Adım"  label="Yapılandırılmış Yolculuk"    accent="coral"  />
-          <StatCard value="20"  suffix="+"      label="Kişilik Elit Kadro"          accent="violet" />
+          <StatCard value="10"  suffix="+"      label="Kişilik Elit Kadro"          accent="violet" />
           <StatCard value="3"   suffix=" Hafta" label="Çevrimiçi Temel Eğitim"      accent="mint"   />
           <StatCard value="100" suffix="%"      label="Kamp Masrafı Karşılanır"    accent="sky"    />
         </div>
@@ -448,11 +460,11 @@ function AboutSection() {
             </h2>
 
             <p className="text-slate-500 text-lg leading-loose mb-8">
-              Her gün milyonlarca insan sağlık kararını sosyal medyadan aldığı bilgilerle veriyor. "Mucizevi kur" videoları, şüphe tohumları, tablo dışı öneriler… Bilimsel bilginin sesi ise çoğunlukla susturuluyor ya da o kadar sıkıcı kalıyor ki kimse izlemiyor.
+              Her gün milyonlarca insan sağlık kararını sosyal medyadan aldığı bilgilerle veriyor. "Mucizevi kür" videoları, şüphe tohumları, tablo dışı öneriler… Bilimsel bilginin sesi ise çoğunlukla susturuluyor ya da o kadar sıkıcı kalıyor ki kimse izlemiyor.
             </p>
 
             <p className="text-slate-500 leading-loose mb-12">
-              Bu program, sağlık eğitimi alan seni bir üretici olarak görüyor. Sahip olduğun bilgiyi etkili, ilgi çekici ve bilime sadık dijital içeriğe dönüştürmeyi ─ hem tekniğini hem de kamusal sorumluluk bi-lincini ─ geliştirmeni hedefliyor.
+              Bu program, sağlık eğitimi alan seni bir üretici olarak görüyor. Sahip olduğun bilgiyi etkili, ilgi çekici ve bilime sadık dijital içeriğe dönüştürmeyi ─ hem tekniğini hem de kamusal sorumluluk bilincini ─ geliştirmeni hedefliyor.
             </p>
 
             <ul className="space-y-5">
@@ -477,7 +489,7 @@ function AboutSection() {
             <FeatureCard
               icon={<IconHeart />}
               title="Bilgi Kirliliğine Son"
-              desc="Sağlık bilgisi bir ayrıcalık değil, hak. Toplumun doğru bilgiye ulaşması için sesinı yükselt."
+              desc="Sağlık bilgisi bir ayrıcalık değil, hak. Toplumun doğru bilgiye ulaşması için sesini yükselt."
               iconBg="bg-orange-100"
               iconColor="text-orange-500"
               delay={0}
@@ -485,7 +497,7 @@ function AboutSection() {
             <FeatureCard
               icon={<IconCpu />}
               title="Teknik Üretim Becerisi"
-              desc="Reels, Shorts, infografik… İzlenmeyi hak eden içerik yapmayı ─ kameradan algoritmayla kavgaşmadan ─ öğren."
+              desc="Reels, Shorts, infografik… İzlenmeyi hak eden içerik yapmayı ─ kameranın karşısında, algoritmayla kavga etmeden ─ öğren."
               iconBg="bg-sky-100"
               iconColor="text-sky-500"
               delay={100}
@@ -493,15 +505,15 @@ function AboutSection() {
             <FeatureCard
               icon={<IconUsers />}
               title="Coğrafya Ötesi Ağ"
-              desc="Türkiye'nin dört bir yanından gelecek 20 kişilik bir ekiple aynı ideali paylaş, kapılar birlikte açılır."
+              desc="Türkiye'nin dört bir yanından gelecek 10 kişilik bir ekiple aynı ideali paylaş, kapılar birlikte açılır."
               iconBg="bg-emerald-100"
               iconColor="text-emerald-500"
               delay={200}
             />
             <FeatureCard
               icon={<IconRocket />}
-              title="Bire Bir Mentorluğu"
-              desc="Alanda iz bırakmış uzmanlar seninle bire bir çalışır; hem içeriğini hem stratejini şekillendirirler."
+              title="Birebir Mentorluğu"
+              desc="Alanında iz bırakmış uzmanlar seninle birebir çalışır; hem içeriğini hem stratejini şekillendirirler."
               iconBg="bg-violet-100"
               iconColor="text-violet-500"
               delay={300}
@@ -520,15 +532,15 @@ function ProcessSection() {
       number: '01',
       icon: <IconClipboard />,
       title: 'Başvur ve Seçil',
-      desc: 'Online başvuru formunu doldur. Kısa bir değerlendirme mülakatından geç ve Temmuz-Ağustos 2026 arasında 20 kişilik seçkin kadronun bir parçası ol. Deneyim aranmıyor; doğru yerden çıkma motivasyonu yeter.',
-      tags: ['Temmuz - Ağustos 2026', 'Çevrimiçi', 'Seçim Mülakatı'],
+      desc: 'Online başvuru formunu doldur. Kısa bir değerlendirme mülakatından geç ve Ağustos 2026\'da 10 kişilik seçkin kadronun bir parçası ol. Deneyim aranmıyor; doğru yerden çıkma motivasyonu yeter.',
+      tags: ['Ağustos 2026', 'Çevrimiçi', 'Seçim Mülakatı'],
       color: 'coral',
     },
     {
       number: '02',
       icon: <IconChartBar />,
       title: 'Online Temel Eğitim (3 Hafta)',
-      desc: '3 hafta boyunca algoritmayla tanış, doğru bilgi teyidini öğren ve ilk dijital sağlık içeriklerini üret. Her haftanin sonunda bir ödev, bir geri bildirim ve bir mükemmellik noktası daha.',
+      desc: '3 hafta boyunca algoritmayla tanış, doğru bilgi teyidini öğren ve ilk dijital sağlık içeriklerini üret. Her haftanın sonunda bir ödev, bir geri bildirim ve bir mükemmellik noktası daha.',
       tags: ['Ağustos 2026', 'Çevrimiçi Dersler', 'Haftalık Ödevler'],
       color: 'violet',
     },
@@ -536,7 +548,7 @@ function ProcessSection() {
       number: '03',
       icon: <IconUsers />,
       title: 'İstanbul Bootcamp (2 Gün)',
-      desc: 'Nerede olursan ol, programdan ayrılma. Ulaşım ve konaklama tamamen bize ait. İstanbul\'da 2 yoğun günde şebİeke kur, uzmanlarla yüz yüze çalış ve sınırlarını kır.',
+      desc: 'Nerede olursan ol, programdan ayrılma. Ulaşım ve konaklama tamamen bize ait. İstanbul\'da 2 yoğun günde network kur, uzmanlarla yüz yüze çalış ve sınırlarını kır.',
       tags: ['Eylül 2026', 'Yüz Yüze', 'Gider Yok'],
       color: 'mint',
     },
@@ -544,7 +556,7 @@ function ProcessSection() {
       number: '04',
       icon: <IconRocket />,
       title: 'İçerik Üretim Dönemi (3 Hafta)',
-      desc: 'Bootcamptan dön, öğrendiklerini sahaya yansıt. Her hafta farklı bir içerik görevi, farklı bir format ve mentorla bire bir değerlendirme. Gücün artık somut.',
+      desc: 'Bootcamptan dön, öğrendiklerini sahaya yansıt. Her hafta farklı bir içerik görevi, farklı bir format ve mentorla birebir değerlendirme. Gücün artık somut.',
       tags: ['Eylül - Ekim 2026', 'Çevrimiçi', 'Görev Odaklı'],
       color: 'amber',
     },
@@ -570,11 +582,11 @@ function ProcessSection() {
             <span className="text-sm font-medium">Program Takvimi</span>
           </SectionBadge>
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
-            Temmuz\'dan Ekim\'e<br />
+            Ağustos'tan Ekim'e<br />
             <span className="gradient-text">5 Adım, Bir Dönüşüm</span>
           </h2>
           <p className="text-slate-500 text-lg leading-loose">
-            3,5 ay boyunca online eğitimden İstanbul bootcampına, oradan sertifika törenine uzanan net bir yol haritası — her adımı biliyorsun, her aşamada destek alıyorsun.
+            2.5 ay boyunca online eğitimden İstanbul bootcampına, oradan sertifika törenine uzanan net bir yol haritası — her adımı biliyorsun, her aşamada destek alıyorsun.
           </p>
         </div>
 
@@ -610,10 +622,10 @@ function CTABanner({ onLoginClick }) {
               <IconRocket />
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
-              Sağlıkın Sesi<br />Olmaya Hazır Mısın?
+              Sağlığın Sesi<br />Olmaya Hazır Mısın?
             </h2>
             <p className="text-white/80 text-xl leading-loose mb-12 max-w-xl mx-auto">
-              Her gün binlerce yanlış bilgi yayılıyor. Sen bunu izleyerek mi geçireceksin, yoksa değiştirerek mi? Başvurunu yap — kontenjan dolmadan.
+              Her gün binlerce yanlış bilgi yayılıyor. Sen bunu izleyerek mi geçireceksin, yoksa değiştirerek mi? Kontenjan dolmadan başvurunu yap.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <a
@@ -639,30 +651,7 @@ function CTABanner({ onLoginClick }) {
   )
 }
 
-/* ─── Footer ─── */
-function Footer() {
-  return (
-    <footer id="iletişim" className="bg-white border-t border-slate-100 py-14">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-md">
-              <span className="text-white font-black text-xs">GD</span>
-            </div>
-            <span className="text-slate-400 text-sm">Geleceğin Dijital Sağlık Liderleri © 2024</span>
-          </div>
-          <div className="flex items-center gap-8">
-            {['Hakkında', 'Gizlilik', 'İletişim'].map(link => (
-              <a key={link} href="#" className="text-slate-400 hover:text-orange-500 text-sm transition-colors duration-200">
-                {link}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-    </footer>
-  )
-}
+
 
 /* ─── Main Page ─── */
 export default function AnaSayfa() {
