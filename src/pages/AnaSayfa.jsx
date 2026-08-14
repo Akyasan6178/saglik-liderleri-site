@@ -313,7 +313,6 @@ function HeroSection({ onLoginClick }) {
               {[
                 { label: 'Program Aşaması', val: '5' },
                 { label: 'Kamp Şehri', val: 'İstanbul' },
-                { label: 'Burs Desteği', val: '%100' },
               ].map(s => (
                 <div key={s.label} className="flex flex-col gap-0.5">
                   <span className="text-slate-900 font-black text-xl sm:text-2xl">{s.val}</span>
@@ -415,7 +414,8 @@ function StatsRow() {
           <StatCard value="5"   suffix=" Adım"  label="Yapılandırılmış Yolculuk"    accent="coral"  />
           <StatCard value="10"  suffix="+"      label="Kişilik Elit Kadro"          accent="violet" />
           <StatCard value="3"   suffix=" Hafta" label="Çevrimiçi Temel Eğitim"      accent="mint"   />
-          <StatCard value="100" suffix="%"      label="Kamp Masrafı Karşılanır"    accent="sky"    />
+          {/* %100 uygulamalı program */}
+          <StatCard value="100" suffix="%"      label="Uygulamalı Program"          accent="sky"    />
         </div>
       </div>
     </section>

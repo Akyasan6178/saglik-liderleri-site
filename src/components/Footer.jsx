@@ -32,11 +32,11 @@ const IconFacebook = () => (
 )
 
 const SOCIAL_LINKS = [
-  { id: 'instagram', label: 'Instagram', icon: <IconInstagram />, hoverBg: 'hover:bg-gradient-to-br hover:from-purple-500 hover:via-pink-500 hover:to-orange-400', hoverText: 'hover:text-white', hoverBorder: 'hover:border-pink-300' },
-  { id: 'linkedin',  label: 'LinkedIn',  icon: <IconLinkedIn />,  hoverBg: 'hover:bg-sky-500',  hoverText: 'hover:text-white', hoverBorder: 'hover:border-sky-300' },
-  { id: 'youtube',   label: 'YouTube',   icon: <IconYouTube />,   hoverBg: 'hover:bg-red-500',  hoverText: 'hover:text-white', hoverBorder: 'hover:border-red-300' },
-  { id: 'tiktok',    label: 'TikTok',    icon: <IconTikTok />,    hoverBg: 'hover:bg-slate-800', hoverText: 'hover:text-white', hoverBorder: 'hover:border-slate-400' },
-  { id: 'facebook',  label: 'Facebook',  icon: <IconFacebook />,  hoverBg: 'hover:bg-blue-600', hoverText: 'hover:text-white', hoverBorder: 'hover:border-blue-300' },
+  { id: 'instagram', label: 'Instagram', href: 'https://www.instagram.com/markamutfagico/', icon: <IconInstagram />, hoverBg: 'hover:bg-gradient-to-br hover:from-purple-500 hover:via-pink-500 hover:to-orange-400', hoverText: 'hover:text-white', hoverBorder: 'hover:border-pink-300' },
+  { id: 'linkedin',  label: 'LinkedIn',  href: 'https://www.linkedin.com/company/markamutfagico/?originalSubdomain=tr', icon: <IconLinkedIn />,  hoverBg: 'hover:bg-sky-500',  hoverText: 'hover:text-white', hoverBorder: 'hover:border-sky-300' },
+  { id: 'youtube',   label: 'YouTube',   href: 'https://www.youtube.com/@markamutfagi/featured', icon: <IconYouTube />,   hoverBg: 'hover:bg-red-500',  hoverText: 'hover:text-white', hoverBorder: 'hover:border-red-300' },
+  { id: 'tiktok',    label: 'TikTok',    href: 'https://www.tiktok.com/@markamutfagico', icon: <IconTikTok />,    hoverBg: 'hover:bg-slate-800', hoverText: 'hover:text-white', hoverBorder: 'hover:border-slate-400' },
+  { id: 'facebook',  label: 'Facebook',  href: 'https://www.facebook.com/MarkaMutfagico/?locale=tr_TR', icon: <IconFacebook />,  hoverBg: 'hover:bg-blue-600', hoverText: 'hover:text-white', hoverBorder: 'hover:border-blue-300' },
 ]
 
 export default function Footer() {
@@ -78,7 +78,7 @@ export default function Footer() {
               {SOCIAL_LINKS.map(s => (
                 <a
                   key={s.id}
-                  href="#"
+                  href={s.href}
                   aria-label={s.label}
                   title={s.label}
                   target="_blank"
